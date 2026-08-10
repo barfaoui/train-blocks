@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { environment } from 'common';
 
 dotenv.config();
 const app = express();
-const PORT = Number(process.env.PLANNER_PORT);
+const PORT = environment.ports.planner;
 
 app.use(cors());
 app.use(express.json());
