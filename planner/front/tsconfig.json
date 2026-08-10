@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/planner/front",
+    "rootDir": ".",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"]
+}

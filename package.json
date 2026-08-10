@@ -21,7 +21,9 @@
     "url": "https://github.com/barfaoui/training-planning/issues"
   },
   "workspaces": [
-    "auths/*"
+    "common",
+    "auths/*",
+    "planner/*"
   ],
   "devDependencies": {
     "@types/cors": "^2.8.19",
