@@ -2,10 +2,10 @@
 
 export const environment = {
   ports: {
-    "auths-service": 3001,
-    "auths-front": 3002,
-    "planner-service": 3003,
-    "planner-front": 3004,
+    'auths-service': 3001,
+    'auths-front': 3002,
+    'planner-service': 3003,
+    'planner-front': 3004,
   },
 } as const;
 
