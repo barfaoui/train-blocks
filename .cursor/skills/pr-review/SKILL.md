@@ -12,6 +12,12 @@ description: >-
 
 Perform a **read-only** review of the current branch in this repo and deliver a final merge verdict. Do not edit files, commit, push, rebase, or apply fixes unless the user explicitly asks after the report.
 
+## Shared foundation
+
+1. Read and follow [pr-recap](../pr-recap/SKILL.md) first (scope, packages, change bullets).
+2. Reuse that recap for branch/base/packages and the report Summary; do not re-gather the same git scope unless the tree changed.
+3. Continue with evidence, regression, quality, and the final report below.
+
 ## Repo context
 
 - npm workspaces monorepo: `auths/*`, `planner/*`
@@ -35,43 +41,23 @@ Copy and track:
 
 ```
 Merge readiness:
-- [ ] 1. Scope the branch
+- [ ] 1. PR recap (shared)
 - [ ] 2. Gather evidence
 - [ ] 3. Review for regressions
 - [ ] 4. Review code quality
 - [ ] 5. Deliver final report
 ```
 
-### 1. Scope the branch
+### 1. PR recap (shared)
 
-Run in parallel:
-
-```bash
-git status
-git branch -vv
-git rev-parse --abbrev-ref HEAD
-git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true
-git log --oneline --decorate -20
-```
-
-Determine base branch (`main`, `master`, or `origin/HEAD`). Then:
-
-```bash
-git merge-base HEAD <base>
-git diff --stat <merge-base>...HEAD
-git diff <merge-base>...HEAD
-git diff
-git diff --cached
-```
-
-If there is no meaningful diff, stop and report that there is nothing to merge-review.
+Follow [pr-recap](../pr-recap/SKILL.md). If there is no meaningful diff, stop and report that there is nothing to merge-review.
 
 ### 2. Gather evidence
 
 Without changing anything:
 
-- Read changed files and nearby call sites / types needed to judge behavior.
-- Map changes to packages: `auths/service`, `auths/front`, `planner/service`, `planner/front`, root config (`package.json`, `tsconfig.json`, `Makefile`).
+- Read changed files and nearby call sites / types needed to judge behavior (deeper than the recap).
+- Map findings to packages from the recap: `auths/service`, `auths/front`, `planner/service`, `planner/front`, root config (`package.json`, `tsconfig.json`, `Makefile`).
 - Run safe verification when TypeScript/service/front/config files changed:
 
 ```bash
