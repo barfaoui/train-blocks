@@ -1,6 +1,7 @@
 ROOT := ..
+PRISMA_SCHEMA := auths/service/prisma/schema.prisma
 
-.PHONY: run reset reset-db run-service run-front preview-front build clean
+.PHONY: run reset reset-db db-migrate db-studio run-service run-front preview-front build clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -18,13 +19,26 @@ preview-front:
 	$(MAKE) -C $(ROOT) generate-env
 	cd $(ROOT) && node -r tsconfig-paths/register node_modules/vite/bin/vite.js preview --config auths/front/vite.config.ts
 
+# Apply pending Prisma migrations (auth schema)
+db-migrate:
+	$(MAKE) -C $(ROOT) db-up
+	cd $(ROOT) && npx prisma migrate deploy --schema=$(PRISMA_SCHEMA)
+	cd $(ROOT) && npx prisma generate --schema=$(PRISMA_SCHEMA)
+
+# Open Prisma Studio for auth.users
+db-studio:
+	cd $(ROOT) && npx prisma studio --schema=$(PRISMA_SCHEMA)
+
 # Wipe schema + reseed, then run
 reset: reset-db run
 
-# Wipe this service's schema and apply default_data.sql
+# Wipe auth schema, re-apply migrations, then seed default_data.sql
 reset-db:
 	$(MAKE) -C $(ROOT) db-up
-	node $(ROOT)/scripts/reset-service-db.mjs auths
+	node $(ROOT)/scripts/reset-service-db.mjs auths --drop-only
+	cd $(ROOT) && npx prisma migrate deploy --schema=$(PRISMA_SCHEMA)
+	cd $(ROOT) && npx prisma generate --schema=$(PRISMA_SCHEMA)
+	node $(ROOT)/scripts/reset-service-db.mjs auths --seed-only
 
 build:
 	$(MAKE) -C $(ROOT) generate-env

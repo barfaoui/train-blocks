@@ -51,10 +51,10 @@ Ports = `basePort + index + 1` from [`common/environment.json`](common/environme
 
 | App | URL |
 | --- | --- |
-| Auths service | http://localhost:3001 |
-| Auths front | http://localhost:3002 |
-| Planner service | http://localhost:3003 |
-| Planner front | http://localhost:3004 |
+| Auths service | <http://localhost:3001> |
+| Auths front | <http://localhost:3002> |
+| Planner service | <http://localhost:3003> |
+| Planner front | <http://localhost:3004> |
 
 ## Connect with DataGrip / DBeaver
 
