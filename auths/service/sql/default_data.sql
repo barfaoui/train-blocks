@@ -1,0 +1,4 @@
+-- Dev seed data for the auths service.
+-- Applied by `make reset-db` / `make reset` (not on plain `make run`).
+-- Prefer idempotent inserts (e.g. ON CONFLICT DO NOTHING) so re-runs are safe.
+-- Empty until the auths schema/tables exist.
