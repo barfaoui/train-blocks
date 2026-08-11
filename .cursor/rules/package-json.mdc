@@ -12,7 +12,7 @@ This monorepo keeps **one** dependency manifest: the root `package.json`.
 - Always add, remove, or bump npm packages in the **root** `package.json` (then `npm install` from the repo root).
 - **Never** create a nested `package.json` (not under `common/`, `auths/`, `planner/`, or anywhere else).
 - Do not use per-package `npm install <pkg> -w …` as a reason to introduce a nested manifest.
-- Shared modules are resolved via root `imports` (e.g. `#common` → built `common/dist`), not via workspace packages.
+- Shared modules use the `@common/*` path alias (root `tsconfig` `paths` + Vite `resolve.alias`), not workspace packages or `package.json` `#imports`.
 
 ## Scripts
 
@@ -23,15 +23,16 @@ This monorepo keeps **one** dependency manifest: the root `package.json`.
 ## Examples
 
 ```bash
-# ✅ GOOD — deps at root, workflows in Make, shared code via #imports
+# ✅ GOOD — deps at root, workflows in Make, shared code via @common/*
 npm install react
 npm install -D vite
 make -C auths run-front
-import { environment } from '#common';
+import { environment } from '@common/environment';
 
 # ❌ BAD
 common/package.json
 auths/front/package.json
 "scripts": { "dev:auths-front": "vite …" }   # in root package.json
-import { environment } from 'common';       # workspace package name
+import { environment } from '#common';
+import { environment } from 'common';
 ```

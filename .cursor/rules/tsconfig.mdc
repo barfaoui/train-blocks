@@ -13,6 +13,7 @@ All project `tsconfig.json` files must **extend the root** `tsconfig.json`. Do n
 - Only add `compilerOptions` that this package actually needs to **override or add** (e.g. `jsx`, `outDir`, `rootDir`, `lib`, `moduleResolution` for Vite).
 - Do not re-declare root defaults (`strict`, `target`, `skipLibCheck`, `esModuleInterop`, `forceConsistentCasingInFileNames`, etc.) unless you intentionally change them.
 - Prefer the existing patterns in `common/`, `auths/service/`, and `*/front/` over inventing a new base config.
+- Shared-code aliases (`@common/*`) are defined only on the **root** `tsconfig` `paths` (and mirrored in Vite `resolve.alias` for fronts). Do not redeclare them in nested configs.
 
 ## Examples
 
