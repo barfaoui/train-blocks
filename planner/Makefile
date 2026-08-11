@@ -12,11 +12,11 @@ run-service:
 
 run-front:
 	$(MAKE) -C $(ROOT) generate-env
-	npx vite --config front/vite.config.ts
+	cd $(ROOT) && node -r tsconfig-paths/register node_modules/vite/bin/vite.js --config planner/front/vite.config.ts
 
 preview-front:
 	$(MAKE) -C $(ROOT) generate-env
-	npx vite preview --config front/vite.config.ts
+	cd $(ROOT) && node -r tsconfig-paths/register node_modules/vite/bin/vite.js preview --config planner/front/vite.config.ts
 
 # Wipe schema + reseed, then run
 reset: reset-db run
@@ -30,7 +30,7 @@ build:
 	$(MAKE) -C $(ROOT) generate-env
 	npx tsc -b service
 	npx tsc -p front
-	npx vite build --config front/vite.config.ts
+	cd $(ROOT) && node -r tsconfig-paths/register node_modules/vite/bin/vite.js build --config planner/front/vite.config.ts
 
 clean:
 	rm -rf service/dist front/dist
