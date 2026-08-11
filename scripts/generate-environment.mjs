@@ -9,7 +9,9 @@ const outPath = join(root, 'common', 'environment.ts');
 const { basePort, apps } = JSON.parse(readFileSync(configPath, 'utf8'));
 
 if (!Number.isInteger(basePort) || basePort < 0) {
-  throw new Error(`common/environment.json: basePort must be a non-negative integer, got ${basePort}`);
+  throw new Error(
+    `common/environment.json: basePort must be a non-negative integer, got ${basePort}`,
+  );
 }
 if (!Array.isArray(apps) || apps.length === 0) {
   throw new Error('common/environment.json: apps must be a non-empty array');
