@@ -1,0 +1,37 @@
+---
+description: Root-only package.json for deps; use Make for run/build scripts
+alwaysApply: true
+---
+
+# package.json conventions
+
+This monorepo keeps **one** dependency manifest: the root `package.json`.
+
+## Dependencies
+
+- Always add, remove, or bump npm packages in the **root** `package.json` (then `npm install` from the repo root).
+- **Never** create a nested `package.json` (not under `common/`, `auths/`, `planner/`, or anywhere else).
+- Do not use per-package `npm install <pkg> -w …` as a reason to introduce a nested manifest.
+- Shared modules are resolved via root `imports` (e.g. `#common` → built `common/dist`), not via workspace packages.
+
+## Scripts
+
+- **Do not** add an npm `scripts` section to `package.json` for app run/build/preview workflows.
+- Put those commands in the corresponding Makefiles instead (`auths/Makefile`, `planner/Makefile`, root `Makefile`).
+- Invoke tools via Make targets (e.g. `npx vite`, `npx tsc`) so `make -C auths run-front` / `build` stay the source of truth.
+
+## Examples
+
+```bash
+# ✅ GOOD — deps at root, workflows in Make, shared code via #imports
+npm install react
+npm install -D vite
+make -C auths run-front
+import { environment } from '#common';
+
+# ❌ BAD
+common/package.json
+auths/front/package.json
+"scripts": { "dev:auths-front": "vite …" }   # in root package.json
+import { environment } from 'common';       # workspace package name
+```
