@@ -47,18 +47,21 @@ Example shape:
 
 ## Output format
 
-Deliver exactly:
+Deliver exactly. Put the description bullets inside a fenced `markdown` code block so they are easy to copy:
 
-```markdown
+````markdown
 ## Title
 <one line>
 
 ## Description
+
+```markdown
 - …
 - …
 ```
+````
 
-If the user asks to open or update a PR, reuse this title and description with `gh` (create or `gh pr edit`). Otherwise stop after the draft.
+If the user asks to open or update a PR, reuse this title and description with `gh` (create or `gh pr edit`) — strip the fence and use the bullet list as the PR body. Otherwise stop after the draft.
 
 ## After delivery
 
