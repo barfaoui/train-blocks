@@ -14,10 +14,9 @@ if (!service || !apps.includes(service)) {
 }
 
 // Schema name always matches the service folder name
-runPsql(
-  `DROP SCHEMA IF EXISTS ${service} CASCADE;\nCREATE SCHEMA ${service};\n`,
-  { label: `${service}: reset schema "${service}"` },
-);
+runPsql(`DROP SCHEMA IF EXISTS ${service} CASCADE;\nCREATE SCHEMA ${service};\n`, {
+  label: `${service}: reset schema "${service}"`,
+});
 
 const sqlPath = join(root, service, 'service', 'sql', 'default_data.sql');
 if (!existsSync(sqlPath)) {
@@ -32,7 +31,9 @@ const statements = sql
   .trim();
 
 if (!statements) {
-  console.log(`[sql] ${service}: no statements in ${service}/service/sql/default_data.sql — skipping`);
+  console.log(
+    `[sql] ${service}: no statements in ${service}/service/sql/default_data.sql — skipping`,
+  );
   process.exit(0);
 }
 

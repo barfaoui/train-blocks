@@ -17,19 +17,7 @@ export function runPsql(sql, { label } = {}) {
 
   const result = spawnSync(
     'docker',
-    [
-      'compose',
-      'exec',
-      '-T',
-      'postgres',
-      'psql',
-      '-U',
-      user,
-      '-d',
-      db,
-      '-v',
-      'ON_ERROR_STOP=1',
-    ],
+    ['compose', 'exec', '-T', 'postgres', 'psql', '-U', user, '-d', db, '-v', 'ON_ERROR_STOP=1'],
     {
       cwd: root,
       input: sql,
