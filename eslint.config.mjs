@@ -50,6 +50,21 @@ export default defineConfig(
             ['builtin', 'external'],
             ['internal', 'parent', 'sibling', 'index'],
           ],
+          // Workspace packages resolve as "external" without a TS resolver; reclassify them.
+          pathGroups: [
+            {
+              pattern: 'common',
+              group: 'internal',
+              position: 'before',
+            },
+            {
+              pattern: 'common/**',
+              group: 'internal',
+              position: 'before',
+            },
+          ],
+          // Allow pathGroups to apply to packages that look external (default excludes them).
+          pathGroupsExcludedImportTypes: ['builtin'],
           'newlines-between': 'always',
           alphabetize: {
             order: 'asc',
