@@ -28,7 +28,7 @@ const portLines = apps
   })
   .join('\n');
 
-const source = `/** Generated based on common/environment.json — do not edit. */
+const source = `/** Generated based on common/environment.json - do not edit. */
 
 export const environment = {
   ports: {

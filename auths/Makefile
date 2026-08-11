@@ -1,6 +1,6 @@
 ROOT := ..
 
-.PHONY: run reset reset-db run-service run-front build clean
+.PHONY: run reset reset-db run-service run-front preview-front build clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -8,10 +8,15 @@ run:
 
 run-service:
 	$(MAKE) -C $(ROOT) generate-env db-up
-	ts-node-dev --respawn --transpile-only service/src/index.ts
+	cd $(ROOT) && ts-node-dev -r tsconfig-paths/register --respawn --transpile-only auths/service/src/index.ts
 
 run-front:
-	ts-node-dev --respawn --transpile-only front/src/index.tsx
+	$(MAKE) -C $(ROOT) generate-env
+	npx vite --config front/vite.config.ts
+
+preview-front:
+	$(MAKE) -C $(ROOT) generate-env
+	npx vite preview --config front/vite.config.ts
 
 # Wipe schema + reseed, then run
 reset: reset-db run
@@ -24,6 +29,8 @@ reset-db:
 build:
 	$(MAKE) -C $(ROOT) generate-env
 	npx tsc -b service
+	npx tsc -p front
+	npx vite build --config front/vite.config.ts
 
 clean:
 	rm -rf service/dist front/dist

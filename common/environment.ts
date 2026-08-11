@@ -1,9 +1,11 @@
-/** Generated based on common/environment.json — do not edit. */
+/** Generated based on common/environment.json - do not edit. */
 
 export const environment = {
   ports: {
-    auths: 3001,
-    planner: 3002,
+    "auths-service": 3001,
+    "auths-front": 3002,
+    "planner-service": 3003,
+    "planner-front": 3004,
   },
 } as const;
 

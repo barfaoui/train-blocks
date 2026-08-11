@@ -1,4 +1,4 @@
 {
   "basePort": 3000,
-  "apps": ["auths", "planner"]
+  "apps": ["auths-service", "auths-front", "planner-service", "planner-front"]
 }

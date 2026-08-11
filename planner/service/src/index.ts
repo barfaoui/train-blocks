@@ -2,11 +2,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 
-import { environment } from 'common';
+import { environment } from '@common/environment';
 
 dotenv.config();
 const app = express();
-const PORT = environment.ports.planner;
+const PORT = environment.ports['planner-service'];
 
 app.use(cors());
 app.use(express.json());
