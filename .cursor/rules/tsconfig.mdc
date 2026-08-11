@@ -1,0 +1,40 @@
+---
+description: Nested tsconfigs must extend the root tsconfig and only override what they need
+alwaysApply: true
+---
+
+# TypeScript config inheritance
+
+All project `tsconfig.json` files must **extend the root** `tsconfig.json`. Do not start a nested config from scratch.
+
+## Rules
+
+- Every non-root `tsconfig.json` starts with `"extends"` pointing at the repo root config (e.g. `"../tsconfig.json"` or `"../../tsconfig.json"`).
+- Only add `compilerOptions` that this package actually needs to **override or add** (e.g. `jsx`, `outDir`, `rootDir`, `lib`, `moduleResolution` for Vite).
+- Do not re-declare root defaults (`strict`, `target`, `skipLibCheck`, `esModuleInterop`, `forceConsistentCasingInFileNames`, etc.) unless you intentionally change them.
+- Prefer the existing patterns in `common/`, `auths/service/`, and `*/front/` over inventing a new base config.
+- Shared-code aliases (`@common/*`) are defined only on the **root** `tsconfig` `paths` (and mirrored in Vite `resolve.alias` for fronts). Do not redeclare them in nested configs.
+
+## Examples
+
+```json
+// ✅ GOOD
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true
+  },
+  "include": ["src"]
+}
+
+// ❌ BAD — redefines the base instead of extending
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "strict": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
+```

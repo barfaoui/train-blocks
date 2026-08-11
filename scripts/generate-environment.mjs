@@ -21,14 +21,9 @@ if (new Set(apps).size !== apps.length) {
 }
 
 const ports = Object.fromEntries(apps.map((id, index) => [id, basePort + index + 1]));
-const portLines = apps
-  .map((id) => {
-    const key = /^[A-Za-z_][A-Za-z0-9_]*$/.test(id) ? id : JSON.stringify(id);
-    return `    ${key}: ${ports[id]},`;
-  })
-  .join('\n');
+const portLines = apps.map((id) => `    ${JSON.stringify(id)}: ${ports[id]},`).join('\n');
 
-const source = `/** Generated based on common/environment.json — do not edit. */
+const source = `/** Generated based on common/environment.json - do not edit. */
 
 export const environment = {
   ports: {

@@ -53,12 +53,12 @@ export default defineConfig(
           // Workspace packages resolve as "external" without a TS resolver; reclassify them.
           pathGroups: [
             {
-              pattern: 'common',
+              pattern: '@common',
               group: 'internal',
               position: 'before',
             },
             {
-              pattern: 'common/**',
+              pattern: '@common/**',
               group: 'internal',
               position: 'before',
             },
