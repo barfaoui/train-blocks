@@ -1,31 +1,23 @@
-.PHONY: generate-env run-auths run-auths-service run-front run-planner run-planner-service build clean
+.PHONY: generate-env db-up db-down run build clean
 
 generate-env:
 	node scripts/generate-environment.mjs
 
-# Run both auths service and front in parallel
-run-auths: generate-env
-	concurrently "make run-auths-service" "make run-front"
+# Shared local Postgres (Compose reads credentials from .env)
+db-up:
+	docker compose up -d --wait
 
-# Run the auths service in dev mode
-run-auths-service: generate-env
-	ts-node-dev --respawn --transpile-only auths/service/src/index.ts
+db-down:
+	docker compose down
 
-# Run the front in dev mode
-run-front:
-	ts-node-dev --respawn --transpile-only auths/front/src/index.tsx
+run:
+	concurrently "make -C auths run" "make -C planner run"
 
-# Run the planner service in dev mode
-run-planner-service: generate-env
-	ts-node-dev --respawn --transpile-only planner/service/src/index.ts
-
-# Alias for planner service (front tooling comes later)
-run-planner: run-planner-service
-
-# Build all TypeScript projects
 build: generate-env
-	npx tsc -b
+	$(MAKE) -C auths build
+	$(MAKE) -C planner build
 
-# Clean build artifacts
 clean:
-	rm -rf dist/ */service/dist common/dist
+	$(MAKE) -C auths clean
+	$(MAKE) -C planner clean
+	rm -rf common/dist
