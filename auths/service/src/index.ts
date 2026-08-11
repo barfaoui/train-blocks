@@ -1,6 +1,6 @@
+import { environment } from 'common';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { environment } from 'common';
 import express from 'express';
 
 dotenv.config();
