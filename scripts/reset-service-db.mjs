@@ -11,6 +11,14 @@ const SCHEMA_BY_SERVICE = {
   planner: 'planner',
 };
 
+/**
+ * Services whose schema is owned by Prisma migrations.
+ * Only these clear `_prisma_migrations` on drop so `migrate deploy` can re-apply.
+ * TODO(planner-prisma): once planner has migrations, delete only that service's rows
+ * (or use per-schema migration tracking) instead of wiping the whole table.
+ */
+const PRISMA_SERVICES = new Set(['auths']);
+
 const service = process.argv[2];
 const dropOnly = process.argv.includes('--drop-only');
 const seedOnly = process.argv.includes('--seed-only');
@@ -24,13 +32,8 @@ if (!schema || (dropOnly && seedOnly)) {
 }
 
 if (!seedOnly) {
-  // Drop service schema. Clear Prisma migration history so `migrate deploy` re-applies.
-  // TODO(planner-prisma): wiping all of `_prisma_migrations` is wrong once planner has its
-  // own migrations — delete only this service's rows (or use per-schema migration tracking).
-  // TODO(planner-prisma): planner `reset-db` should mirror auths (drop → migrate deploy → seed).
-  runPsql(
-    `DROP SCHEMA IF EXISTS ${schema} CASCADE;\n` +
-      `DO $$\n` +
+  const clearMigrations = PRISMA_SERVICES.has(service)
+    ? `DO $$\n` +
       `BEGIN\n` +
       `  IF EXISTS (\n` +
       `    SELECT 1 FROM information_schema.tables\n` +
@@ -38,7 +41,13 @@ if (!seedOnly) {
       `  ) THEN\n` +
       `    DELETE FROM "_prisma_migrations";\n` +
       `  END IF;\n` +
-      `END $$;\n`,
+      `END $$;\n`
+    : '';
+
+  runPsql(
+    `DROP SCHEMA IF EXISTS ${schema} CASCADE;\n` +
+      clearMigrations +
+      `CREATE SCHEMA ${schema};\n`,
     { label: `${service}: reset schema "${schema}"` },
   );
 }
