@@ -1,7 +1,7 @@
 ROOT := ..
 PRISMA_SCHEMA := auths/service/prisma/schema.prisma
 
-.PHONY: run reset reset-db db-migrate db-studio run-service run-front preview-front build clean
+.PHONY: run reset reset-db db-migrate db-studio run-service run-front preview-front build test clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -39,6 +39,9 @@ reset-db:
 	cd $(ROOT) && npx prisma migrate deploy --schema=$(PRISMA_SCHEMA)
 	cd $(ROOT) && npx prisma generate --schema=$(PRISMA_SCHEMA)
 	node $(ROOT)/scripts/reset-service-db.mjs auths --seed-only
+
+test:
+	cd $(ROOT) && npx vitest run --config auths/service/vitest.config.mts
 
 build:
 	$(MAKE) -C $(ROOT) generate-env
