@@ -1,4 +1,4 @@
-.PHONY: generate-env db-up db-down run build clean lint
+.PHONY: generate-env db-up db-down run build test clean lint
 
 generate-env:
 	node scripts/generate-environment.mjs
@@ -17,6 +17,9 @@ run:
 build: generate-env
 	$(MAKE) -C auths build
 	$(MAKE) -C planner build
+
+test:
+	$(MAKE) -C auths test
 
 lint:
 	npx prettier --write .
