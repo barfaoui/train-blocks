@@ -45,9 +45,7 @@ if (!seedOnly) {
     : '';
 
   runPsql(
-    `DROP SCHEMA IF EXISTS ${schema} CASCADE;\n` +
-      clearMigrations +
-      `CREATE SCHEMA ${schema};\n`,
+    `DROP SCHEMA IF EXISTS ${schema} CASCADE;\n` + clearMigrations + `CREATE SCHEMA ${schema};\n`,
     { label: `${service}: reset schema "${schema}"` },
   );
 }
