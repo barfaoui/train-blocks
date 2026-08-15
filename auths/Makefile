@@ -45,7 +45,7 @@ test:
 
 build:
 	$(MAKE) -C $(ROOT) generate-env
-	npx tsc -b service
+	npx tsc -b service/tsconfig.build.json
 	npx tsc -p front
 	cd $(ROOT) && node -r tsconfig-paths/register node_modules/vite/bin/vite.js build --config auths/front/vite.config.ts
 

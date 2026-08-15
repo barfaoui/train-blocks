@@ -15,7 +15,7 @@
   "files": [],
   "references": [
     { "path": "./common" },
-    { "path": "./auths/service" },
+    { "path": "./auths/service/tsconfig.build.json" },
     { "path": "./planner/service" }
   ]
 }
