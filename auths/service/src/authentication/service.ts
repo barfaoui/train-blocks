@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
-import type { SignUpResult } from '../data/types/authentication';
+import type { AuthResult } from '../data/types/authentication';
 import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 
@@ -12,7 +12,7 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   return existing === null;
 }
 
-export async function signUp(username: string, password: string): Promise<SignUpResult> {
+export async function signUp(username: string, password: string): Promise<AuthResult> {
   const passwordHash = await hashPassword(password);
 
   try {
@@ -34,7 +34,7 @@ export async function signUp(username: string, password: string): Promise<SignUp
   }
 }
 
-export async function signIn(username: string, password: string): Promise<SignUpResult> {
+export async function signIn(username: string, password: string): Promise<AuthResult> {
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user) {
     throw new InvalidCredentialsError();

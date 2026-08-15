@@ -1,6 +1,5 @@
 import { Router } from 'express';
 
-
 import { isUsernameAvailable, signIn, signUp } from './service';
 import { formatZodError, signInBody, signUpBody, username } from './validation';
 import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';

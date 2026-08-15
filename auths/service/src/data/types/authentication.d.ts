@@ -18,7 +18,7 @@ export type AuthUser = {
   username: string;
 };
 
-export type SignUpResult = {
+export type AuthResult = {
   token: string;
   user: AuthUser;
 };
