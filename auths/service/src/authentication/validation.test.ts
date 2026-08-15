@@ -1,0 +1,79 @@
+import { describe, expect, it } from 'vitest';
+
+import { password, signUpBody, username } from './validation';
+
+describe('username', () => {
+  it('trims and lowercases a valid username', () => {
+    expect(username.parse('  Bochra  ')).toBe('bochra');
+  });
+
+  it('rejects usernames shorter than 3 characters', () => {
+    const result = username.safeParse('ab');
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects usernames longer than 32 characters', () => {
+    const result = username.safeParse('a'.repeat(33));
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects usernames with characters other than letters, numbers, and underscores', () => {
+    const result = username.safeParse('bochra-1');
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('password', () => {
+  const validPassword = 'Secret1!';
+
+  it('accepts a password that meets every rule', () => {
+    expect(password.parse(validPassword)).toBe(validPassword);
+  });
+
+  it('rejects passwords shorter than 8 characters', () => {
+    const result = password.safeParse('Sec1!');
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects passwords missing a lowercase letter', () => {
+    const result = password.safeParse('SECRET1!');
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects passwords missing an uppercase letter', () => {
+    const result = password.safeParse('secret1!');
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects passwords missing a number', () => {
+    const result = password.safeParse('Secret!!');
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects passwords missing a special character', () => {
+    const result = password.safeParse('Secret12');
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('signUpBody', () => {
+  it('normalizes username and keeps the password', () => {
+    expect(
+      signUpBody.parse({
+        username: 'Bochra',
+        password: 'Secret1!',
+      }),
+    ).toEqual({
+      username: 'bochra',
+      password: 'Secret1!',
+    });
+  });
+});
