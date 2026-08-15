@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { signToken } from '@common/utils/jwt.util';
 
-import { UsernameTakenError, isUsernameAvailable, signUp } from './service';
+import { isUsernameAvailable, signIn, signUp } from './service';
 import { prisma } from '../data/prisma';
-import { hashPassword } from '../utils/password.util';
+import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';
+import { hashPassword, verifyPassword } from '../utils/password.util';
 
 vi.mock('../data/prisma', () => ({
   prisma: {
@@ -18,6 +19,7 @@ vi.mock('../data/prisma', () => ({
 
 vi.mock('../utils/password.util', () => ({
   hashPassword: vi.fn(),
+  verifyPassword: vi.fn(),
 }));
 
 vi.mock('@common/utils/jwt.util', () => ({
@@ -30,6 +32,7 @@ const prismaUser = prisma.user as unknown as {
 };
 
 const hashPasswordMock = vi.mocked(hashPassword);
+const verifyPasswordMock = vi.mocked(verifyPassword);
 const signTokenMock = vi.mocked(signToken);
 
 describe('isUsernameAvailable', () => {
@@ -87,6 +90,52 @@ describe('signUp', () => {
     );
 
     await expect(signUp('bochra', 'Secret1!')).rejects.toBeInstanceOf(UsernameTakenError);
+    expect(signTokenMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('signIn', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    signTokenMock.mockReturnValue('signed-token');
+  });
+
+  it('returns a token when credentials match', async () => {
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      passwordHash: 'hashed-password',
+    });
+    verifyPasswordMock.mockResolvedValue(true);
+
+    await expect(signIn('bochra', 'Secret1!')).resolves.toEqual({
+      token: 'signed-token',
+      user: { id: 'user-1', username: 'bochra' },
+    });
+
+    expect(prismaUser.findUnique).toHaveBeenCalledWith({ where: { username: 'bochra' } });
+    expect(verifyPasswordMock).toHaveBeenCalledWith('Secret1!', 'hashed-password');
+    expect(signTokenMock).toHaveBeenCalledWith({ sub: 'user-1', username: 'bochra' });
+  });
+
+  it('throws InvalidCredentialsError when the password is wrong', async () => {
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      passwordHash: 'hashed-password',
+    });
+    verifyPasswordMock.mockResolvedValue(false);
+
+    await expect(signIn('bochra', 'Wrong1!')).rejects.toBeInstanceOf(InvalidCredentialsError);
+    expect(verifyPasswordMock).toHaveBeenCalledWith('Wrong1!', 'hashed-password');
+    expect(signTokenMock).not.toHaveBeenCalled();
+  });
+
+  it('throws InvalidCredentialsError for an unknown user without comparing a password', async () => {
+    prismaUser.findUnique.mockResolvedValue(null);
+
+    await expect(signIn('bochra', 'Secret1!')).rejects.toBeInstanceOf(InvalidCredentialsError);
+    expect(verifyPasswordMock).not.toHaveBeenCalled();
     expect(signTokenMock).not.toHaveBeenCalled();
   });
 });

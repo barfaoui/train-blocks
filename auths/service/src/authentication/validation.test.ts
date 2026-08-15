@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { password, signUpBody, username } from './validation';
+import { password, signInBody, signUpBody, username } from './validation';
 
 describe('username', () => {
   it('trims and lowercases a valid username', () => {
@@ -74,6 +74,41 @@ describe('signUpBody', () => {
     ).toEqual({
       username: 'bochra',
       password: 'Secret1!',
+    });
+  });
+});
+
+describe('signInBody', () => {
+  it('normalizes username and keeps the password', () => {
+    expect(
+      signInBody.parse({
+        username: 'Bochra',
+        password: 'Secret1!',
+      }),
+    ).toEqual({
+      username: 'bochra',
+      password: 'Secret1!',
+    });
+  });
+
+  it('rejects an empty password', () => {
+    const result = signInBody.safeParse({
+      username: 'bochra',
+      password: '',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts a weak password that would fail sign-up rules', () => {
+    expect(
+      signInBody.parse({
+        username: 'bochra',
+        password: 'weak',
+      }),
+    ).toEqual({
+      username: 'bochra',
+      password: 'weak',
     });
   });
 });
