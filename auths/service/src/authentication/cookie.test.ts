@@ -1,10 +1,11 @@
 import type { Request, Response } from 'express';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ACCESS_TOKEN_COOKIE_NAME } from '@common/auth-constants';
 import { TOKEN_MAX_AGE_MS } from '@common/utils/jwt.util';
 
 import { readAccessToken, setAuthCookie } from './cookie';
+
+const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 
 describe('setAuthCookie', () => {
   afterEach(() => {

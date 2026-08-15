@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 
-import { ACCESS_TOKEN_COOKIE_NAME } from '@common/auth-constants';
 import { TOKEN_MAX_AGE_MS } from '@common/utils/jwt.util';
+
+const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 
 export function setAuthCookie(res: Response, token: string): void {
   res.cookie(ACCESS_TOKEN_COOKIE_NAME, token, {

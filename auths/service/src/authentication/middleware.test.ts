@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ACCESS_TOKEN_COOKIE_NAME } from '@common/auth-constants';
 import { verifyToken } from '@common/utils/jwt.util';
 
 import { requireAuth } from './middleware';
 import type { AuthenticatedRequest } from '../data/types/authentication';
+
+const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 
 vi.mock('@common/utils/jwt.util', () => ({
   verifyToken: vi.fn(),
