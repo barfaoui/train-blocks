@@ -18,6 +18,15 @@ export type AuthUser = {
   username: string;
 };
 
+export type AuthenticatedRequest = import('express').Request & {
+  user: AuthUser;
+};
+
+export type MeUser = AuthUser & {
+  email: string | null;
+  createdAt: string;
+};
+
 export type AuthResult = {
   token: string;
   user: AuthUser;
