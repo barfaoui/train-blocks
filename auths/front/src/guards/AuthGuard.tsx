@@ -1,10 +1,16 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { isAuthenticated } from '../auth/session';
+import { useSessionStatus } from '../auth/session';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
-  if (!isAuthenticated()) {
+  const status = useSessionStatus();
+
+  if (status === 'loading') {
+    return null;
+  }
+
+  if (status === 'unauthenticated') {
     return <Navigate to="/login" replace />;
   }
 

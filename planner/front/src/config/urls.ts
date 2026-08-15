@@ -1,9 +1,16 @@
-import { localhostOrigin } from '@common/app-urls';
+import {
+  authsLoginHref as buildAuthsLoginHref,
+  authsMeHref as buildAuthsMeHref,
+} from '@common/app-urls';
+
+function sameOrigin(): boolean {
+  return import.meta.env.VITE_SAME_ORIGIN === 'true';
+}
 
 export function authsLoginHref(): string {
-  if (import.meta.env.VITE_SAME_ORIGIN === 'true') {
-    return '/login';
-  }
+  return buildAuthsLoginHref(sameOrigin());
+}
 
-  return `${localhostOrigin('auths-front')}/login`;
+export function authsMeHref(): string {
+  return buildAuthsMeHref(sameOrigin());
 }

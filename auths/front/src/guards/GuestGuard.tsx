@@ -1,11 +1,17 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import { isAuthenticated } from '../auth/session';
+import { useSessionStatus } from '../auth/session';
 
 export function GuestGuard({ children }: { children: ReactNode }) {
-  if (isAuthenticated()) {
-    return <Navigate to="/profile" replace />;
+  const status = useSessionStatus();
+
+  if (status === 'loading') {
+    return null;
+  }
+
+  if (status === 'authenticated') {
+    return <Navigate to="/" replace />;
   }
 
   return children;

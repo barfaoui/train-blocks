@@ -1,1 +1,1 @@
-export const ACCESS_TOKEN_STORAGE_KEY = 'accessToken';
+export const ACCESS_TOKEN_COOKIE_NAME = 'accessToken';
