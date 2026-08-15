@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { signToken } from '@common/utils/jwt.util';
 
-import { isUsernameAvailable, signIn, signUp } from './service';
+import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { prisma } from '../data/prisma';
-import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';
+import { InvalidCredentialsError, UnauthorizedError, UsernameTakenError } from '../data/types/errors';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 
 vi.mock('../data/prisma', () => ({
@@ -137,5 +137,39 @@ describe('signIn', () => {
     await expect(signIn('bochra', 'Secret1!')).rejects.toBeInstanceOf(InvalidCredentialsError);
     expect(verifyPasswordMock).not.toHaveBeenCalled();
     expect(signTokenMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('getMe', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns the user profile without the password hash', async () => {
+    const createdAt = new Date('2026-08-15T07:00:00.000Z');
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      email: null,
+      createdAt,
+    });
+
+    await expect(getMe('user-1')).resolves.toEqual({
+      id: 'user-1',
+      username: 'bochra',
+      email: null,
+      createdAt: '2026-08-15T07:00:00.000Z',
+    });
+
+    expect(prismaUser.findUnique).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      omit: { passwordHash: true },
+    });
+  });
+
+  it('throws UnauthorizedError when the user no longer exists', async () => {
+    prismaUser.findUnique.mockResolvedValue(null);
+
+    await expect(getMe('user-1')).rejects.toBeInstanceOf(UnauthorizedError);
   });
 });

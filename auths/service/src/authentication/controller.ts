@@ -1,8 +1,10 @@
 import { Router } from 'express';
 
-import { isUsernameAvailable, signIn, signUp } from './service';
+import { requireAuth } from './middleware';
+import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { formatZodError, signInBody, signUpBody, username } from './validation';
-import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';
+import type { AuthenticatedRequest } from '../data/types/authentication';
+import { InvalidCredentialsError, UnauthorizedError, UsernameTakenError } from '../data/types/errors';
 
 export const authenticationRouter = Router();
 
@@ -35,6 +37,22 @@ authenticationRouter.post('/sign-up', async (req, res) => {
   } catch (error) {
     if (error instanceof UsernameTakenError) {
       res.status(409).json({ error: 'Username already taken' });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+authenticationRouter.get('/me', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+
+  try {
+    const me = await getMe(user.id);
+    res.status(200).json(me);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'Unauthorized' });
       return;
     }
     console.error(error);

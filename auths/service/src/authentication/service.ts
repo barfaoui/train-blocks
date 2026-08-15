@@ -3,8 +3,8 @@ import { Prisma } from '@prisma/client';
 import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
-import type { AuthResult } from '../data/types/authentication';
-import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';
+import type { AuthResult, MeUser } from '../data/types/authentication';
+import { InvalidCredentialsError, UnauthorizedError, UsernameTakenError } from '../data/types/errors';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
@@ -50,6 +50,24 @@ export async function signIn(username: string, password: string): Promise<AuthRe
   return {
     token,
     user: { id: user.id, username: user.username },
+  };
+}
+
+export async function getMe(userId: string): Promise<MeUser> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    omit: { passwordHash: true },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError();
+  }
+
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    createdAt: user.createdAt.toISOString(),
   };
 }
 
