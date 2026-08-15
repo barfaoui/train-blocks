@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
+      "@common/styles/*": ["common/styles/*"],
       "@common/*": ["common/dist/*"]
     }
   },
