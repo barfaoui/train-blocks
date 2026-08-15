@@ -4,7 +4,11 @@ import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
 import type { AuthResult, MeUser } from '../data/types/authentication';
-import { InvalidCredentialsError, UnauthorizedError, UsernameTakenError } from '../data/types/errors';
+import {
+  InvalidCredentialsError,
+  UnauthorizedError,
+  UsernameTakenError,
+} from '../data/types/errors';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
