@@ -9,7 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@common/*": ["common/dist/*"]
+      "@common/*": ["common/*"]
     }
   },
   "files": [],
