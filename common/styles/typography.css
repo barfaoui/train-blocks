@@ -1,0 +1,35 @@
+.TypographySmall,
+.TypographyMedium,
+.TypographyLarge {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-style: normal;
+  color: var(--color-text);
+}
+
+.TypographySmall {
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.TypographyMedium {
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+.TypographyLarge {
+  font-size: var(--font-size-lg);
+  line-height: 1.5;
+}
+
+.TypographySmall.bold,
+.TypographyMedium.bold,
+.TypographyLarge.bold {
+  font-weight: 700;
+}
+
+.TypographySmall.italic,
+.TypographyMedium.italic,
+.TypographyLarge.italic {
+  font-style: italic;
+}
