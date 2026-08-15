@@ -8,6 +8,11 @@ export type SignUpBody = {
   password: string;
 };
 
+export type SignInBody = {
+  username: string;
+  password: string;
+};
+
 export type AuthUser = {
   id: string;
   username: string;

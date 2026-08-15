@@ -4,14 +4,8 @@ import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
 import type { SignUpResult } from '../data/types/authentication';
-import { hashPassword } from '../utils/password.util';
-
-export class UsernameTakenError extends Error {
-  constructor() {
-    super('Username already taken');
-    this.name = 'UsernameTakenError';
-  }
-}
+import { InvalidCredentialsError, UsernameTakenError } from '../data/types/errors';
+import { hashPassword, verifyPassword } from '../utils/password.util';
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   const existing = await prisma.user.findUnique({ where: { username } });
@@ -38,6 +32,25 @@ export async function signUp(username: string, password: string): Promise<SignUp
     }
     throw error;
   }
+}
+
+export async function signIn(username: string, password: string): Promise<SignUpResult> {
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user) {
+    throw new InvalidCredentialsError();
+  }
+
+  const matches = await verifyPassword(password, user.passwordHash);
+  if (!matches) {
+    throw new InvalidCredentialsError();
+  }
+
+  const token = signToken({ sub: user.id, username: user.username });
+
+  return {
+    token,
+    user: { id: user.id, username: user.username },
+  };
 }
 
 function isUniqueConstraintError(error: unknown): boolean {

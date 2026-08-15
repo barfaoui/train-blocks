@@ -23,6 +23,11 @@ export const signUpBody = z.object({
   password,
 });
 
+export const signInBody = z.object({
+  username,
+  password: z.string().min(1, 'Password is required'),
+});
+
 export function formatZodError(error: ZodError): { error: string; details: FieldError[] } {
   return {
     error: 'Invalid request',
