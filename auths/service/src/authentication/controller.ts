@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import { setAuthCookie } from './cookie';
 import { requireAuth } from './middleware';
 import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { formatZodError, signInBody, signUpBody, username } from './validation';
@@ -33,7 +34,8 @@ authenticationRouter.post('/sign-up', async (req, res) => {
 
   try {
     const result = await signUp(parsed.data.username, parsed.data.password);
-    res.status(201).json(result);
+    setAuthCookie(res, result.token);
+    res.status(201).json({ user: result.user });
   } catch (error) {
     if (error instanceof UsernameTakenError) {
       res.status(409).json({ error: 'Username already taken' });
@@ -69,7 +71,8 @@ authenticationRouter.post('/sign-in', async (req, res) => {
 
   try {
     const result = await signIn(parsed.data.username, parsed.data.password);
-    res.status(200).json(result);
+    setAuthCookie(res, result.token);
+    res.status(200).json({ user: result.user });
   } catch (error) {
     if (error instanceof InvalidCredentialsError) {
       res.status(401).json({ error: 'Invalid username or password' });

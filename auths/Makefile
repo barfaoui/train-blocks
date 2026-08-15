@@ -5,11 +5,11 @@ PRISMA_SCHEMA := auths/service/prisma/schema.prisma
 
 # Start service + front (DB up, no seed)
 run:
-	concurrently "make run-service" "make run-front"
+	cd $(ROOT) && npx concurrently "make -C auths run-service" "make -C auths run-front"
 
 run-service:
 	$(MAKE) -C $(ROOT) generate-env db-up
-	cd $(ROOT) && ts-node-dev -r tsconfig-paths/register --respawn --transpile-only auths/service/src/index.ts
+	cd $(ROOT) && npx ts-node-dev -r tsconfig-paths/register --respawn --transpile-only auths/service/src/index.ts
 
 run-front:
 	$(MAKE) -C $(ROOT) generate-env

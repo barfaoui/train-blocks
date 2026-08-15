@@ -5,7 +5,8 @@ export type TokenPayload = {
   username: string;
 };
 
-const TOKEN_EXPIRES_IN = '7d';
+export const TOKEN_EXPIRES_IN = '7d';
+export const TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;

@@ -12,7 +12,7 @@ db-down:
 	docker compose down
 
 run:
-	concurrently "make -C auths run" "make -C planner run"
+	cd $(CURDIR) && npx concurrently "make -C auths run" "make -C planner run"
 
 build: generate-env
 	$(MAKE) -C auths build

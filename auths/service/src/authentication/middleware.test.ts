@@ -6,6 +6,8 @@ import { verifyToken } from '@common/utils/jwt.util';
 import { requireAuth } from './middleware';
 import type { AuthenticatedRequest } from '../data/types/authentication';
 
+const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
+
 vi.mock('@common/utils/jwt.util', () => ({
   verifyToken: vi.fn(),
 }));
@@ -22,9 +24,9 @@ function createMockRes(): Response {
   return res as unknown as Response;
 }
 
-function createMockReq(authorization?: string): Request {
+function createMockReq(cookie?: string): Request {
   return {
-    headers: !authorization ? {} : { authorization },
+    headers: cookie ? { cookie } : {},
   } as Request;
 }
 
@@ -36,32 +38,8 @@ describe('requireAuth', () => {
     next = vi.fn();
   });
 
-  it('returns 401 when the Authorization header is missing', () => {
+  it('returns 401 when the access token cookie is missing', () => {
     const req = createMockReq();
-    const res = createMockRes();
-
-    requireAuth(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
-    expect(next).not.toHaveBeenCalled();
-    expect(verifyTokenMock).not.toHaveBeenCalled();
-  });
-
-  it('returns 401 when the scheme is not Bearer', () => {
-    const req = createMockReq('Basic abc123');
-    const res = createMockRes();
-
-    requireAuth(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(401);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' });
-    expect(next).not.toHaveBeenCalled();
-    expect(verifyTokenMock).not.toHaveBeenCalled();
-  });
-
-  it('returns 401 when the Bearer token is empty', () => {
-    const req = createMockReq('Bearer ');
     const res = createMockRes();
 
     requireAuth(req, res, next);
@@ -77,7 +55,7 @@ describe('requireAuth', () => {
       throw new Error('jwt expired');
     });
 
-    const req = createMockReq('Bearer bad-token');
+    const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=bad-token`);
     const res = createMockRes();
 
     requireAuth(req, res, next);
@@ -88,15 +66,15 @@ describe('requireAuth', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('sets req.user from the token payload and calls next', () => {
+  it('sets req.user from the access token cookie and calls next', () => {
     verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra' });
 
-    const req = createMockReq('Bearer valid-token');
+    const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=cookie-token`);
     const res = createMockRes();
 
     requireAuth(req, res, next);
 
-    expect(verifyTokenMock).toHaveBeenCalledWith('valid-token');
+    expect(verifyTokenMock).toHaveBeenCalledWith('cookie-token');
     expect((req as AuthenticatedRequest).user).toEqual({ id: 'user-1', username: 'bochra' });
     expect(next).toHaveBeenCalledOnce();
     expect(res.status).not.toHaveBeenCalled();
