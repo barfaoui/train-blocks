@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react';
 
 import { Button } from '@common/styles/Button';
 import { TextInput } from '@common/styles/TextInput';
-import { TypographySmall } from '@common/styles/Typography';
+import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './LoginPage.module.scss';
 
@@ -65,7 +65,7 @@ function AuthTabs({ tab, onChange }: AuthTabsProps) {
   );
 }
 
-function SignInForm() {
+function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -95,11 +95,16 @@ function SignInForm() {
         onChange={setPassword}
       />
       <Button type="submit" label="Sign in" fillHorizontally />
+      <SwitchPrompt
+        prompt="Don't have an account yet?"
+        actionLabel="Sign up"
+        onAction={onSwitchToSignUp}
+      />
     </form>
   );
 }
 
-function SignUpForm() {
+function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -117,6 +122,7 @@ function SignUpForm() {
         name="username"
         autoComplete="username"
         required
+        helperText="3–32 characters. Letters, numbers, and underscores."
         value={username}
         onChange={setUsername}
       />
@@ -126,7 +132,7 @@ function SignUpForm() {
         type="password"
         autoComplete="new-password"
         required
-        helperText="At least 8 characters"
+        helperText="At least 8 characters, with uppercase, lowercase, a number, and a special character."
         value={password}
         onChange={setPassword}
       />
@@ -140,7 +146,29 @@ function SignUpForm() {
         onChange={setConfirmPassword}
       />
       <Button type="submit" label="Sign up" fillHorizontally />
+      <SwitchPrompt
+        prompt="Already have an account?"
+        actionLabel="Sign in"
+        onAction={onSwitchToSignIn}
+      />
     </form>
+  );
+}
+
+type SwitchPromptProps = {
+  prompt: string;
+  actionLabel: string;
+  onAction: () => void;
+};
+
+function SwitchPrompt({ prompt, actionLabel, onAction }: SwitchPromptProps) {
+  return (
+    <TypographySmall as="p" className={styles.switchPrompt}>
+      {prompt}{' '}
+      <TypographySmall as="button" type="button" className={styles.switchLink} onClick={onAction}>
+        {actionLabel}
+      </TypographySmall>
+    </TypographySmall>
   );
 }
 
@@ -149,9 +177,22 @@ export function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <h1>Auths</h1>
-      <AuthTabs tab={tab} onChange={setTab} />
-      {tab === 'sign-in' ? <SignInForm /> : <SignUpForm />}
+      <div className={styles.column}>
+        <header className={styles.header}>
+          <TypographyLarge as="h1" variant="bold" className={styles.title}>
+            Train Blocks
+          </TypographyLarge>
+          <TypographyMedium as="p" className={styles.tagline}>
+            Plan your training sessions, and sync them with your other apps and calendars.
+          </TypographyMedium>
+        </header>
+        <AuthTabs tab={tab} onChange={setTab} />
+        {tab === 'sign-in' ? (
+          <SignInForm onSwitchToSignUp={() => setTab('sign-up')} />
+        ) : (
+          <SignUpForm onSwitchToSignIn={() => setTab('sign-in')} />
+        )}
+      </div>
     </main>
   );
 }
