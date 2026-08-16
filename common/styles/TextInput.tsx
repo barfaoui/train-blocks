@@ -8,26 +8,39 @@ export type TextInputProps = {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  helperText?: string;
+  required?: boolean;
   className?: string;
-} & Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'value' | 'onChange' | 'className'>;
+} & Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
 
 export function TextInput({
   label,
   value,
   onChange,
   error,
+  helperText,
+  required,
   type = 'text',
   className,
   ...inputProps
 }: TextInputProps) {
   const id = useId();
+  const helperId = `${id}-helper`;
   const errorId = `${id}-error`;
   const invalid = Boolean(error);
+  const describedBy = [helperText ? helperId : undefined, invalid ? errorId : undefined]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
       <TypographySmall as="label" htmlFor={id}>
         {label}
+        {required ? (
+          <span className={styles.requiredAsterisk} aria-hidden="true">
+            {' *'}
+          </span>
+        ) : null}
       </TypographySmall>
       <input
         {...inputProps}
@@ -38,9 +51,15 @@ export function TextInput({
           .filter(Boolean)
           .join(' ')}
         aria-invalid={invalid}
-        aria-describedby={invalid ? errorId : undefined}
+        aria-required={required || undefined}
+        aria-describedby={describedBy || undefined}
         onChange={(event) => onChange(event.target.value)}
       />
+      {helperText ? (
+        <p id={helperId} className={styles.helper}>
+          {helperText}
+        </p>
+      ) : null}
       {error ? (
         <TypographySmall as="p" id={errorId} className={styles.error}>
           {error}

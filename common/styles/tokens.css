@@ -12,9 +12,11 @@
   --color-primary-contrast: #ffffff;
   --color-accent: #f97316;
   --color-danger: #dc2626;
+  --color-required: #b85c55;
   --color-success: #059669;
 
   --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.125rem;
@@ -42,5 +44,6 @@
   --color-primary-contrast: #042f2e;
   --color-accent: #fb923c;
   --color-danger: #f87171;
+  --color-required: #d49a94;
   --color-success: #34d399;
 }

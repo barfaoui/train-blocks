@@ -45,6 +45,7 @@ export function LoginPage() {
             label="Username"
             name="username"
             autoComplete="username"
+            required
             value={signInUsername}
             onChange={setSignInUsername}
           />
@@ -53,6 +54,7 @@ export function LoginPage() {
             name="password"
             type="password"
             autoComplete="current-password"
+            required
             value={signInPassword}
             onChange={setSignInPassword}
           />
@@ -64,6 +66,7 @@ export function LoginPage() {
             label="Username"
             name="username"
             autoComplete="username"
+            required
             value={signUpUsername}
             onChange={setSignUpUsername}
           />
@@ -72,6 +75,8 @@ export function LoginPage() {
             name="password"
             type="password"
             autoComplete="new-password"
+            required
+            helperText="At least 8 characters"
             value={signUpPassword}
             onChange={setSignUpPassword}
           />
@@ -80,6 +85,7 @@ export function LoginPage() {
             name="confirmPassword"
             type="password"
             autoComplete="new-password"
+            required
             value={signUpConfirmPassword}
             onChange={setSignUpConfirmPassword}
           />

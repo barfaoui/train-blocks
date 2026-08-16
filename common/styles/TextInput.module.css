@@ -37,6 +37,17 @@
   }
 }
 
+.requiredAsterisk {
+  color: var(--color-required);
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
 .error {
   margin: 0;
   color: var(--color-danger);
