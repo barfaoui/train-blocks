@@ -10,7 +10,7 @@ export default defineConfig({
   root: dir,
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', '../front/src/**/*.test.ts'],
     env: {
       DATABASE_URL: 'postgresql://app:app@localhost:5432/training_planning',
       JWT_SECRET: 'test-jwt-secret-for-vitest',

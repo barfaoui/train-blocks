@@ -8,5 +8,5 @@
     "rootDir": "."
   },
   "include": ["*.ts", "**/*.ts"],
-  "exclude": ["styles", "dist"]
+  "exclude": ["styles", "components", "dist"]
 }

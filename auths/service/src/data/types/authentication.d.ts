@@ -1,30 +1,9 @@
-export type FieldError = {
-  path: string;
-  message: string;
-};
+import type { AuthUser } from '@common/auth-types';
 
-export type SignUpBody = {
-  username: string;
-  password: string;
-};
-
-export type SignInBody = {
-  username: string;
-  password: string;
-};
-
-export type AuthUser = {
-  id: string;
-  username: string;
-};
+export type { AuthUser, FieldError, MeUser, SignInBody, SignUpBody } from '@common/auth-types';
 
 export type AuthenticatedRequest = import('express').Request & {
   user: AuthUser;
-};
-
-export type MeUser = AuthUser & {
-  email: string | null;
-  createdAt: string;
 };
 
 export type AuthResult = {

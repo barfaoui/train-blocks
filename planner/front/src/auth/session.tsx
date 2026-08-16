@@ -1,6 +1,8 @@
 import { type ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-import { authsMeHref } from '../config/urls';
+import { authsMeHref } from '@common/app-urls';
+
+const meHref = authsMeHref(import.meta.env.VITE_SAME_ORIGIN === 'true');
 
 export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -12,7 +14,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    fetch(authsMeHref(), { credentials: 'include' })
+    fetch(meHref, { credentials: 'include' })
       .then((response) => {
         if (!cancelled) {
           setStatus(response.ok ? 'authenticated' : 'unauthenticated');

@@ -1,7 +1,7 @@
 import { type ComponentPropsWithoutRef } from 'react';
 
 import styles from './Button.module.scss';
-import { TypographyLarge, TypographyMedium } from './Typography';
+import { TypographyLarge, TypographyMedium } from '../styles/Typography';
 
 export type ButtonVariant = 'primary' | 'incentivized' | 'dangerous';
 
@@ -20,12 +20,7 @@ function Spinner() {
   return (
     <svg className={styles.spinnerSvg} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-      <path
-        d="M21 12a9 9 0 0 0-9-9"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
