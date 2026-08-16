@@ -5,7 +5,11 @@ import { requireAuth } from './middleware';
 import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { formatZodError, signInBody, signUpBody, username } from './validation';
 import type { AuthenticatedRequest } from '../data/types/authentication';
-import { InvalidCredentialsError, UnauthorizedError, UsernameTakenError } from '../data/types/errors';
+import {
+  InvalidCredentialsError,
+  UnauthorizedError,
+  UsernameTakenError,
+} from '../data/types/errors';
 
 export const authenticationRouter = Router();
 

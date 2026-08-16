@@ -5,7 +5,11 @@ import { signToken } from '@common/utils/jwt.util';
 
 import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { prisma } from '../data/prisma';
-import { InvalidCredentialsError, UnauthorizedError, UsernameTakenError } from '../data/types/errors';
+import {
+  InvalidCredentialsError,
+  UnauthorizedError,
+  UsernameTakenError,
+} from '../data/types/errors';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 
 vi.mock('../data/prisma', () => ({

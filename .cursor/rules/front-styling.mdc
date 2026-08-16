@@ -1,0 +1,56 @@
+---
+description: Sass and BEM conventions for front styles
+alwaysApply: true
+---
+
+# Front Sass conventions
+
+## Class names, not tags
+
+Never select HTML tags in component styles. Add a class and style that.
+
+```scss
+// ❌ BAD
+.icon {
+  svg {
+    width: 1.35rem;
+  }
+}
+
+// ✅ GOOD
+.iconSvg {
+  width: 1.35rem;
+}
+```
+
+Exception: global resets in `common/styles/base.scss` (`html`, `body`, form controls).
+
+Pseudo-classes (`&:focus-visible`, `&:disabled`) and `::placeholder` are fine.
+
+## BEM modifiers use one dash
+
+Modifiers are a second class starting with `-`, nested as `&.-name`.
+
+```scss
+.TypographySmall {
+  &.-bold {
+    font-weight: 700;
+  }
+}
+
+.field {
+  &.-invalid {
+    border-color: var(--color-danger);
+  }
+}
+```
+
+```tsx
+className={[styles.field, invalid ? styles['-invalid'] : undefined].filter(Boolean).join(' ')}
+```
+
+Do not use `&.bold`, `&.fieldInvalid`, or `--` (`&--invalid`).
+
+## Keep unused tokens
+
+Never remove a custom property from `common/styles/tokens.scss` just because nothing references it yet.

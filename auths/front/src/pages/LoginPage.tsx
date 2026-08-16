@@ -1,5 +1,9 @@
 import { type FormEvent, useState } from 'react';
 
+import { TextInput } from '@common/styles/TextInput';
+
+import styles from './LoginPage.module.scss';
+
 type Tab = 'sign-in' | 'sign-up';
 
 function preventSubmit(event: FormEvent) {
@@ -8,9 +12,14 @@ function preventSubmit(event: FormEvent) {
 
 export function LoginPage() {
   const [tab, setTab] = useState<Tab>('sign-in');
+  const [signInUsername, setSignInUsername] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
+  const [signUpUsername, setSignUpUsername] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
 
   return (
-    <main>
+    <main className={styles.page}>
       <h1>Auths</h1>
       <div role="tablist" aria-label="Authentication">
         <button
@@ -31,31 +40,55 @@ export function LoginPage() {
         </button>
       </div>
       {tab === 'sign-in' ? (
-        <form onSubmit={preventSubmit}>
-          <label>
-            Username
-            <input name="username" autoComplete="username" />
-          </label>
-          <label>
-            Password
-            <input name="password" type="password" autoComplete="current-password" />
-          </label>
+        <form className={styles.form} onSubmit={preventSubmit}>
+          <TextInput
+            label="Username"
+            name="username"
+            autoComplete="username"
+            required
+            value={signInUsername}
+            onChange={setSignInUsername}
+          />
+          <TextInput
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={signInPassword}
+            onChange={setSignInPassword}
+          />
           <button type="submit">Sign in</button>
         </form>
       ) : (
-        <form onSubmit={preventSubmit}>
-          <label>
-            Username
-            <input name="username" autoComplete="username" />
-          </label>
-          <label>
-            Password
-            <input name="password" type="password" autoComplete="new-password" />
-          </label>
-          <label>
-            Confirm password
-            <input name="confirmPassword" type="password" autoComplete="new-password" />
-          </label>
+        <form className={styles.form} onSubmit={preventSubmit}>
+          <TextInput
+            label="Username"
+            name="username"
+            autoComplete="username"
+            required
+            value={signUpUsername}
+            onChange={setSignUpUsername}
+          />
+          <TextInput
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            helperText="At least 8 characters"
+            value={signUpPassword}
+            onChange={setSignUpPassword}
+          />
+          <TextInput
+            label="Confirm password"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={signUpConfirmPassword}
+            onChange={setSignUpConfirmPassword}
+          />
           <button type="submit">Sign up</button>
         </form>
       )}
