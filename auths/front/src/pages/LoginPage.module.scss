@@ -2,6 +2,59 @@
   padding: var(--space-6);
 }
 
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  max-width: 22rem;
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: var(--space-3) var(--space-2);
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.65px;
+
+  &.-selected {
+    color: var(--color-primary);
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+}
+
+.indicator {
+  position: absolute;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 2px;
+  background: var(--color-primary);
+  pointer-events: none;
+  transition: transform 0.25s ease;
+
+  &.-end {
+    transform: translateX(100%);
+  }
+}
+
 .form {
   display: flex;
   flex-direction: column;
