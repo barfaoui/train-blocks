@@ -1,16 +1,14 @@
-import { type FormEvent, useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@common/styles/Button';
 import { TextInput } from '@common/styles/TextInput';
 import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './LoginPage.module.scss';
+import { useZodForm } from '../auth/useZodForm';
+import { signInBody, signUpForm } from '../auth/validation';
 
 type Tab = 'sign-in' | 'sign-up';
-
-function preventSubmit(event: FormEvent) {
-  event.preventDefault();
-}
 
 type TabButtonProps = {
   value: Tab;
@@ -66,8 +64,7 @@ function AuthTabs({ tab, onChange }: AuthTabsProps) {
 }
 
 function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const form = useZodForm(signInBody, { username: '', password: '' });
 
   return (
     <form
@@ -75,15 +72,18 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
       id="auth-panel-sign-in"
       role="tabpanel"
       aria-labelledby="auth-tab-sign-in"
-      onSubmit={preventSubmit}
+      noValidate
+      onSubmit={form.onSubmit}
     >
       <TextInput
         label="Username"
         name="username"
         autoComplete="username"
         required
-        value={username}
-        onChange={setUsername}
+        value={form.values.username}
+        error={form.fieldError('username')}
+        onChange={(value) => form.setField('username', value)}
+        onBlur={() => form.touchField('username')}
       />
       <TextInput
         label="Password"
@@ -91,10 +91,12 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
         type="password"
         autoComplete="current-password"
         required
-        value={password}
-        onChange={setPassword}
+        value={form.values.password}
+        error={form.fieldError('password')}
+        onChange={(value) => form.setField('password', value)}
+        onBlur={() => form.touchField('password')}
       />
-      <Button type="submit" label="Sign in" fillHorizontally />
+      <Button type="submit" label="Sign in" fillHorizontally disabled={!form.isValid} />
       <SwitchPrompt
         prompt="Don't have an account yet?"
         actionLabel="Sign up"
@@ -105,9 +107,7 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
 }
 
 function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const form = useZodForm(signUpForm, { username: '', password: '', confirmPassword: '' });
 
   return (
     <form
@@ -115,7 +115,8 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
       id="auth-panel-sign-up"
       role="tabpanel"
       aria-labelledby="auth-tab-sign-up"
-      onSubmit={preventSubmit}
+      noValidate
+      onSubmit={form.onSubmit}
     >
       <TextInput
         label="Username"
@@ -123,8 +124,10 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
         autoComplete="username"
         required
         helperText="3–32 characters. Letters, numbers, and underscores."
-        value={username}
-        onChange={setUsername}
+        value={form.values.username}
+        error={form.fieldError('username')}
+        onChange={(value) => form.setField('username', value)}
+        onBlur={() => form.touchField('username')}
       />
       <TextInput
         label="Password"
@@ -133,8 +136,10 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
         autoComplete="new-password"
         required
         helperText="At least 8 characters, with uppercase, lowercase, a number, and a special character."
-        value={password}
-        onChange={setPassword}
+        value={form.values.password}
+        error={form.fieldError('password')}
+        onChange={(value) => form.setField('password', value)}
+        onBlur={() => form.touchField('password')}
       />
       <TextInput
         label="Confirm password"
@@ -142,10 +147,12 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
         type="password"
         autoComplete="new-password"
         required
-        value={confirmPassword}
-        onChange={setConfirmPassword}
+        value={form.values.confirmPassword}
+        error={form.fieldError('confirmPassword')}
+        onChange={(value) => form.setField('confirmPassword', value)}
+        onBlur={() => form.touchField('confirmPassword')}
       />
-      <Button type="submit" label="Sign up" fillHorizontally />
+      <Button type="submit" label="Sign up" fillHorizontally disabled={!form.isValid} />
       <SwitchPrompt
         prompt="Already have an account?"
         actionLabel="Sign in"
