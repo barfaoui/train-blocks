@@ -28,7 +28,7 @@
     cursor: not-allowed;
   }
 
-  &-invalid {
+  &.-invalid {
     border-color: var(--color-danger);
 
     &:focus-visible {
@@ -43,8 +43,6 @@
 
 .helper {
   margin: 0;
-  font-size: var(--font-size-xs);
-  line-height: 1.4;
   color: var(--color-text-muted);
 }
 

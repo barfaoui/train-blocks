@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react';
 
 import { TextInput } from '@common/styles/TextInput';
 
-import styles from './LoginPage.module.css';
+import styles from './LoginPage.module.scss';
 
 type Tab = 'sign-in' | 'sign-up';
 

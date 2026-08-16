@@ -13,11 +13,16 @@
   border-radius: 999px;
   background: var(--color-surface);
   cursor: pointer;
-}
 
-.toggle:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  &[aria-checked='true'] .thumb {
+    left: calc(100% - 2.3rem);
+    background: var(--color-text);
+  }
 }
 
 .icon {
@@ -29,19 +34,19 @@
   width: 2rem;
   height: 2rem;
   color: var(--color-text-muted);
+
+  &.-sun {
+    color: var(--color-accent);
+  }
+
+  &.-moon {
+    color: var(--color-primary);
+  }
 }
 
-.icon svg {
+.iconSvg {
   width: 1.35rem;
   height: 1.35rem;
-}
-
-.sun {
-  color: var(--color-accent);
-}
-
-.moon {
-  color: var(--color-primary);
 }
 
 .thumb {
@@ -53,9 +58,4 @@
   border-radius: 50%;
   background: var(--color-primary);
   transition: left 0.2s ease;
-}
-
-.toggle[aria-checked='true'] .thumb {
-  left: calc(100% - 2.3rem);
-  background: var(--color-text);
 }

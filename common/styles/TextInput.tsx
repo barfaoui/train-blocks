@@ -1,6 +1,6 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
-import styles from './TextInput.module.css';
+import styles from './TextInput.module.scss';
 import { TypographySmall } from './Typography';
 
 export type TextInputProps = {
@@ -47,7 +47,7 @@ export function TextInput({
         id={id}
         type={type}
         value={value}
-        className={[styles.field, invalid ? styles['field-invalid'] : undefined]
+        className={[styles.field, invalid ? styles['-invalid'] : undefined]
           .filter(Boolean)
           .join(' ')}
         aria-invalid={invalid}
@@ -56,9 +56,9 @@ export function TextInput({
         onChange={(event) => onChange(event.target.value)}
       />
       {helperText ? (
-        <p id={helperId} className={styles.helper}>
+        <TypographySmall as="p" id={helperId} className={styles.helper}>
           {helperText}
-        </p>
+        </TypographySmall>
       ) : null}
       {error ? (
         <TypographySmall as="p" id={errorId} className={styles.error}>

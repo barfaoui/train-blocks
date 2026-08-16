@@ -10,7 +10,9 @@ type TypographyProps<T extends ElementType> = {
 } & Omit<ComponentPropsWithoutRef<T>, 'as' | 'variant'>;
 
 function typographyClassName(size: TypographySize, variant: TypographyVariant, className?: string) {
-  return [size, variant === 'normal' ? undefined : variant, className].filter(Boolean).join(' ');
+  return [size, variant === 'normal' ? undefined : `-${variant}`, className]
+    .filter(Boolean)
+    .join(' ');
 }
 
 function TypographySmall<T extends ElementType = 'span'>({

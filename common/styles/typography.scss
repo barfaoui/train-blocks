@@ -5,6 +5,14 @@
   font-weight: 400;
   font-style: normal;
   color: var(--color-text);
+
+  &.-bold {
+    font-weight: 700;
+  }
+
+  &.-italic {
+    font-style: italic;
+  }
 }
 
 .TypographySmall {
@@ -20,16 +28,4 @@
 .TypographyLarge {
   font-size: var(--font-size-lg);
   line-height: 1.5;
-}
-
-.TypographySmall.bold,
-.TypographyMedium.bold,
-.TypographyLarge.bold {
-  font-weight: 700;
-}
-
-.TypographySmall.italic,
-.TypographyMedium.italic,
-.TypographyLarge.italic {
-  font-style: italic;
 }

@@ -13,9 +13,9 @@ import '@fontsource/outfit/500.css';
 import '@fontsource/outfit/600.css';
 import '@fontsource/outfit/700.css';
 
-import './base.css';
-import './tokens.css';
-import './typography.css';
+import './base.scss';
+import './tokens.scss';
+import './typography.scss';
 import {
   type ResolvedTheme,
   type ThemePreference,
