@@ -8,6 +8,10 @@ export function authsLoginHref(sameOrigin: boolean): string {
   return sameOrigin ? '/login' : `${localhostOrigin('auths-front')}/login`;
 }
 
+export function authsApiBaseHref(sameOrigin: boolean): string {
+  return sameOrigin ? '/api/auth' : `${localhostOrigin('auths-service')}/api/auth`;
+}
+
 export function authsMeHref(sameOrigin: boolean): string {
-  return sameOrigin ? '/api/auth/me' : `${localhostOrigin('auths-service')}/api/auth/me`;
+  return `${authsApiBaseHref(sameOrigin)}/me`;
 }

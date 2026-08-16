@@ -5,8 +5,10 @@ import { TextInput } from '@common/components/TextInput';
 import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './LoginPage.module.scss';
+import { useSession } from '../auth/session';
 import { useZodForm } from '../auth/useZodForm';
 import { signInBody, signUpForm } from '../auth/validation';
+import { AuthApiError } from '../types/error';
 
 type Tab = 'sign-in' | 'sign-up';
 
@@ -64,7 +66,9 @@ function AuthTabs({ tab, onChange }: AuthTabsProps) {
 }
 
 function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
+  const { login } = useSession();
   const form = useZodForm(signInBody, { username: '', password: '' });
+  const [submitError, setSubmitError] = useState<string>();
 
   return (
     <form
@@ -73,7 +77,14 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
       role="tabpanel"
       aria-labelledby="auth-tab-sign-in"
       noValidate
-      onSubmit={form.onSubmit}
+      onSubmit={form.handleSubmit(async (values) => {
+        setSubmitError(undefined);
+        try {
+          await login(values.username, values.password);
+        } catch (error) {
+          setSubmitError(submitMessage(error, form.applyServerErrors));
+        }
+      })}
     >
       <TextInput
         label="Username"
@@ -96,7 +107,14 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
         onChange={(value) => form.setField('password', value)}
         onBlur={() => form.touchField('password')}
       />
-      <Button type="submit" label="Sign in" fillHorizontally disabled={!form.isValid} />
+      <FormError message={submitError} />
+      <Button
+        type="submit"
+        label="Sign in"
+        fillHorizontally
+        disabled={!form.isValid}
+        isLoading={form.submitting}
+      />
       <SwitchPrompt
         prompt="Don't have an account yet?"
         actionLabel="Sign up"
@@ -107,7 +125,9 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
 }
 
 function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
+  const { register } = useSession();
   const form = useZodForm(signUpForm, { username: '', password: '', confirmPassword: '' });
+  const [submitError, setSubmitError] = useState<string>();
 
   return (
     <form
@@ -116,7 +136,14 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
       role="tabpanel"
       aria-labelledby="auth-tab-sign-up"
       noValidate
-      onSubmit={form.onSubmit}
+      onSubmit={form.handleSubmit(async (values) => {
+        setSubmitError(undefined);
+        try {
+          await register(values.username, values.password);
+        } catch (error) {
+          setSubmitError(submitMessage(error, form.applyServerErrors));
+        }
+      })}
     >
       <TextInput
         label="Username"
@@ -152,13 +179,43 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
         onChange={(value) => form.setField('confirmPassword', value)}
         onBlur={() => form.touchField('confirmPassword')}
       />
-      <Button type="submit" label="Sign up" fillHorizontally disabled={!form.isValid} />
+      <FormError message={submitError} />
+      <Button
+        type="submit"
+        label="Sign up"
+        fillHorizontally
+        disabled={!form.isValid}
+        isLoading={form.submitting}
+      />
       <SwitchPrompt
         prompt="Already have an account?"
         actionLabel="Sign in"
         onAction={onSwitchToSignIn}
       />
     </form>
+  );
+}
+
+function submitMessage(
+  error: unknown,
+  applyServerErrors: (errors: Record<string, string>) => void,
+): string | undefined {
+  if (error instanceof AuthApiError) {
+    applyServerErrors(error.fieldErrors);
+    return Object.keys(error.fieldErrors).length > 0 ? undefined : error.message;
+  }
+  return 'Something went wrong. Please try again.';
+}
+
+function FormError({ message }: { message?: string }) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <TypographySmall as="p" className={styles.formError} role="alert">
+      {message}
+    </TypographySmall>
   );
 }
 

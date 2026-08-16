@@ -1,37 +1,117 @@
-import { type ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
-import { authsMeHref } from '../config/urls';
+import type { MeUser } from '@common/auth-types';
+
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  register as apiRegister,
+  getMe,
+} from './auths-service';
 
 export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
-const SessionContext = createContext<SessionStatus>('loading');
+export type SessionValue = {
+  status: SessionStatus;
+  user: MeUser | null;
+  login: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  loadSession: () => Promise<void>;
+};
+
+const SessionContext = createContext<SessionValue | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SessionStatus>('loading');
+  const [user, setUser] = useState<MeUser | null>(null);
+
+  const applyUser = useCallback((me: MeUser) => {
+    setUser(me);
+    setStatus('authenticated');
+  }, []);
+
+  const clearUser = useCallback(() => {
+    setUser(null);
+    setStatus('unauthenticated');
+  }, []);
+
+  const loadSession = useCallback(async () => {
+    try {
+      applyUser(await getMe());
+    } catch {
+      clearUser();
+    }
+  }, [applyUser, clearUser]);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch(authsMeHref(), { credentials: 'include' })
-      .then((response) => {
+    getMe()
+      .then((me) => {
         if (!cancelled) {
-          setStatus(response.ok ? 'authenticated' : 'unauthenticated');
+          applyUser(me);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setStatus('unauthenticated');
+          clearUser();
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyUser, clearUser]);
 
-  return <SessionContext.Provider value={status}>{children}</SessionContext.Provider>;
+  const login = useCallback(
+    async (username: string, password: string) => {
+      await apiLogin(username, password);
+      applyUser(await getMe());
+    },
+    [applyUser],
+  );
+
+  const register = useCallback(
+    async (username: string, password: string) => {
+      await apiRegister(username, password);
+      applyUser(await getMe());
+    },
+    [applyUser],
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      await apiLogout();
+    } finally {
+      clearUser();
+    }
+  }, [clearUser]);
+
+  const value = useMemo(
+    () => ({ status, user, login, register, logout, loadSession }),
+    [status, user, login, register, logout, loadSession],
+  );
+
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
+export function useSession(): SessionValue {
+  const context = useContext(SessionContext);
+  if (!context) {
+    throw new Error('useSession must be used within SessionProvider');
+  }
+  return context;
 }
 
 export function useSessionStatus(): SessionStatus {
-  return useContext(SessionContext);
+  return useSession().status;
 }

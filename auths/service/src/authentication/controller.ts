@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { setAuthCookie } from './cookie';
+import { clearAuthCookie, setAuthCookie } from './cookie';
 import { requireAuth } from './middleware';
 import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { formatZodError, signInBody, signUpBody, username } from './validation';
@@ -85,4 +85,9 @@ authenticationRouter.post('/sign-in', async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
   }
+});
+
+authenticationRouter.post('/sign-out', (_req, res) => {
+  clearAuthCookie(res);
+  res.status(204).end();
 });

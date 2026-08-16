@@ -14,6 +14,15 @@ export function setAuthCookie(res: Response, token: string): void {
   });
 }
 
+export function clearAuthCookie(res: Response): void {
+  res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+  });
+}
+
 export function readAccessToken(req: Request): string | undefined {
   return readCookie(req.headers.cookie, ACCESS_TOKEN_COOKIE_NAME);
 }

@@ -86,6 +86,11 @@
   gap: var(--space-4);
 }
 
+.formError {
+  margin: 0;
+  color: var(--color-danger);
+}
+
 .switchPrompt {
   margin: 0;
   text-align: center;

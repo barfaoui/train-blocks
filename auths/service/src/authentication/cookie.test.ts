@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TOKEN_MAX_AGE_MS } from '@common/utils/jwt.util';
 
-import { readAccessToken, setAuthCookie } from './cookie';
+import { clearAuthCookie, readAccessToken, setAuthCookie } from './cookie';
 
 const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 
@@ -35,6 +35,37 @@ describe('setAuthCookie', () => {
     expect(res.cookie).toHaveBeenCalledWith(
       ACCESS_TOKEN_COOKIE_NAME,
       'signed-token',
+      expect.objectContaining({ secure: true }),
+    );
+  });
+});
+
+describe('clearAuthCookie', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('clears the httpOnly Lax cookie', () => {
+    const res = { clearCookie: vi.fn() };
+
+    clearAuthCookie(res as unknown as Response);
+
+    expect(res.clearCookie).toHaveBeenCalledWith(ACCESS_TOKEN_COOKIE_NAME, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      path: '/',
+    });
+  });
+
+  it('sets Secure in production', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const res = { clearCookie: vi.fn() };
+
+    clearAuthCookie(res as unknown as Response);
+
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      ACCESS_TOKEN_COOKIE_NAME,
       expect.objectContaining({ secure: true }),
     );
   });

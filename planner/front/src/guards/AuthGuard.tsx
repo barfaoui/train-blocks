@@ -1,14 +1,17 @@
 import { type ReactNode, useEffect } from 'react';
 
+import { authsLoginHref } from '@common/app-urls';
+
 import { useSessionStatus } from '../auth/session';
-import { authsLoginHref } from '../config/urls';
+
+const loginHref = authsLoginHref(import.meta.env.VITE_SAME_ORIGIN === 'true');
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const status = useSessionStatus();
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      window.location.assign(authsLoginHref());
+      window.location.assign(loginHref);
     }
   }, [status]);
 
