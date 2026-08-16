@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 
-import type { MeUser } from '@common/auth-types';
+import type { AuthUser, MeUser } from '@common/auth-types';
 
 import {
   login as apiLogin,
@@ -25,7 +25,6 @@ export type SessionValue = {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  loadSession: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -43,14 +42,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setStatus('unauthenticated');
   }, []);
-
-  const loadSession = useCallback(async () => {
-    try {
-      applyUser(await getMe());
-    } catch {
-      clearUser();
-    }
-  }, [applyUser, clearUser]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,20 +63,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [applyUser, clearUser]);
 
-  const login = useCallback(
-    async (username: string, password: string) => {
-      await apiLogin(username, password);
-      applyUser(await getMe());
+  const establishSession = useCallback(
+    async (authenticate: () => Promise<{ user: AuthUser }>) => {
+      const { user } = await authenticate();
+      try {
+        applyUser(await getMe());
+      } catch {
+        applyUser({ ...user, email: null, createdAt: '' });
+      }
     },
     [applyUser],
   );
 
+  const login = useCallback(
+    (username: string, password: string) => establishSession(() => apiLogin(username, password)),
+    [establishSession],
+  );
+
   const register = useCallback(
-    async (username: string, password: string) => {
-      await apiRegister(username, password);
-      applyUser(await getMe());
-    },
-    [applyUser],
+    (username: string, password: string) =>
+      establishSession(() => apiRegister(username, password)),
+    [establishSession],
   );
 
   const logout = useCallback(async () => {
@@ -97,8 +95,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [clearUser]);
 
   const value = useMemo(
-    () => ({ status, user, login, register, logout, loadSession }),
-    [status, user, login, register, logout, loadSession],
+    () => ({ status, user, login, register, logout }),
+    [status, user, login, register, logout],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

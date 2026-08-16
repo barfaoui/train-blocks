@@ -1,6 +1,8 @@
 import { type FormEvent, useMemo, useState } from 'react';
 import { type ZodType } from 'zod';
 
+import { clearFieldError } from '@common/utils/forms.util';
+
 import { fieldErrors } from './validation';
 
 type FormSchema<TValues> = ZodType | ((values: TValues) => ZodType);
@@ -24,14 +26,7 @@ export function useZodForm<TValues extends Record<string, string>>(
   };
 
   function setField(field: keyof TValues & string, value: string) {
-    setServerErrors((current) => {
-      if (!(field in current)) {
-        return current;
-      }
-      const next = { ...current };
-      delete next[field];
-      return next;
-    });
+    setServerErrors((current) => clearFieldError(current, field));
     setValues((current) => ({ ...current, [field]: value }));
   }
 

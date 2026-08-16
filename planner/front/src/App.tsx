@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { ThemeToggle } from '@common/styles/ThemeToggle';
+import { ThemeToggle } from '@common/components/ThemeToggle';
 
 import { AuthGuard } from './guards/AuthGuard';
 import { HomePage } from './pages/HomePage';
