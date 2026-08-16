@@ -81,8 +81,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    (username: string, password: string) =>
-      establishSession(() => apiRegister(username, password)),
+    (username: string, password: string) => establishSession(() => apiRegister(username, password)),
     [establishSession],
   );
 
