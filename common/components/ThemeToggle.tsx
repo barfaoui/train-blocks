@@ -1,5 +1,5 @@
-import { useTheme } from './ThemeProvider';
 import styles from './ThemeToggle.module.scss';
+import { useTheme } from '../styles/ThemeProvider';
 
 function SunIcon() {
   return (

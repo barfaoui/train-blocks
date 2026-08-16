@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { Button } from '@common/styles/Button';
-import { TextInput } from '@common/styles/TextInput';
+import { Button } from '@common/components/Button';
+import { TextInput } from '@common/components/TextInput';
 import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './LoginPage.module.scss';
