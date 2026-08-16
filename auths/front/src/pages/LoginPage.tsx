@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from 'react';
 
+import { Button } from '@common/styles/Button';
 import { TextInput } from '@common/styles/TextInput';
 
 import styles from './LoginPage.module.scss';
@@ -58,7 +59,7 @@ export function LoginPage() {
             value={signInPassword}
             onChange={setSignInPassword}
           />
-          <button type="submit">Sign in</button>
+          <Button type="submit" label="Sign in" fillHorizontally />
         </form>
       ) : (
         <form className={styles.form} onSubmit={preventSubmit}>
@@ -89,7 +90,7 @@ export function LoginPage() {
             value={signUpConfirmPassword}
             onChange={setSignUpConfirmPassword}
           />
-          <button type="submit">Sign up</button>
+          <Button type="submit" label="Sign up" fillHorizontally />
         </form>
       )}
     </main>
