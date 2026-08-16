@@ -12,120 +12,146 @@ function preventSubmit(event: FormEvent) {
   event.preventDefault();
 }
 
+type TabButtonProps = {
+  value: Tab;
+  selected: Tab;
+  onChange: (tab: Tab) => void;
+  children: string;
+};
+
+function TabButton({ value, selected, onChange, children }: TabButtonProps) {
+  const isSelected = value === selected;
+
+  return (
+    <TypographySmall
+      as="button"
+      type="button"
+      role="tab"
+      id={`auth-tab-${value}`}
+      variant={isSelected ? 'bold' : 'normal'}
+      className={[styles.tab, isSelected ? styles['-selected'] : undefined]
+        .filter(Boolean)
+        .join(' ')}
+      aria-selected={isSelected}
+      aria-controls={`auth-panel-${value}`}
+      onClick={() => onChange(value)}
+    >
+      {children}
+    </TypographySmall>
+  );
+}
+
+type AuthTabsProps = {
+  tab: Tab;
+  onChange: (tab: Tab) => void;
+};
+
+function AuthTabs({ tab, onChange }: AuthTabsProps) {
+  return (
+    <div className={styles.tabs} role="tablist" aria-label="Authentication">
+      <TabButton value="sign-in" selected={tab} onChange={onChange}>
+        Sign in
+      </TabButton>
+      <TabButton value="sign-up" selected={tab} onChange={onChange}>
+        Sign up
+      </TabButton>
+      <span
+        className={[styles.indicator, tab === 'sign-up' ? styles['-end'] : undefined]
+          .filter(Boolean)
+          .join(' ')}
+        aria-hidden="true"
+      />
+    </div>
+  );
+}
+
+function SignInForm() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+
+  return (
+    <form
+      className={styles.form}
+      id="auth-panel-sign-in"
+      role="tabpanel"
+      aria-labelledby="auth-tab-sign-in"
+      onSubmit={preventSubmit}
+    >
+      <TextInput
+        label="Username"
+        name="username"
+        autoComplete="username"
+        required
+        value={username}
+        onChange={setUsername}
+      />
+      <TextInput
+        label="Password"
+        name="password"
+        type="password"
+        autoComplete="current-password"
+        required
+        value={password}
+        onChange={setPassword}
+      />
+      <Button type="submit" label="Sign in" fillHorizontally />
+    </form>
+  );
+}
+
+function SignUpForm() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  return (
+    <form
+      className={styles.form}
+      id="auth-panel-sign-up"
+      role="tabpanel"
+      aria-labelledby="auth-tab-sign-up"
+      onSubmit={preventSubmit}
+    >
+      <TextInput
+        label="Username"
+        name="username"
+        autoComplete="username"
+        required
+        value={username}
+        onChange={setUsername}
+      />
+      <TextInput
+        label="Password"
+        name="password"
+        type="password"
+        autoComplete="new-password"
+        required
+        helperText="At least 8 characters"
+        value={password}
+        onChange={setPassword}
+      />
+      <TextInput
+        label="Confirm password"
+        name="confirmPassword"
+        type="password"
+        autoComplete="new-password"
+        required
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+      />
+      <Button type="submit" label="Sign up" fillHorizontally />
+    </form>
+  );
+}
+
 export function LoginPage() {
   const [tab, setTab] = useState<Tab>('sign-in');
-  const [signInUsername, setSignInUsername] = useState('');
-  const [signInPassword, setSignInPassword] = useState('');
-  const [signUpUsername, setSignUpUsername] = useState('');
-  const [signUpPassword, setSignUpPassword] = useState('');
-  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
 
   return (
     <main className={styles.page}>
       <h1>Auths</h1>
-      <div className={styles.tabs} role="tablist" aria-label="Authentication">
-        <TypographySmall
-          as="button"
-          type="button"
-          role="tab"
-          id="auth-tab-sign-in"
-          variant={tab === 'sign-in' ? 'bold' : 'normal'}
-          className={[styles.tab, tab === 'sign-in' ? styles['-selected'] : undefined]
-            .filter(Boolean)
-            .join(' ')}
-          aria-selected={tab === 'sign-in'}
-          aria-controls="auth-panel-sign-in"
-          onClick={() => setTab('sign-in')}
-        >
-          Sign in
-        </TypographySmall>
-        <TypographySmall
-          as="button"
-          type="button"
-          role="tab"
-          id="auth-tab-sign-up"
-          variant={tab === 'sign-up' ? 'bold' : 'normal'}
-          className={[styles.tab, tab === 'sign-up' ? styles['-selected'] : undefined]
-            .filter(Boolean)
-            .join(' ')}
-          aria-selected={tab === 'sign-up'}
-          aria-controls="auth-panel-sign-up"
-          onClick={() => setTab('sign-up')}
-        >
-          Sign up
-        </TypographySmall>
-        <span
-          className={[styles.indicator, tab === 'sign-up' ? styles['-end'] : undefined]
-            .filter(Boolean)
-            .join(' ')}
-          aria-hidden="true"
-        />
-      </div>
-      {tab === 'sign-in' ? (
-        <form
-          className={styles.form}
-          id="auth-panel-sign-in"
-          role="tabpanel"
-          aria-labelledby="auth-tab-sign-in"
-          onSubmit={preventSubmit}
-        >
-          <TextInput
-            label="Username"
-            name="username"
-            autoComplete="username"
-            required
-            value={signInUsername}
-            onChange={setSignInUsername}
-          />
-          <TextInput
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={signInPassword}
-            onChange={setSignInPassword}
-          />
-          <Button type="submit" label="Sign in" fillHorizontally />
-        </form>
-      ) : (
-        <form
-          className={styles.form}
-          id="auth-panel-sign-up"
-          role="tabpanel"
-          aria-labelledby="auth-tab-sign-up"
-          onSubmit={preventSubmit}
-        >
-          <TextInput
-            label="Username"
-            name="username"
-            autoComplete="username"
-            required
-            value={signUpUsername}
-            onChange={setSignUpUsername}
-          />
-          <TextInput
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            helperText="At least 8 characters"
-            value={signUpPassword}
-            onChange={setSignUpPassword}
-          />
-          <TextInput
-            label="Confirm password"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            required
-            value={signUpConfirmPassword}
-            onChange={setSignUpConfirmPassword}
-          />
-          <Button type="submit" label="Sign up" fillHorizontally />
-        </form>
-      )}
+      <AuthTabs tab={tab} onChange={setTab} />
+      {tab === 'sign-in' ? <SignInForm /> : <SignUpForm />}
     </main>
   );
 }
