@@ -4,14 +4,48 @@ export function localhostOrigin(appId: AppId): string {
   return `http://localhost:${environment.ports[appId]}`;
 }
 
-export function authsLoginHref(sameOrigin: boolean): string {
-  return sameOrigin ? '/login' : `${localhostOrigin('auths-front')}/login`;
+export function resolveSameOrigin(explicitFlag: string | undefined, isProdBuild: boolean): boolean {
+  return explicitFlag ? explicitFlag === 'true' : isProdBuild;
 }
 
-export function authsApiBaseHref(sameOrigin: boolean): string {
-  return sameOrigin ? '/api/auth' : `${localhostOrigin('auths-service')}/api/auth`;
+export function appBaseHref(appId: AppId, sameOrigin: boolean): string {
+  return sameOrigin ? '' : localhostOrigin(appId);
 }
 
-export function authsMeHref(sameOrigin: boolean): string {
-  return `${authsApiBaseHref(sameOrigin)}/me`;
+export function authsLoginHref(authsFrontBase: string): string {
+  return authsFrontBase || '/';
+}
+
+export function authsProfileHref(authsFrontBase: string): string {
+  return `${authsFrontBase}/profile`;
+}
+
+export function authsApiBaseHref(authsServiceBase: string): string {
+  return `${authsServiceBase}/api/auth`;
+}
+
+export function authsMeHref(authsServiceBase: string): string {
+  return `${authsApiBaseHref(authsServiceBase)}/me`;
+}
+
+export function isAllowedAppRedirect(href: string): boolean {
+  const normalized = href.replace(/\\/g, '/');
+  const relative = normalized.startsWith('/') && !normalized.startsWith('//');
+
+  try {
+    const url = relative ? new URL(normalized, 'http://local.invalid') : new URL(normalized);
+    const targetsAuthsFront = relative || url.origin === localhostOrigin('auths-front');
+    if (targetsAuthsFront && url.pathname === '/') {
+      return false;
+    }
+    if (relative) {
+      return true;
+    }
+    return (
+      url.origin === localhostOrigin('auths-front') ||
+      url.origin === localhostOrigin('planner-front')
+    );
+  } catch {
+    return false;
+  }
 }

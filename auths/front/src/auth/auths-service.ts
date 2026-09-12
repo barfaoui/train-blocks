@@ -2,9 +2,10 @@ import { authsApiBaseHref } from '@common/app-urls';
 import type { AuthUser, MeUser } from '@common/auth-types';
 import { request } from '@common/utils/request.util';
 
+import { authsServiceBase } from './url-bases';
 import { AuthApiError, type ErrorBody } from '../types/error';
 
-const apiBase = authsApiBaseHref(import.meta.env.VITE_SAME_ORIGIN === 'true');
+const apiBase = authsApiBaseHref(authsServiceBase);
 
 export function register(username: string, password: string): Promise<{ user: AuthUser }> {
   return authsRequest('/sign-up', {
