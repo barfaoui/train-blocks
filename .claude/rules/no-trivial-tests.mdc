@@ -1,0 +1,61 @@
+---
+description: Do not generate trivial tests; only test real branching/business logic
+alwaysApply: true
+---
+
+# Don't write trivial tests
+
+Only add a test when it exercises a **decision** in the code under test: a branch,
+an error path, a security-relevant flag, or a business rule that could plausibly
+regress. If a test would pass for almost any implementation of the function, it
+isn't worth writing.
+
+## Skip tests for
+
+- A wrapper that just forwards to a library call with no added logic (e.g.
+  asserting a library's own randomness/salting, not something the app decided).
+- Getters/setters or pure pass-through code with no transformation.
+- Restating a type system guarantee at runtime.
+- A second test that asserts the same branch another test already covers, just
+  with different input values.
+
+## Do write tests for
+
+- Each distinct validation rule/branch in a schema or guard (e.g. every
+  rejection reason in a password or username validator).
+- Error-path mapping (e.g. a DB constraint error becoming a specific typed
+  error).
+- Security-relevant config that differs by environment (e.g. `secure` cookie
+  flag in production vs. development).
+- Business rules that are easy to accidentally break during refactors,
+  especially ones that look like they *should* behave one way but deliberately
+  don't (e.g. sign-in accepting a password that sign-up would reject).
+- Composition points: when a combined schema/function wires together smaller
+  pieces, a test that the wiring is actually applied (not just that the piece
+  works in isolation).
+
+## Examples
+
+```ts
+// ❌ BAD — only restates that bcrypt salts its own output, not app logic
+it('produces different hashes for the same password', async () => {
+  const first = await hashPassword('secret');
+  const second = await hashPassword('secret');
+  expect(first).not.toBe(second);
+});
+
+// ✅ GOOD — verifies our wrapper actually hashes instead of passing through
+it('returns a bcrypt hash different from the plaintext', async () => {
+  const hashed = await hashPassword('secret');
+  expect(hashed).not.toBe('secret');
+  expect(hashed.startsWith('$2')).toBe(true);
+});
+
+// ✅ GOOD — documents a deliberate, easy-to-break business rule
+it('accepts a weak password that would fail sign-up rules', () => {
+  expect(signInBody.parse({ username: 'bochra', password: 'weak' }).password).toBe('weak');
+});
+```
+
+When in doubt, ask: "if someone rewrote this function correctly but
+differently, would this test still make sense?" If not, don't write it.
