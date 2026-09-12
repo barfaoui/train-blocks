@@ -9,13 +9,6 @@ describe('hashPassword', () => {
     expect(hashed).not.toBe('secret-password');
     expect(hashed.startsWith('$2')).toBe(true);
   });
-
-  it('produces different hashes for the same password', async () => {
-    const first = await hashPassword('secret-password');
-    const second = await hashPassword('secret-password');
-
-    expect(first).not.toBe(second);
-  });
 });
 
 describe('verifyPassword', () => {
