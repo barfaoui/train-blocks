@@ -1,5 +1,3 @@
-import { Link } from 'react-router-dom';
-
 import { Button } from '@common/components/Button';
 
 import { useSession } from '../auth/session';
@@ -18,9 +16,6 @@ export function ProfilePage() {
         <dt>Created at</dt>
         <dd>{user?.createdAt ? formatCreatedAt(user.createdAt) : '—'}</dd>
       </dl>
-      <p>
-        <Link to="/">Home</Link>
-      </p>
       <Button type="button" label="Sign out" onClick={() => void logout()} />
     </main>
   );

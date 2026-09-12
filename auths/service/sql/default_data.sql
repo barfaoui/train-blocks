@@ -1,4 +1,8 @@
--- Dev seed data for the auths service.
--- Applied by `make reset-db` / `make reset` (not on plain `make run`).
--- Prefer idempotent inserts (e.g. ON CONFLICT DO NOTHING) so re-runs are safe.
--- Empty until the auths schema/tables exist.
+-- Dev login: username "testuser", password "DevPass123!"
+INSERT INTO "auth"."users" (id, username, password_hash)
+VALUES (
+  gen_random_uuid(),
+  'testuser',
+  '$2b$12$SwJXLm3yITO3RiO8pCCZVuInpFKK8eihEiS.yHxRQUKitu06frtV2'
+)
+ON CONFLICT (username) DO NOTHING;
