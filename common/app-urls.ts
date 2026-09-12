@@ -24,10 +24,6 @@ export function authsApiBaseHref(authsServiceBase: string): string {
   return `${authsServiceBase}/api/auth`;
 }
 
-export function authsMeHref(authsServiceBase: string): string {
-  return `${authsApiBaseHref(authsServiceBase)}/me`;
-}
-
 export function isAllowedAppRedirect(href: string): boolean {
   const normalized = href.replace(/\\/g, '/');
   const relative = normalized.startsWith('/') && !normalized.startsWith('//');
