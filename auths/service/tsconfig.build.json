@@ -7,5 +7,5 @@
     "rootDir": "./src"
   },
   "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../../common" }]
+  "references": [{ "path": "../../common/tsconfig.build.json" }]
 }

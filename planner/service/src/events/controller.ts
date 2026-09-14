@@ -5,21 +5,21 @@ import type { SportType } from '@common/planner-types';
 import { requireAuth } from '@common/utils/auth-middleware.util';
 
 import { listEvents } from './service';
+import { isValidIsoDate } from '../utils/date.util';
 
 const SPORT_TYPES: SportType[] = ['RUNNING', 'CYCLING', 'SWIMMING', 'STRENGTH', 'YOGA', 'OTHER'];
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export const eventsRouter = Router();
 
 eventsRouter.get('/', requireAuth, async (req, res) => {
   const { startDate, endDate, sportType } = req.query;
 
-  if (typeof startDate !== 'string' || !ISO_DATE_PATTERN.test(startDate)) {
-    res.status(400).json({ error: 'startDate must be an ISO date (YYYY-MM-DD)' });
+  if (typeof startDate !== 'string' || !isValidIsoDate(startDate)) {
+    res.status(400).json({ error: 'startDate must be a valid ISO date (YYYY-MM-DD)' });
     return;
   }
-  if (typeof endDate !== 'string' || !ISO_DATE_PATTERN.test(endDate)) {
-    res.status(400).json({ error: 'endDate must be an ISO date (YYYY-MM-DD)' });
+  if (typeof endDate !== 'string' || !isValidIsoDate(endDate)) {
+    res.status(400).json({ error: 'endDate must be a valid ISO date (YYYY-MM-DD)' });
     return;
   }
   if (startDate > endDate) {

@@ -2,7 +2,7 @@
 
 generate-env:
 	node scripts/generate-environment.mjs
-	npx tsc -b common
+	npx tsc -b common/tsconfig.build.json
 
 # Shared local Postgres (Compose reads credentials from .env)
 db-up:
