@@ -11,6 +11,7 @@ const port = environment.ports['auths-front'];
 
 export default defineConfig({
   root,
+  cacheDir: path.join(root, 'node_modules/.vite'),
   plugins: [react()],
   resolve: {
     alias: {

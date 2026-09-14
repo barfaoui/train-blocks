@@ -1,0 +1,60 @@
+.calendar {
+  :global(.fc) {
+    --fc-border-color: var(--color-border);
+    --fc-page-bg-color: var(--color-surface);
+    --fc-neutral-bg-color: var(--color-bg);
+    --fc-neutral-text-color: var(--color-text-muted);
+    --fc-today-bg-color: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+    --fc-button-text-color: var(--color-primary-contrast);
+    --fc-button-bg-color: var(--color-primary);
+    --fc-button-border-color: var(--color-primary);
+    --fc-button-hover-bg-color: var(--color-primary-hover);
+    --fc-button-hover-border-color: var(--color-primary-hover);
+    --fc-button-active-bg-color: var(--color-primary-hover);
+    --fc-button-active-border-color: var(--color-primary-hover);
+    --fc-event-bg-color: var(--color-primary);
+    --fc-event-border-color: var(--color-primary);
+    --fc-event-text-color: var(--color-primary-contrast);
+
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  :global(.fc .fc-toolbar.fc-header-toolbar) {
+    padding: var(--space-4);
+    margin: 0;
+  }
+
+  :global(.fc .fc-toolbar-title) {
+    font-size: var(--font-size-lg);
+  }
+
+  :global(.fc .fc-button) {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: var(--radius);
+    box-shadow: none;
+  }
+
+  :global(.fc .fc-button:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    box-shadow: none;
+  }
+
+  :global(.fc .fc-daygrid-day-number) {
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+  }
+
+  :global(.fc .fc-col-header-cell-cushion) {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: var(--space-2);
+  }
+}

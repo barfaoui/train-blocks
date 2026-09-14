@@ -11,7 +11,11 @@ const port = environment.ports['planner-front'];
 
 export default defineConfig({
   root,
+  cacheDir: path.join(root, 'node_modules/.vite'),
   plugins: [react()],
+  optimizeDeps: {
+    exclude: ['@fullcalendar/core', '@fullcalendar/daygrid', '@fullcalendar/react'],
+  },
   resolve: {
     alias: {
       '@common': path.join(repoRoot, 'common'),
