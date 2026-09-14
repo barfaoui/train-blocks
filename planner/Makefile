@@ -1,7 +1,7 @@
 ROOT := ..
 PRISMA_SCHEMA := planner/service/prisma/schema.prisma
 
-.PHONY: run reset reset-db db-migrate db-studio purge-deleted-events run-service run-front preview-front build clean
+.PHONY: run reset reset-db db-migrate db-studio purge-deleted-events run-service run-front preview-front test build clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -35,6 +35,9 @@ db-studio:
 purge-deleted-events:
 	cd $(ROOT) && node planner/service/scripts/purge-deleted-events.mjs
 
+test:
+	cd $(ROOT) && npx vitest run --config planner/service/vitest.config.mts
+
 # Wipe schema + reseed, then run
 reset: reset-db run
 
@@ -48,7 +51,7 @@ reset-db:
 
 build:
 	$(MAKE) -C $(ROOT) generate-env
-	npx tsc -b service
+	npx tsc -b service/tsconfig.build.json
 	npx tsc -p front
 	cd $(ROOT) && node -r tsconfig-paths/register node_modules/vite/bin/vite.js build --config planner/front/vite.config.ts
 

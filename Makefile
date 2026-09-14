@@ -2,7 +2,7 @@
 
 generate-env:
 	node scripts/generate-environment.mjs
-	npx tsc -b common
+	npx tsc -b common/tsconfig.build.json
 
 # Shared local Postgres (Compose reads credentials from .env)
 db-up:
@@ -19,7 +19,9 @@ build: generate-env
 	$(MAKE) -C planner build
 
 test:
+	npx vitest run --config common/vitest.config.mts
 	$(MAKE) -C auths test
+	$(MAKE) -C planner test
 
 lint:
 	npx prettier --write .
