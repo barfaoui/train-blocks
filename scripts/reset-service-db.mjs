@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runPsql } from './lib/psql.mjs';
@@ -14,10 +14,8 @@ const SCHEMA_BY_SERVICE = {
 /**
  * Services whose schema is owned by Prisma migrations.
  * Only these clear `_prisma_migrations` on drop so `migrate deploy` can re-apply.
- * TODO(planner-prisma): once planner has migrations, delete only that service's rows
- * (or use per-schema migration tracking) instead of wiping the whole table.
  */
-const PRISMA_SERVICES = new Set(['auths']);
+const PRISMA_SERVICES = new Set(['auths', 'planner']);
 
 const service = process.argv[2];
 const dropOnly = process.argv.includes('--drop-only');
@@ -32,17 +30,31 @@ if (!schema || (dropOnly && seedOnly)) {
 }
 
 if (!seedOnly) {
-  const clearMigrations = PRISMA_SERVICES.has(service)
-    ? `DO $$\n` +
-      `BEGIN\n` +
-      `  IF EXISTS (\n` +
-      `    SELECT 1 FROM information_schema.tables\n` +
-      `    WHERE table_schema = 'public' AND table_name = '_prisma_migrations'\n` +
-      `  ) THEN\n` +
-      `    DELETE FROM "_prisma_migrations";\n` +
-      `  END IF;\n` +
-      `END $$;\n`
-    : '';
+  let clearMigrations = '';
+  if (PRISMA_SERVICES.has(service)) {
+    // Scope the delete to this service's own migration names so resetting one
+    // Prisma-backed service doesn't wipe another's rows from the shared table.
+    const migrationsDir = join(root, service, 'service', 'prisma', 'migrations');
+    const migrationNames = existsSync(migrationsDir)
+      ? readdirSync(migrationsDir, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .map((entry) => entry.name)
+      : [];
+
+    if (migrationNames.length > 0) {
+      const nameList = migrationNames.map((name) => `'${name.replace(/'/g, "''")}'`).join(', ');
+      clearMigrations =
+        `DO $$\n` +
+        `BEGIN\n` +
+        `  IF EXISTS (\n` +
+        `    SELECT 1 FROM information_schema.tables\n` +
+        `    WHERE table_schema = 'public' AND table_name = '_prisma_migrations'\n` +
+        `  ) THEN\n` +
+        `    DELETE FROM "_prisma_migrations" WHERE migration_name IN (${nameList});\n` +
+        `  END IF;\n` +
+        `END $$;\n`;
+    }
+  }
 
   runPsql(
     `DROP SCHEMA IF EXISTS ${schema} CASCADE;\n` + clearMigrations + `CREATE SCHEMA ${schema};\n`,
