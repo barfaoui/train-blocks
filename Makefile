@@ -19,7 +19,9 @@ build: generate-env
 	$(MAKE) -C planner build
 
 test:
+	npx vitest run --config common/vitest.config.mts
 	$(MAKE) -C auths test
+	$(MAKE) -C planner test
 
 lint:
 	npx prettier --write .

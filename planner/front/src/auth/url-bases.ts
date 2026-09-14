@@ -4,3 +4,4 @@ export const sameOrigin = resolveSameOrigin(import.meta.env.VITE_SAME_ORIGIN, im
 
 export const authsFrontBase = appBaseHref('auths-front', sameOrigin);
 export const authsServiceBase = appBaseHref('auths-service', sameOrigin);
+export const plannerServiceBase = appBaseHref('planner-service', sameOrigin);

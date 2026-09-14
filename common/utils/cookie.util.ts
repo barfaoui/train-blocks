@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 
-import { TOKEN_MAX_AGE_MS } from '@common/utils/jwt.util';
+import { TOKEN_MAX_AGE_MS } from './jwt.util';
 
 const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 

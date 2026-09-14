@@ -1,7 +1,8 @@
 import { Router } from 'express';
 
-import { clearAuthCookie, setAuthCookie } from './cookie';
-import { requireAuth } from './middleware';
+import { requireAuth } from '@common/utils/auth-middleware.util';
+import { clearAuthCookie, setAuthCookie } from '@common/utils/cookie.util';
+
 import { getMe, isUsernameAvailable, signIn, signUp } from './service';
 import { formatZodError, signInBody, signUpBody, username } from './validation';
 import type { AuthenticatedRequest } from '../data/types/authentication';

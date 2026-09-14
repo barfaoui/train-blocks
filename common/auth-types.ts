@@ -22,3 +22,7 @@ export type MeUser = AuthUser & {
   email: string | null;
   createdAt: string;
 };
+
+export type AuthenticatedRequest = import('express').Request & {
+  user: AuthUser;
+};

@@ -1,9 +1,8 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { verifyToken } from '@common/utils/jwt.util';
-
-import { readAccessToken } from './cookie';
-import type { AuthenticatedRequest } from '../data/types/authentication';
+import type { AuthenticatedRequest } from '../auth-types';
+import { readAccessToken } from './cookie.util';
+import { verifyToken } from './jwt.util';
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const token = readAccessToken(req);

@@ -1,9 +1,8 @@
 import type { Request, Response } from 'express';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { TOKEN_MAX_AGE_MS } from '@common/utils/jwt.util';
-
-import { clearAuthCookie, readAccessToken, setAuthCookie } from './cookie';
+import { clearAuthCookie, readAccessToken, setAuthCookie } from './cookie.util';
+import { TOKEN_MAX_AGE_MS } from './jwt.util';
 
 const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 
