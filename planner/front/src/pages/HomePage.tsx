@@ -3,6 +3,7 @@ import { Button } from '@common/components/Button';
 
 import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
+import { Calendar } from '../components/Calendar/Calendar';
 
 const profileHref = authsProfileHref(authsFrontBase);
 
@@ -17,6 +18,7 @@ export function HomePage() {
         <a href={profileHref}>Profile</a>
       </p>
       <Button type="button" label="Sign out" onClick={() => void logout()} />
+      <Calendar />
     </main>
   );
 }
