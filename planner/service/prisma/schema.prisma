@@ -45,6 +45,7 @@ model Event {
   sportType   SportType @map("sport_type")
   createdById String    @map("created_by_id") @db.Uuid
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   // Recurrence: the series "root" carries the rule; every occurrence
   // (root included) shares one seriesId, so `WHERE series_id = X` alone
@@ -54,13 +55,14 @@ model Event {
   series         Event?  @relation("EventSeries", fields: [seriesId], references: [id], onDelete: Cascade)
   occurrences    Event[] @relation("EventSeries")
 
-  trainingPlanId String?       @map("training_plan_id") @db.Uuid
-  trainingPlan   TrainingPlan? @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
+  planId String? @map("plan_id") @db.Uuid
+  plan   Plan?   @relation(fields: [planId], references: [id], onDelete: SetNull)
 
   participants EventParticipant[]
 
   @@index([seriesId])
   @@index([startDate])
+  @@index([deletedAt])
   @@map("events")
   @@schema("planner")
 }
@@ -92,8 +94,9 @@ model EventReminder {
   @@schema("planner")
 }
 
-model TrainingPlan {
+model Plan {
   id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(255)
   sportType   SportType @map("sport_type")
   notes       String?
   details     Json
@@ -102,6 +105,17 @@ model TrainingPlan {
 
   events Event[]
 
-  @@map("training_plans")
+  @@index([createdById, sportType])
+  @@map("plans")
+  @@schema("planner")
+}
+
+model PlanPrototype {
+  id        String    @id @default(uuid()) @db.Uuid
+  sportType SportType @unique @map("sport_type")
+  fields    Json
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("plan_prototypes")
   @@schema("planner")
 }

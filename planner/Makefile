@@ -1,7 +1,7 @@
 ROOT := ..
 PRISMA_SCHEMA := planner/service/prisma/schema.prisma
 
-.PHONY: run reset reset-db db-migrate db-studio run-service run-front preview-front build clean
+.PHONY: run reset reset-db db-migrate db-studio purge-deleted-events run-service run-front preview-front build clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -28,6 +28,12 @@ db-migrate:
 # Open Prisma Studio for planner.events
 db-studio:
 	cd $(ROOT) && npx prisma studio --schema=$(PRISMA_SCHEMA)
+
+# Permanently delete events soft-deleted more than 14 days ago (see
+# planner/service/scripts/purge-deleted-events.mjs). Intended to be wired
+# into an OS-level cron in production, not run automatically here.
+purge-deleted-events:
+	cd $(ROOT) && node planner/service/scripts/purge-deleted-events.mjs
 
 # Wipe schema + reseed, then run
 reset: reset-db run

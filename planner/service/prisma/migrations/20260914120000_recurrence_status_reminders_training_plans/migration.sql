@@ -4,7 +4,7 @@ CREATE TYPE "planner"."ParticipantStatus" AS ENUM ('PENDING', 'CONFIRMED', 'DECL
 -- AlterTable
 ALTER TABLE "planner"."events" ADD COLUMN     "recurrence_rule" TEXT,
 ADD COLUMN     "series_id" UUID,
-ADD COLUMN     "training_plan_id" UUID;
+ADD COLUMN     "plan_id" UUID;
 
 -- AlterTable
 ALTER TABLE "planner"."event_participants" ADD COLUMN     "status" "planner"."ParticipantStatus" NOT NULL DEFAULT 'PENDING';
@@ -21,7 +21,7 @@ CREATE TABLE "planner"."event_reminders" (
 );
 
 -- CreateTable
-CREATE TABLE "planner"."training_plans" (
+CREATE TABLE "planner"."plans" (
     "id" UUID NOT NULL,
     "sport_type" "planner"."SportType" NOT NULL,
     "notes" TEXT,
@@ -29,7 +29,7 @@ CREATE TABLE "planner"."training_plans" (
     "created_by_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "training_plans_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "plans_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -45,7 +45,7 @@ CREATE INDEX "events_start_date_idx" ON "planner"."events"("start_date");
 ALTER TABLE "planner"."events" ADD CONSTRAINT "events_series_id_fkey" FOREIGN KEY ("series_id") REFERENCES "planner"."events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "planner"."events" ADD CONSTRAINT "events_training_plan_id_fkey" FOREIGN KEY ("training_plan_id") REFERENCES "planner"."training_plans"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "planner"."events" ADD CONSTRAINT "events_plan_id_fkey" FOREIGN KEY ("plan_id") REFERENCES "planner"."plans"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "planner"."event_reminders" ADD CONSTRAINT "event_reminders_event_id_user_id_fkey" FOREIGN KEY ("event_id", "user_id") REFERENCES "planner"."event_participants"("event_id", "user_id") ON DELETE CASCADE ON UPDATE CASCADE;

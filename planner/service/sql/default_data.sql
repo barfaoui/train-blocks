@@ -7,11 +7,19 @@
 -- looking it up — both services seed the same fixed id, so this doesn't
 -- depend on which one runs first.
 
-INSERT INTO "planner"."training_plans" (id, sport_type, notes, details, created_by_id)
+INSERT INTO "planner"."plan_prototypes" (id, sport_type, fields)
 VALUES
-  ('00000000-0000-0000-0000-000000000201', 'RUNNING', 'Seed: 5k easy run',
+  ('00000000-0000-0000-0000-000000000401', 'RUNNING',
+    '[{"key": "distanceKm", "label": "Distance (km)", "type": "number", "required": true}, {"key": "targetPaceMinPerKm", "label": "Target pace (min/km)", "type": "number", "required": false}]'::jsonb),
+  ('00000000-0000-0000-0000-000000000402', 'STRENGTH',
+    '[{"key": "exercises", "label": "Exercises", "type": "list", "required": true}]'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO "planner"."plans" (id, name, sport_type, notes, details, created_by_id)
+VALUES
+  ('00000000-0000-0000-0000-000000000201', '5k Easy Run', 'RUNNING', 'Seed: 5k easy run',
     '{"distanceKm": 5, "targetPaceMinPerKm": 5.5}'::jsonb, '00000000-0000-0000-0000-000000000001'),
-  ('00000000-0000-0000-0000-000000000202', 'STRENGTH', 'Seed: full-body strength',
+  ('00000000-0000-0000-0000-000000000202', 'Full-Body Strength', 'STRENGTH', 'Seed: full-body strength',
     '{"exercises": [{"name": "Back squat", "sets": 4, "reps": 8, "weightKg": 60}, {"name": "Bench press", "sets": 4, "reps": 8, "weightKg": 40}]}'::jsonb,
     '00000000-0000-0000-0000-000000000001')
 ON CONFLICT (id) DO NOTHING;
@@ -20,7 +28,7 @@ ON CONFLICT (id) DO NOTHING;
 -- root (id = series_id) and carries the recurrence rule; 000106/000107 are
 -- later occurrences sharing that series_id.
 INSERT INTO "planner"."events"
-  (id, title, start_date, end_date, start_time, end_time, timezone, description, location, sport_type, created_by_id, recurrence_rule, series_id, training_plan_id)
+  (id, title, start_date, end_date, start_time, end_time, timezone, description, location, sport_type, created_by_id, recurrence_rule, series_id, plan_id)
 VALUES
   ('00000000-0000-0000-0000-000000000101', 'Morning Run', CURRENT_DATE, CURRENT_DATE, '07:00', '08:00', 'Europe/Paris',
     'Easy 5k loop around the park before work.', 'Riverside Park', 'RUNNING', '00000000-0000-0000-0000-000000000001',
