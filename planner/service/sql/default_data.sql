@@ -38,6 +38,80 @@ WITH dev_user AS (
   )
   RETURNING id, created_by_id
 )
-INSERT INTO "planner"."event_participants" (event_id, user_id)
-SELECT id, created_by_id FROM new_events
+INSERT INTO "planner"."event_participants" (event_id, user_id, status)
+SELECT id, created_by_id, 'CONFIRMED' FROM new_events
 ON CONFLICT DO NOTHING;
+
+-- Recurring series (root + 2 later occurrences sharing one series_id) and
+-- two training plans, linked back onto events from the block above.
+DO $$
+DECLARE
+  dev_user_id      UUID;
+  series_root_id   UUID;
+  occurrence_2_id  UUID;
+  occurrence_3_id  UUID;
+  running_plan_id  UUID;
+  strength_plan_id UUID;
+  morning_run_id   UUID;
+  strength_event_id UUID;
+BEGIN
+  SELECT id INTO dev_user_id FROM "auth"."users" WHERE username = 'testuser';
+  IF dev_user_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM "planner"."events" WHERE title = 'Tuesday Evening Swim') THEN
+    series_root_id := gen_random_uuid();
+    occurrence_2_id := gen_random_uuid();
+    occurrence_3_id := gen_random_uuid();
+
+    INSERT INTO "planner"."events"
+      (id, title, start_date, end_date, start_time, end_time, timezone, description, location, sport_type, created_by_id, recurrence_rule, series_id)
+    VALUES
+      (series_root_id, 'Tuesday Evening Swim', CURRENT_DATE + 2, CURRENT_DATE + 2, '18:30'::time, '19:30'::time, 'Europe/Paris',
+        'Weekly technique swim session.', 'Community Pool', 'SWIMMING', dev_user_id, 'FREQ=WEEKLY;BYDAY=TU;COUNT=6', series_root_id),
+      (occurrence_2_id, 'Tuesday Evening Swim', CURRENT_DATE + 9, CURRENT_DATE + 9, '18:30'::time, '19:30'::time, 'Europe/Paris',
+        'Weekly technique swim session.', 'Community Pool', 'SWIMMING', dev_user_id, NULL, series_root_id),
+      (occurrence_3_id, 'Tuesday Evening Swim', CURRENT_DATE + 16, CURRENT_DATE + 16, '18:30'::time, '19:30'::time, 'Europe/Paris',
+        'Weekly technique swim session.', 'Community Pool', 'SWIMMING', dev_user_id, NULL, series_root_id);
+
+    -- Different statuses per occurrence to exercise the enum: confirmed for
+    -- the next two, skipped for the third (still on the plan, sitting this one out).
+    INSERT INTO "planner"."event_participants" (event_id, user_id, status)
+    VALUES
+      (series_root_id, dev_user_id, 'CONFIRMED'),
+      (occurrence_2_id, dev_user_id, 'CONFIRMED'),
+      (occurrence_3_id, dev_user_id, 'SKIPPED');
+
+    -- Reminders on the root occurrence only, to show a participant can have more than one.
+    INSERT INTO "planner"."event_reminders" (id, event_id, user_id, minutes_before)
+    VALUES
+      (gen_random_uuid(), series_root_id, dev_user_id, 60),
+      (gen_random_uuid(), series_root_id, dev_user_id, 1440);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM "planner"."training_plans" WHERE notes = 'Seed: 5k easy run') THEN
+    running_plan_id := gen_random_uuid();
+    INSERT INTO "planner"."training_plans" (id, sport_type, notes, details, created_by_id)
+    VALUES (running_plan_id, 'RUNNING', 'Seed: 5k easy run',
+      '{"distanceKm": 5, "targetPaceMinPerKm": 5.5}'::jsonb, dev_user_id);
+
+    SELECT id INTO morning_run_id FROM "planner"."events" WHERE title = 'Morning Run';
+    IF morning_run_id IS NOT NULL THEN
+      UPDATE "planner"."events" SET training_plan_id = running_plan_id WHERE id = morning_run_id;
+    END IF;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM "planner"."training_plans" WHERE notes = 'Seed: full-body strength') THEN
+    strength_plan_id := gen_random_uuid();
+    INSERT INTO "planner"."training_plans" (id, sport_type, notes, details, created_by_id)
+    VALUES (strength_plan_id, 'STRENGTH', 'Seed: full-body strength',
+      '{"exercises": [{"name": "Back squat", "sets": 4, "reps": 8, "weightKg": 60}, {"name": "Bench press", "sets": 4, "reps": 8, "weightKg": 40}]}'::jsonb,
+      dev_user_id);
+
+    SELECT id INTO strength_event_id FROM "planner"."events" WHERE title = 'Strength Training Weekend';
+    IF strength_event_id IS NOT NULL THEN
+      UPDATE "planner"."events" SET training_plan_id = strength_plan_id WHERE id = strength_event_id;
+    END IF;
+  END IF;
+END $$;
