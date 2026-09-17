@@ -1,7 +1,7 @@
 import { type ComponentPropsWithoutRef } from 'react';
 
 import styles from './Button.module.scss';
-import { TypographyLarge, TypographyMedium } from '../styles/Typography';
+import { TypographyLarge, TypographyMedium, TypographySmall } from '../styles/Typography';
 
 export type ButtonVariant = 'primary' | 'incentivized' | 'dangerous';
 
@@ -13,6 +13,8 @@ export type ButtonProps = {
   variant?: ButtonVariant;
   outlined?: boolean;
   big?: boolean;
+  small?: boolean;
+  thin?: boolean;
   className?: string;
 } & Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'disabled' | 'className'>;
 
@@ -33,16 +35,18 @@ export function Button({
   variant = 'primary',
   outlined = false,
   big = false,
+  small = false,
+  thin = false,
   className,
   type = 'button',
   ...buttonProps
 }: ButtonProps) {
-  const Label = big ? TypographyLarge : TypographyMedium;
+  const Label = big ? TypographyLarge : small ? TypographySmall : TypographyMedium;
 
   return (
     <Label
       as="button"
-      variant="bold"
+      variant={thin ? 'normal' : 'bold'}
       {...buttonProps}
       type={type}
       disabled={disabled || isLoading}
@@ -53,6 +57,7 @@ export function Button({
         outlined ? styles['-outlined'] : undefined,
         fillHorizontally ? styles['-fillHorizontally'] : undefined,
         big ? styles['-big'] : undefined,
+        small ? styles['-small'] : undefined,
         className,
       ]
         .filter(Boolean)

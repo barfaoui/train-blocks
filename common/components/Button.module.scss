@@ -27,6 +27,10 @@
     padding: var(--space-3) var(--space-4);
   }
 
+  &.-small {
+    padding: var(--space-1) var(--space-2);
+  }
+
   &.-primary {
     background: var(--color-primary);
     color: var(--color-primary-contrast);
