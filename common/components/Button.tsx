@@ -1,9 +1,11 @@
 import { type ComponentPropsWithoutRef } from 'react';
 
 import styles from './Button.module.scss';
-import { TypographyLarge, TypographyMedium } from '../styles/Typography';
+import { TypographyLarge, TypographyMedium, TypographySmall } from '../styles/Typography';
 
 export type ButtonVariant = 'primary' | 'incentivized' | 'dangerous';
+
+export type ButtonStyle = 'normal' | 'big' | 'small';
 
 export type ButtonProps = {
   label: string;
@@ -12,9 +14,9 @@ export type ButtonProps = {
   isLoading?: boolean;
   variant?: ButtonVariant;
   outlined?: boolean;
-  big?: boolean;
+  style?: ButtonStyle;
   className?: string;
-} & Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'disabled' | 'className'>;
+} & Omit<ComponentPropsWithoutRef<'button'>, 'children' | 'disabled' | 'className' | 'style'>;
 
 function Spinner() {
   return (
@@ -32,17 +34,18 @@ export function Button({
   isLoading = false,
   variant = 'primary',
   outlined = false,
-  big = false,
+  style = 'normal',
   className,
   type = 'button',
   ...buttonProps
 }: ButtonProps) {
-  const Label = big ? TypographyLarge : TypographyMedium;
+  const Label =
+    style === 'big' ? TypographyLarge : style === 'small' ? TypographySmall : TypographyMedium;
 
   return (
     <Label
       as="button"
-      variant="bold"
+      variant={style === 'small' ? 'normal' : 'bold'}
       {...buttonProps}
       type={type}
       disabled={disabled || isLoading}
@@ -52,7 +55,8 @@ export function Button({
         styles[`-${variant}`],
         outlined ? styles['-outlined'] : undefined,
         fillHorizontally ? styles['-fillHorizontally'] : undefined,
-        big ? styles['-big'] : undefined,
+        style === 'big' ? styles['-big'] : undefined,
+        style === 'small' ? styles['-small'] : undefined,
         className,
       ]
         .filter(Boolean)

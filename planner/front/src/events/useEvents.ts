@@ -15,7 +15,11 @@ export type UseEventsResult = {
   error: Error | null;
 };
 
-export function useEvents(range: DateRange | null, sportTypes?: SportType[]): UseEventsResult {
+export function useEvents(
+  range: DateRange | null,
+  sportTypes?: SportType[],
+  reloadKey?: number,
+): UseEventsResult {
   const [events, setEvents] = useState<PlannerEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -47,7 +51,7 @@ export function useEvents(range: DateRange | null, sportTypes?: SportType[]): Us
       controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range?.startDate, range?.endDate, sportTypes]);
+  }, [range?.startDate, range?.endDate, sportTypes, reloadKey]);
 
   return { events, loading, error };
 }
