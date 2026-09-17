@@ -24,9 +24,9 @@
   flex-shrink: 0;
 }
 
-.wordmark {
-  color: var(--color-text);
-  letter-spacing: 0.2px;
+.brandText {
+  display: flex;
+  flex-direction: column;
 }
 
 .greeting {

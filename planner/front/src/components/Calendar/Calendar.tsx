@@ -31,21 +31,21 @@ export type CalendarProps = {
 
 const ALL_DAY_COLLAPSE_THRESHOLD = 3;
 
-function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function pad(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-// Reads the clicked block's local wall-clock date/time as plain strings, since
-// converting through toISOString() would shift the hour by the browser's UTC offset.
+// Reads a wall-clock date/time as plain local strings, since converting
+// through toISOString() would shift to UTC and can land on the wrong day.
 function toLocalDateAndTime(date: Date): { date: string; time: string } {
   return {
     date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
     time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
   };
+}
+
+function todayIsoDate(): string {
+  return toLocalDateAndTime(new Date()).date;
 }
 
 function maxAllDayEventsPerDay(events: PlannerEvent[], range: DateRange | null): number {

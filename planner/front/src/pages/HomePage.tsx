@@ -29,7 +29,7 @@ export function HomePage() {
         <div className={styles.brand}>
           <img src={watermelonLogo} alt="" className={styles.logoMark} />
           <div className={styles.brandText}>
-            <TypographyMedium as="p" className={styles.greeting}>
+            <TypographyMedium as="h1" className={styles.greeting}>
               Hello, {user?.username}
             </TypographyMedium>
           </div>
