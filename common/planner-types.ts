@@ -11,4 +11,25 @@ export type PlannerEvent = {
   sportType: SportType;
   description: string | null;
   location: string | null;
+  seriesId: string | null;
+  planId: string | null;
+};
+
+export type CreateEventBody = {
+  title: string;
+  startDate: string;
+  endDate: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  timezone: string;
+  sportType: SportType;
+  description?: string | null;
+  location?: string | null;
+  planId?: string | null;
+  recurrenceRule?: string | null;
+};
+
+export type CreateEventResponse = {
+  events: PlannerEvent[];
+  truncated: boolean;
 };

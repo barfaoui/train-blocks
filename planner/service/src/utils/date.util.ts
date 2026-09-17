@@ -23,3 +23,15 @@ export function isValidIsoDate(value: string): boolean {
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && toIsoDateString(date) === value;
 }
+
+const ISO_TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+
+export function isValidIsoTime(value: string): boolean {
+  return ISO_TIME_PATTERN.test(value);
+}
+
+export function addDaysToIsoDate(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return toIsoDateString(d);
+}
