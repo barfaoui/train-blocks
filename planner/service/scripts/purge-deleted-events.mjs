@@ -11,5 +11,7 @@ const { count } = await prisma.event.deleteMany({
   where: { deletedAt: { lt: cutoff } },
 });
 
-console.log(`[purge-deleted-events] removed ${count} event(s) soft-deleted before ${cutoff.toISOString()}`);
+console.log(
+  `[purge-deleted-events] removed ${count} event(s) soft-deleted before ${cutoff.toISOString()}`,
+);
 await prisma.$disconnect();

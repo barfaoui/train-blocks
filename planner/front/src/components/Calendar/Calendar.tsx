@@ -2,6 +2,7 @@ import type {
   DatesSetArg,
   DayCellContentArg,
   DayHeaderContentArg,
+  EventClickArg,
   EventInput,
   MoreLinkArg,
 } from '@fullcalendar/core';
@@ -27,6 +28,7 @@ import { type DateRange, useEvents } from '../../events/useEvents';
 
 export type CalendarProps = {
   onCreateRequested: (date: string, time?: string) => void;
+  onEventClick: (event: PlannerEvent, anchor: DOMRect) => void;
   reloadKey?: number;
 };
 
@@ -75,7 +77,7 @@ function maxAllDayEventsPerDay(events: PlannerEvent[], range: DateRange | null):
   return counts.size > 0 ? Math.max(...counts.values()) : 0;
 }
 
-export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
+export function Calendar({ onCreateRequested, onEventClick, reloadKey }: CalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
   const [viewSlug, setViewSlug] = useState<CalendarViewSlug>(
     () => readStoredView() ?? DEFAULT_VIEW_SLUG,
@@ -203,6 +205,12 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
           }
           const { date, time } = toLocalDateAndTime(info.date);
           onCreateRequested(date, time);
+        }}
+        eventClick={(info: EventClickArg) => {
+          const plannerEvent = events.find((event) => event.id === info.event.id);
+          if (plannerEvent) {
+            onEventClick(plannerEvent, info.el.getBoundingClientRect());
+          }
         }}
         events={events.map(toFullCalendarEvent)}
       />

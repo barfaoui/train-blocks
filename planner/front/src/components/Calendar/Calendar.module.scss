@@ -31,6 +31,10 @@
     padding: var(--space-2);
   }
 
+  :global(.fc-event) {
+    cursor: pointer;
+  }
+
   :global(.fc .fc-daygrid-day):hover,
   :global(.fc .fc-timegrid-slot-lane):hover {
     background: linear-gradient(
