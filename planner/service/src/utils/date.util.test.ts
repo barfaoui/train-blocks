@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isValidIsoDate, toIsoTimeString } from './date.util';
+import { addDaysToIsoDate, isValidIsoDate, isValidIsoTime, toIsoTimeString } from './date.util';
 
 describe('toIsoTimeString', () => {
   it('formats a time value as HH:mm:ss', () => {
@@ -35,5 +35,29 @@ describe('isValidIsoDate', () => {
 
   it('rejects a value that is not in YYYY-MM-DD format', () => {
     expect(isValidIsoDate('09/14/2026')).toBe(false);
+  });
+});
+
+describe('isValidIsoTime', () => {
+  it('accepts a valid time with seconds', () => {
+    expect(isValidIsoTime('18:30:00')).toBe(true);
+  });
+
+  it('rejects a time missing seconds', () => {
+    expect(isValidIsoTime('18:30')).toBe(false);
+  });
+
+  it('rejects an out-of-range hour', () => {
+    expect(isValidIsoTime('24:00:00')).toBe(false);
+  });
+});
+
+describe('addDaysToIsoDate', () => {
+  it('rolls over a month boundary', () => {
+    expect(addDaysToIsoDate('2026-01-31', 1)).toBe('2026-02-01');
+  });
+
+  it('is a no-op for zero days', () => {
+    expect(addDaysToIsoDate('2026-09-14', 0)).toBe('2026-09-14');
   });
 });
