@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { authsProfileHref } from '@common/app-urls';
 import { ThemeToggle } from '@common/components/ThemeToggle';
+import type { PlannerEvent } from '@common/planner-types';
 import { TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './HomePage.module.scss';
@@ -10,6 +11,7 @@ import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
 import { Calendar } from '../components/Calendar/Calendar';
 import { CreateEventModal } from '../events/CreateEventModal';
+import { EventDetailsModal } from '../events/EventDetailsModal';
 
 const profileHref = authsProfileHref(authsFrontBase);
 
@@ -18,9 +20,15 @@ export type CreateRequest = {
   time?: string;
 };
 
+type SelectedEvent = {
+  event: PlannerEvent;
+  anchor: DOMRect;
+};
+
 export function HomePage() {
   const { user, logout } = useSession();
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   return (
@@ -56,6 +64,7 @@ export function HomePage() {
       </header>
       <Calendar
         onCreateRequested={(date, time) => setCreateRequest({ date, time })}
+        onEventClick={(event, anchor) => setSelectedEvent({ event, anchor })}
         reloadKey={reloadKey}
       />
       {createRequest ? (
@@ -67,6 +76,13 @@ export function HomePage() {
             setCreateRequest(null);
             setReloadKey((key) => key + 1);
           }}
+        />
+      ) : null}
+      {selectedEvent ? (
+        <EventDetailsModal
+          event={selectedEvent.event}
+          anchor={selectedEvent.anchor}
+          onClose={() => setSelectedEvent(null)}
         />
       ) : null}
     </main>
