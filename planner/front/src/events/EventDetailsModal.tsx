@@ -60,7 +60,7 @@ function formatWhen(event: PlannerEvent): string {
 }
 
 function isRecurring(event: PlannerEvent): boolean {
-  return event.seriesId !== undefined;
+  return event.seriesId !== null;
 }
 
 export function EventDetailsModal({ event, anchor, onClose }: EventDetailsModalProps) {
