@@ -1,8 +1,5 @@
 .toggle {
-  position: fixed;
-  top: var(--space-4);
-  right: var(--space-4);
-  z-index: 1000;
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: space-between;

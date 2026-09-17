@@ -1,9 +1,11 @@
 import { useState } from 'react';
 
 import { authsProfileHref } from '@common/app-urls';
-import { Button } from '@common/components/Button';
+import { ThemeToggle } from '@common/components/ThemeToggle';
+import { TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './HomePage.module.scss';
+import watermelonLogo from '../../assets/watermelon.svg';
 import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
 import { Calendar } from '../components/Calendar/Calendar';
@@ -11,29 +13,58 @@ import { CreateEventModal } from '../events/CreateEventModal';
 
 const profileHref = authsProfileHref(authsFrontBase);
 
+export type CreateRequest = {
+  date: string;
+  time?: string;
+};
+
 export function HomePage() {
-  const { logout } = useSession();
-  const [createDate, setCreateDate] = useState<string | null>(null);
+  const { user, logout } = useSession();
+  const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <h1>Planner</h1>
+        <div className={styles.brand}>
+          <img src={watermelonLogo} alt="" className={styles.logoMark} />
+          <div className={styles.brandText}>
+            <TypographyMedium as="p" className={styles.greeting}>
+              Hello, {user?.username}
+            </TypographyMedium>
+          </div>
+        </div>
         <nav className={styles.headerActions}>
-          <a className={styles.profileLink} href={profileHref}>
+          <TypographySmall
+            as="button"
+            type="button"
+            className={styles.signOutButton}
+            onClick={() => void logout()}
+          >
+            Sign out
+          </TypographySmall>
+          <TypographySmall
+            as="a"
+            variant="bold"
+            href={profileHref}
+            className={styles.profileButton}
+          >
             Profile
-          </a>
-          <Button type="button" label="Sign out" small onClick={() => void logout()} />
+          </TypographySmall>
+          <ThemeToggle />
         </nav>
       </header>
-      <Calendar onCreateRequested={setCreateDate} reloadKey={reloadKey} />
-      {createDate ? (
+      <Calendar
+        onCreateRequested={(date, time) => setCreateRequest({ date, time })}
+        reloadKey={reloadKey}
+      />
+      {createRequest ? (
         <CreateEventModal
-          initialDate={createDate}
-          onClose={() => setCreateDate(null)}
+          initialDate={createRequest.date}
+          initialTime={createRequest.time}
+          onClose={() => setCreateRequest(null)}
           onCreated={() => {
-            setCreateDate(null);
+            setCreateRequest(null);
             setReloadKey((key) => key + 1);
           }}
         />

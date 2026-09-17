@@ -81,19 +81,29 @@ type FieldErrors = Partial<
 
 export type CreateEventModalProps = {
   initialDate: string;
+  initialTime?: string;
   onClose: () => void;
   onCreated: () => void;
 };
 
-function initialFormState(initialDate: string): FormState {
+// Caps at 23:59 rather than rolling into the next day, since the form treats
+// a single click as a same-day block.
+function addOneHour(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const totalMinutes = Math.min(hours * 60 + minutes + 60, 23 * 60 + 59);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
+}
+
+function initialFormState(initialDate: string, initialTime?: string): FormState {
   return {
     title: '',
     sportType: 'RUNNING',
-    allDay: true,
+    allDay: !initialTime,
     startDate: initialDate,
     endDate: initialDate,
-    startTime: '',
-    endTime: '',
+    startTime: initialTime ?? '',
+    endTime: initialTime ? addOneHour(initialTime) : '',
     location: '',
     description: '',
     repeatFrequency: '',
@@ -170,8 +180,13 @@ function toRequestBody(form: FormState): CreateEventBody {
   };
 }
 
-export function CreateEventModal({ initialDate, onClose, onCreated }: CreateEventModalProps) {
-  const [form, setForm] = useState<FormState>(() => initialFormState(initialDate));
+export function CreateEventModal({
+  initialDate,
+  initialTime,
+  onClose,
+  onCreated,
+}: CreateEventModalProps) {
+  const [form, setForm] = useState<FormState>(() => initialFormState(initialDate, initialTime));
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);

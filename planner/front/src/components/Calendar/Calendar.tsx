@@ -9,7 +9,6 @@ import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction'
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 
 import { Button } from '@common/components/Button';
 import type { PlannerEvent } from '@common/planner-types';
@@ -19,7 +18,6 @@ import {
   DEFAULT_VIEW_SLUG,
   VIEW_OPTIONS,
   fcViewNameFor,
-  isCalendarViewSlug,
   persistView,
   readStoredView,
 } from './calendar-view.util';
@@ -27,44 +25,70 @@ import styles from './Calendar.module.scss';
 import { type DateRange, useEvents } from '../../events/useEvents';
 
 export type CalendarProps = {
-  onCreateRequested: (date: string) => void;
+  onCreateRequested: (date: string, time?: string) => void;
   reloadKey?: number;
 };
+
+const ALL_DAY_COLLAPSE_THRESHOLD = 3;
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function resolveInitialViewSlug(searchParams: URLSearchParams): CalendarViewSlug {
-  const fromUrl = searchParams.get('view');
-  if (isCalendarViewSlug(fromUrl)) {
-    return fromUrl;
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+// Reads the clicked block's local wall-clock date/time as plain strings, since
+// converting through toISOString() would shift the hour by the browser's UTC offset.
+function toLocalDateAndTime(date: Date): { date: string; time: string } {
+  return {
+    date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  };
+}
+
+function maxAllDayEventsPerDay(events: PlannerEvent[], range: DateRange | null): number {
+  if (!range) {
+    return 0;
   }
-  return readStoredView() ?? DEFAULT_VIEW_SLUG;
+
+  const counts = new Map<string, number>();
+  for (const event of events) {
+    if (event.startTime) {
+      continue;
+    }
+    for (let day = event.startDate; day <= event.endDate; day = addOneDay(day)) {
+      if (day >= range.startDate && day <= range.endDate) {
+        counts.set(day, (counts.get(day) ?? 0) + 1);
+      }
+      if (day >= range.endDate) {
+        break;
+      }
+    }
+  }
+
+  return counts.size > 0 ? Math.max(...counts.values()) : 0;
 }
 
 export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [viewSlug, setViewSlug] = useState<CalendarViewSlug>(() =>
-    resolveInitialViewSlug(searchParams),
+  const [viewSlug, setViewSlug] = useState<CalendarViewSlug>(
+    () => readStoredView() ?? DEFAULT_VIEW_SLUG,
   );
   const [range, setRange] = useState<DateRange | null>(null);
   const [title, setTitle] = useState('');
+  const [allDayCollapsed, setAllDayCollapsed] = useState(true);
   const { events } = useEvents(range, undefined, reloadKey);
+
+  const needsAllDayCollapse = maxAllDayEventsPerDay(events, range) > ALL_DAY_COLLAPSE_THRESHOLD;
+  const allDayRowLimit =
+    needsAllDayCollapse && allDayCollapsed ? ALL_DAY_COLLAPSE_THRESHOLD : false;
 
   function goToView(slug: CalendarViewSlug) {
     setViewSlug(slug);
     persistView(slug);
     calendarRef.current?.getApi().changeView(fcViewNameFor(slug));
-
-    const params = new URLSearchParams(searchParams);
-    if (slug === DEFAULT_VIEW_SLUG) {
-      params.delete('view');
-    } else {
-      params.set('view', slug);
-    }
-    setSearchParams(params, { replace: true });
   }
 
   return (
@@ -72,7 +96,7 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
       <div className={styles.toolbar}>
         <Button
           type="button"
-          label="✚ Create event"
+          label="✚ New event"
           small
           thin
           onClick={() => onCreateRequested(todayIsoDate())}
@@ -118,18 +142,34 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
       </div>
       <FullCalendar
         ref={calendarRef}
+        locale="en"
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView={fcViewNameFor(viewSlug)}
         views={{
           timeGrid3Day: {
             type: 'timeGrid',
             duration: { days: 3 },
+            dayMaxEventRows: allDayRowLimit,
           },
+          timeGridWeek: { dayMaxEventRows: allDayRowLimit },
+          timeGridDay: { dayMaxEventRows: allDayRowLimit },
         }}
         headerToolbar={false}
         height="auto"
         dayCellContent={renderDayCellContent}
         dayHeaderContent={renderDayHeaderContent}
+        allDayContent={() =>
+          needsAllDayCollapse ? (
+            <button
+              type="button"
+              className={styles.allDayToggle}
+              aria-label={allDayCollapsed ? 'Show all all-day events' : 'Show fewer all-day events'}
+              onClick={() => setAllDayCollapsed((collapsed) => !collapsed)}
+            >
+              {allDayCollapsed ? '▾' : '▴'}
+            </button>
+          ) : null
+        }
         datesSet={(info: DatesSetArg) => {
           setRange({
             startDate: info.startStr.slice(0, 10),
@@ -137,7 +177,14 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
           });
           setTitle(info.view.title);
         }}
-        dateClick={(info: DateClickArg) => onCreateRequested(info.dateStr)}
+        dateClick={(info: DateClickArg) => {
+          if (info.allDay) {
+            onCreateRequested(info.dateStr);
+            return;
+          }
+          const { date, time } = toLocalDateAndTime(info.date);
+          onCreateRequested(date, time);
+        }}
         events={events.map(toFullCalendarEvent)}
       />
     </div>
@@ -169,7 +216,7 @@ function renderDayHeaderContent(arg: DayHeaderContentArg) {
     return arg.text;
   }
 
-  const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(arg.date);
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(arg.date);
 
   return (
     <div className={styles.dayHeaderContent}>
@@ -209,6 +256,7 @@ function toInclusiveEndDate(exclusiveEndDate: string): string {
 }
 
 // FullCalendar's all-day `end` is exclusive, unlike the API's inclusive endDate.
+// Also used to walk a multi-day event's date range when tallying all-day counts.
 function addOneDay(dateStr: string): string {
   const date = new Date(`${dateStr}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + 1);

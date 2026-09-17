@@ -51,6 +51,13 @@
       );
     }
   }
+
+  // Our own arrow replaces FullCalendar's default "+N more" link for the
+  // all-day section; the all-day area is the only day-grid nested in a
+  // timegrid view, so this never touches month view's own more-links.
+  :global(.fc .fc-timegrid .fc-daygrid-more-link) {
+    display: none;
+  }
 }
 
 .toolbar {
@@ -148,5 +155,27 @@
     color: var(--color-accent-contrast);
     background: var(--color-accent);
     font-weight: 700;
+  }
+}
+
+.allDayToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  line-height: 1;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }

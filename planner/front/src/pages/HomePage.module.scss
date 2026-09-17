@@ -10,22 +10,69 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding-right: 4rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.logoMark {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.wordmark {
+  color: var(--color-text);
+  letter-spacing: 0.2px;
+}
+
+.greeting {
+  margin: 0;
+  color: var(--color-text-muted);
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
-.profileLink {
+.signOutButton {
+  padding: var(--space-1) var(--space-2);
   color: var(--color-text-muted);
-  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
 
   &:hover {
     color: var(--color-primary);
     text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.profileButton {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-primary-contrast);
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
   }
 
   &:focus-visible {
