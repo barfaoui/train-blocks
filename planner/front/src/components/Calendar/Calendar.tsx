@@ -1,5 +1,6 @@
 import type { DatesSetArg, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import { useState } from 'react';
 
@@ -8,14 +9,19 @@ import type { PlannerEvent } from '@common/planner-types';
 import styles from './Calendar.module.scss';
 import { type DateRange, useEvents } from '../../events/useEvents';
 
-export function Calendar() {
+export type CalendarProps = {
+  onCreateRequested: (date: string) => void;
+  reloadKey?: number;
+};
+
+export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
   const [range, setRange] = useState<DateRange | null>(null);
-  const { events } = useEvents(range);
+  const { events } = useEvents(range, undefined, reloadKey);
 
   return (
     <div className={styles.calendar}>
       <FullCalendar
-        plugins={[dayGridPlugin]}
+        plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         headerToolbar={{
           left: 'prev,next today',
@@ -29,6 +35,7 @@ export function Calendar() {
             endDate: toInclusiveEndDate(info.endStr.slice(0, 10)),
           })
         }
+        dateClick={(info: DateClickArg) => onCreateRequested(info.dateStr)}
         events={events.map(toFullCalendarEvent)}
       />
     </div>
