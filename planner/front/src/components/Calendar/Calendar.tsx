@@ -3,6 +3,7 @@ import type {
   DayCellContentArg,
   DayHeaderContentArg,
   EventInput,
+  MoreLinkArg,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction';
@@ -29,7 +30,10 @@ export type CalendarProps = {
   reloadKey?: number;
 };
 
-const ALL_DAY_COLLAPSE_THRESHOLD = 3;
+const ALL_DAY_COLLAPSE_THRESHOLD = 2;
+// Month-view day cells always cap at 3 rows; overflow uses FullCalendar's own
+// "+N more" popover (no custom arrow there, unlike the timeGrid all-day row).
+const MONTH_DAY_MAX_EVENT_ROWS = 3;
 
 function pad(value: number): string {
   return String(value).padStart(2, '0');
@@ -97,8 +101,7 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
         <Button
           type="button"
           label="✚ New event"
-          small
-          thin
+          style="small"
           onClick={() => onCreateRequested(todayIsoDate())}
         />
         <span className={styles.title}>{title}</span>
@@ -153,6 +156,7 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
           },
           timeGridWeek: { dayMaxEventRows: allDayRowLimit },
           timeGridDay: { dayMaxEventRows: allDayRowLimit },
+          dayGridMonth: { dayMaxEventRows: MONTH_DAY_MAX_EVENT_ROWS },
         }}
         headerToolbar={false}
         height="auto"
@@ -170,6 +174,21 @@ export function Calendar({ onCreateRequested, reloadKey }: CalendarProps) {
             </button>
           ) : null
         }
+        // Let FullCalendar show its own "+N more" link both for the timeGrid
+        // all-day row and for month-view day cells; clicking it expands the
+        // all-day row via our own arrow state, but still opens the default
+        // popover in month view (arg.allDay is also true there, since every
+        // month-view cell is an all-day cell, so the view type disambiguates).
+        moreLinkClick={(arg: MoreLinkArg) => {
+          if (arg.view.type === 'dayGridMonth' || !arg.allDay) {
+            return 'popover';
+          }
+          setAllDayCollapsed(false);
+          // FullCalendar's handler opens its popover for any falsy return
+          // (including `undefined`/void) and navigates views for any string
+          // return, so only a truthy, non-string value fully suppresses both.
+          return true as unknown as void;
+        }}
         datesSet={(info: DatesSetArg) => {
           setRange({
             startDate: info.startStr.slice(0, 10),

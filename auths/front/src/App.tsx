@@ -11,7 +11,7 @@ import { ProfilePage } from './pages/ProfilePage';
 export function App() {
   return (
     <>
-      <div className={styles.themeToggleFloat}>
+      <div className={styles.floatingThemeToggle}>
         <ThemeToggle />
       </div>
       <Routes>

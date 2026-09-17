@@ -52,11 +52,16 @@
     }
   }
 
-  // Our own arrow replaces FullCalendar's default "+N more" link for the
-  // all-day section; the all-day area is the only day-grid nested in a
-  // timegrid view, so this never touches month view's own more-links.
-  :global(.fc .fc-timegrid .fc-daygrid-more-link) {
-    display: none;
+  // The all-day row's axis cell only exists nested in a `.fc-daygrid-body`
+  // within a timeGrid view (month view has no `.fc-timegrid-axis-cushion` at
+  // all), so this can't leak into month view's own axis/time-label cells.
+  // FullCalendar's cushion shrink-wraps its content by default; stretch it so
+  // our toggle button (which already fills the cushion) covers the whole cell.
+  :global(.fc-daygrid-body .fc-timegrid-axis-frame),
+  :global(.fc-daygrid-body .fc-timegrid-axis-cushion) {
+    width: 100%;
+    height: 100%;
+    padding: 0;
   }
 }
 
@@ -163,6 +168,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  height: 100%;
   color: var(--color-text-muted);
   background: transparent;
   border: none;
