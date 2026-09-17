@@ -59,6 +59,10 @@ function formatWhen(event: PlannerEvent): string {
     : `${formatDate(event.startDate)} ${formatTime(event.startTime)} – ${formatDate(event.endDate)} ${event.endTime ? formatTime(event.endTime) : ''}`;
 }
 
+function isRecurring(event: PlannerEvent): boolean {
+  return event.seriesId !== undefined;
+}
+
 export function EventDetailsModal({ event, anchor, onClose }: EventDetailsModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<CSSProperties>({ visibility: 'hidden' });
@@ -122,6 +126,9 @@ export function EventDetailsModal({ event, anchor, onClose }: EventDetailsModalP
       </header>
       <div className={styles.body}>
         <TypographySmall className={styles.detailRow}>{formatWhen(event)}</TypographySmall>
+        {isRecurring(event) ? (
+          <TypographySmall className={styles.detailRow}>🔁 Recurring</TypographySmall>
+        ) : null}
         <TypographySmall className={styles.detailRow}>
           {SPORT_TYPE_LABELS[event.sportType]}
         </TypographySmall>
