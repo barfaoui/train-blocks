@@ -11,3 +11,10 @@ export class PlanNotFoundError extends Error {
     this.name = 'PlanNotFoundError';
   }
 }
+
+export class EventNotFoundError extends Error {
+  constructor() {
+    super('event does not exist');
+    this.name = 'EventNotFoundError';
+  }
+}

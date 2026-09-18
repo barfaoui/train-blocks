@@ -4,8 +4,14 @@ import type { PlannerEvent } from '@common/planner-types';
 
 import { Prisma } from '../../generated/client';
 import { prisma } from '../data/prisma';
-import { PlanNotFoundError } from '../data/types/errors';
-import type { CreateEventInput, CreateEventResult, ListEventsFilters } from '../data/types/events';
+import { EventNotFoundError, PlanNotFoundError } from '../data/types/errors';
+import type {
+  CreateEventInput,
+  CreateEventResult,
+  ListEventsFilters,
+  UpdateEventInput,
+  UpdateEventResult,
+} from '../data/types/events';
 import { addDaysToIsoDate, toIsoDateString, toIsoTimeString } from '../utils/date.util';
 import { expandRecurrence } from '../utils/recurrence.util';
 
@@ -76,6 +82,76 @@ export async function createEvent(
   }
 
   return { events: rows.map(toPlannerEvent), truncated };
+}
+
+export async function updateEvent(
+  userId: string,
+  eventId: string,
+  input: UpdateEventInput,
+): Promise<UpdateEventResult> {
+  const existing = await prisma.event.findFirst({
+    where: { id: eventId, deletedAt: null, createdById: userId },
+  });
+  if (!existing) {
+    throw new EventNotFoundError();
+  }
+
+  const durationDays = Math.round(
+    (Date.parse(`${input.endDate}T00:00:00Z`) - Date.parse(`${input.startDate}T00:00:00Z`)) /
+      MS_PER_DAY,
+  );
+
+  const sharedFields = {
+    title: input.title,
+    startTime: input.startTime ? new Date(`1970-01-01T${input.startTime}Z`) : null,
+    endTime: input.endTime ? new Date(`1970-01-01T${input.endTime}Z`) : null,
+    timezone: input.timezone,
+    description: input.description,
+    location: input.location,
+    sportType: input.sportType,
+  };
+
+  if (input.scope === 'THIS_EVENT' || !existing.seriesId) {
+    const updated = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        ...sharedFields,
+        startDate: new Date(`${input.startDate}T00:00:00Z`),
+        endDate: new Date(`${addDaysToIsoDate(input.startDate, durationDays)}T00:00:00Z`),
+      },
+    });
+    return { events: [toPlannerEvent(updated)] };
+  }
+
+  // Whole-series edit: shift every occurrence by the same number of days the
+  // edited occurrence moved, preserving each occurrence's own original date
+  // and the new span, rather than collapsing them onto a single date.
+  const deltaDays = Math.round(
+    (Date.parse(`${input.startDate}T00:00:00Z`) -
+      Date.parse(`${toIsoDateString(existing.startDate)}T00:00:00Z`)) /
+      MS_PER_DAY,
+  );
+
+  const seriesEvents = await prisma.event.findMany({
+    where: { seriesId: existing.seriesId, deletedAt: null },
+  });
+
+  const updated = await prisma.$transaction(
+    seriesEvents.map((event) => {
+      const newStartDate = addDaysToIsoDate(toIsoDateString(event.startDate), deltaDays);
+      const newEndDate = addDaysToIsoDate(newStartDate, durationDays);
+      return prisma.event.update({
+        where: { id: event.id },
+        data: {
+          ...sharedFields,
+          startDate: new Date(`${newStartDate}T00:00:00Z`),
+          endDate: new Date(`${newEndDate}T00:00:00Z`),
+        },
+      });
+    }),
+  );
+
+  return { events: updated.map(toPlannerEvent) };
 }
 
 function toPlannerEvent(event: {

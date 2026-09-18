@@ -11,6 +11,7 @@ import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
 import { Calendar } from '../components/Calendar/Calendar';
 import { CreateEventModal } from '../events/CreateEventModal';
+import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
 
 const profileHref = authsProfileHref(authsFrontBase);
@@ -29,6 +30,7 @@ export function HomePage() {
   const { user, logout } = useSession();
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   return (
@@ -83,6 +85,20 @@ export function HomePage() {
           event={selectedEvent.event}
           anchor={selectedEvent.anchor}
           onClose={() => setSelectedEvent(null)}
+          onEdit={() => {
+            setEditingEvent(selectedEvent.event);
+            setSelectedEvent(null);
+          }}
+        />
+      ) : null}
+      {editingEvent ? (
+        <EditEventModal
+          event={editingEvent}
+          onClose={() => setEditingEvent(null)}
+          onUpdated={() => {
+            setEditingEvent(null);
+            setReloadKey((key) => key + 1);
+          }}
         />
       ) : null}
     </main>
