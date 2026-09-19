@@ -16,7 +16,7 @@ export type EditEventModalProps = {
   onUpdated: () => void;
 };
 
-function initialValues(event: PlannerEvent): EventFormValues {
+export function initialValues(event: PlannerEvent): EventFormValues {
   return {
     ...EMPTY_FORM_VALUES,
     title: event.title,

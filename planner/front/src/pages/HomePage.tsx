@@ -13,14 +13,10 @@ import { authsFrontBase } from '../auth/url-bases';
 import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar';
 import { CreateEventModal } from '../events/CreateEventModal';
 import { DeleteEventModal } from '../events/DeleteEventModal';
+import { DuplicateEventModal } from '../events/DuplicateEventModal';
 import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
-import {
-  browserTimeZone,
-  createEvent,
-  deleteEvent,
-  updateEvent,
-} from '../events/events-service';
+import { browserTimeZone, updateEvent } from '../events/events-service';
 
 const profileHref = authsProfileHref(authsFrontBase);
 
@@ -39,51 +35,10 @@ export function HomePage() {
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null);
+  const [duplicatingEvent, setDuplicatingEvent] = useState<PlannerEvent | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<PlannerEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [moveError, setMoveError] = useState<string | null>(null);
-  // Id of a freshly created copy that is still being edited; discarded if the edit is dismissed.
-  const [draftEventId, setDraftEventId] = useState<string | null>(null);
-
-  async function duplicateEvent(event: PlannerEvent) {
-    setSelectedEvent(null);
-    try {
-      const { events } = await createEvent({
-        title: event.title,
-        startDate: event.startDate,
-        endDate: event.endDate,
-        startTime: event.startTime,
-        endTime: event.endTime,
-        timezone: event.timezone,
-        sportType: event.sportType,
-        description: event.description,
-        location: event.location,
-        planId: event.planId,
-      });
-      const copy = events[0];
-      setDraftEventId(copy.id);
-      setEditingEvent(copy);
-      setReloadKey((key) => key + 1);
-    } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Failed to duplicate event');
-    }
-  }
-
-  async function closeEditModal() {
-    const discardedId = draftEventId;
-    setEditingEvent(null);
-    setDraftEventId(null);
-    if (discardedId === null) {
-      return;
-    }
-    try {
-      await deleteEvent(discardedId, 'THIS_EVENT');
-    } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Failed to discard duplicate');
-    }
-    setReloadKey((key) => key + 1);
-  }
-
   async function moveEvent(event: PlannerEvent, changes: EventMoveChanges) {
     try {
       await updateEvent(event.id, {
@@ -160,7 +115,10 @@ export function HomePage() {
             setEditingEvent(selectedEvent.event);
             setSelectedEvent(null);
           }}
-          onDuplicate={() => void duplicateEvent(selectedEvent.event)}
+          onDuplicate={() => {
+            setDuplicatingEvent(selectedEvent.event);
+            setSelectedEvent(null);
+          }}
           onDelete={() => {
             setDeletingEvent(selectedEvent.event);
             setSelectedEvent(null);
@@ -177,13 +135,22 @@ export function HomePage() {
           }}
         />
       ) : null}
+      {duplicatingEvent ? (
+        <DuplicateEventModal
+          event={duplicatingEvent}
+          onClose={() => setDuplicatingEvent(null)}
+          onCreated={() => {
+            setDuplicatingEvent(null);
+            setReloadKey((key) => key + 1);
+          }}
+        />
+      ) : null}
       {editingEvent ? (
         <EditEventModal
           event={editingEvent}
-          onClose={() => void closeEditModal()}
+          onClose={() => setEditingEvent(null)}
           onUpdated={() => {
             setEditingEvent(null);
-            setDraftEventId(null);
             setReloadKey((key) => key + 1);
           }}
         />
