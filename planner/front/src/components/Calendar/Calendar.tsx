@@ -1,10 +1,10 @@
 import type {
   DatesSetArg,
-  EventContentArg,
   DayCellContentArg,
   DayHeaderContentArg,
   EventApi,
   EventClickArg,
+  EventContentArg,
   EventDropArg,
   EventInput,
   MoreLinkArg,
