@@ -1,5 +1,6 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
+import { type InputWithHelperProps } from './input-props';
 import styles from './Select.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
@@ -9,19 +10,10 @@ export type SelectOption = {
 };
 
 export type SelectProps = {
-  label?: string | null;
-  value: string;
-  onChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
-  error?: string;
-  helperText?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<
-  ComponentPropsWithoutRef<'select'>,
-  'id' | 'value' | 'onChange' | 'className' | 'required'
->;
+} & InputWithHelperProps &
+  Omit<ComponentPropsWithoutRef<'select'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
 
 export function Select({
   label,

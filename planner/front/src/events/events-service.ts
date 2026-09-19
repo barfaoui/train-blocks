@@ -12,6 +12,11 @@ import { plannerServiceBase } from '../auth/url-bases';
 
 const apiBase = `${plannerServiceBase}/api/events`;
 
+// Event times are wall-clock in the browser's zone, so that is the zone to store.
+export function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
 export type ListEventsParams = {
   startDate: string;
   endDate: string;

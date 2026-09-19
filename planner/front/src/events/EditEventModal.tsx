@@ -55,7 +55,7 @@ export function EditEventModal({ event, onClose, onUpdated }: EditEventModalProp
       onSubmit={async (form) => {
         // Only send a rule when the repeat controls were changed, so a rule with
         // parts the form can't represent (e.g. COUNT) isn't silently rewritten.
-        const repeatApplies = !isRecurring || form.scope === 'ALL_EVENTS';
+        const repeatApplies = !isRecurring || form.scope === 'THIS_AND_FUTURE_EVENTS';
         const repeatChanged = repeatSignature(form) !== repeatSignature(initial);
 
         await updateEvent(event.id, {

@@ -1,20 +1,16 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
 import styles from './DateTimeInput.module.scss';
+import { type InputProps } from './input-props';
 import { TypographySmall } from '../styles/Typography';
 
 export type DateTimeInputProps = {
-  label?: string | null;
   type: 'date' | 'time';
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<
-  ComponentPropsWithoutRef<'input'>,
-  'id' | 'type' | 'value' | 'onChange' | 'className' | 'required'
->;
+} & InputProps &
+  Omit<
+    ComponentPropsWithoutRef<'input'>,
+    'id' | 'type' | 'value' | 'onChange' | 'className' | 'required'
+  >;
 
 export function DateTimeInput({
   label,

@@ -35,7 +35,7 @@ export type CreateEventResponse = {
   truncated: boolean;
 };
 
-export type EventEditScope = 'THIS_EVENT' | 'ALL_EVENTS';
+export type EventEditScope = 'THIS_EVENT' | 'THIS_AND_FUTURE_EVENTS';
 
 export type UpdateEventBody = {
   title: string;
@@ -48,7 +48,7 @@ export type UpdateEventBody = {
   description?: string | null;
   location?: string | null;
   // Omit to keep the current recurrence; null turns the series into a single
-  // event. Only applied when scope is ALL_EVENTS (or the event isn't recurring yet).
+  // event. Only applied when scope is THIS_AND_FUTURE_EVENTS (or the event isn't recurring yet).
   recurrenceRule?: string | null;
   scope: EventEditScope;
 };

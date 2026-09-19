@@ -1,18 +1,12 @@
 import { type ComponentPropsWithoutRef, useId, useState } from 'react';
 
+import { type InputWithHelperProps } from './input-props';
 import { ShowHideButton } from './ShowHideButton';
 import styles from './TextInput.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
-export type TextInputProps = {
-  label?: string | null;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  helperText?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
+export type TextInputProps = InputWithHelperProps &
+  Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
 
 export function TextInput({
   label,

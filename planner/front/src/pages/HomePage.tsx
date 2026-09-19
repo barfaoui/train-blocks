@@ -14,7 +14,7 @@ import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar
 import { CreateEventModal } from '../events/CreateEventModal';
 import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
-import { updateEvent } from '../events/events-service';
+import { browserTimeZone, updateEvent } from '../events/events-service';
 
 const profileHref = authsProfileHref(authsFrontBase);
 
@@ -40,7 +40,7 @@ export function HomePage() {
     try {
       await updateEvent(event.id, {
         title: event.title,
-        timezone: event.timezone,
+        timezone: browserTimeZone(),
         sportType: event.sportType,
         description: event.description,
         location: event.location,

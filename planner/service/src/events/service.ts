@@ -123,65 +123,67 @@ export async function updateEvent(
       MS_PER_DAY,
   );
 
-  // Changing the recurrence only makes sense for the series as a whole (or to
-  // turn a one-off event into a series), never for a single occurrence.
+  // "This and future" = the edited occurrence and every later one. A one-off falls
+  // back to its own id so the filter can't match unrelated one-off events.
+  const rootId = existing.seriesId ?? existing.id;
+  const fromThisOn = { seriesId: rootId, deletedAt: null, startDate: { gte: existing.startDate } };
+
+  // A recurrence change never applies to a single occurrence.
   const changesRecurrence =
     input.recurrenceRule !== undefined &&
-    (existing.seriesId ? input.scope === 'ALL_EVENTS' : input.recurrenceRule !== null);
+    (existing.seriesId ? input.scope === 'THIS_AND_FUTURE_EVENTS' : input.recurrenceRule !== null);
 
   if (changesRecurrence) {
     const recurrenceRule = input.recurrenceRule as string | null;
-    const rootId = existing.seriesId ?? existing.id;
-    const seriesRows = existing.seriesId
-      ? await prisma.event.findMany({ where: { seriesId: rootId, deletedAt: null } })
-      : [existing];
-    const root = seriesRows.find((row) => row.id === rootId);
-    if (!root) {
-      throw new EventNotFoundError();
-    }
 
-    // Regenerate the series from the (possibly shifted) root date: the root row
-    // is kept so the seriesId stays stable, other occurrences are soft-deleted
-    // and replaced by freshly expanded ones.
-    const rootStart = addDaysToIsoDate(toIsoDateString(root.startDate), deltaDays);
+    // Keep the edited occurrence; replace the later ones with a fresh expansion.
     const { occurrenceDates, truncated } =
       recurrenceRule === null
-        ? { occurrenceDates: [rootStart], truncated: false }
-        : expandRecurrence(recurrenceRule, rootStart);
+        ? { occurrenceDates: [input.startDate], truncated: false }
+        : expandRecurrence(recurrenceRule, input.startDate);
 
     const newRows = occurrenceDates.slice(1).map((occDate) => ({
       id: randomUUID(),
       ...sharedFields,
       startDate: new Date(`${occDate}T00:00:00Z`),
       endDate: new Date(`${addDaysToIsoDate(occDate, durationDays)}T00:00:00Z`),
-      createdById: root.createdById,
-      planId: root.planId,
+      createdById: existing.createdById,
+      planId: existing.planId,
       recurrenceRule: null,
-      seriesId: rootId,
+      seriesId: recurrenceRule === null ? null : rootId,
     }));
 
-    const [, updatedRoot] = await prisma.$transaction([
+    // The root stores the rule, so write it there when editing a later occurrence.
+    const isRoot = existing.id === rootId;
+    const rootRuleUpdate =
+      !isRoot && recurrenceRule !== null
+        ? [prisma.event.update({ where: { id: rootId }, data: { recurrenceRule } })]
+        : [];
+
+    // Replaced occurrences are soft-deleted; participants/reminders don't carry over.
+    const [, updatedExisting] = await prisma.$transaction([
       prisma.event.updateMany({
-        where: { seriesId: rootId, id: { not: rootId }, deletedAt: null },
+        where: { ...fromThisOn, id: { notIn: [rootId, existing.id] } },
         data: { deletedAt: new Date() },
       }),
       prisma.event.update({
-        where: { id: rootId },
+        where: { id: existing.id },
         data: {
           ...sharedFields,
-          startDate: new Date(`${rootStart}T00:00:00Z`),
-          endDate: new Date(`${addDaysToIsoDate(rootStart, durationDays)}T00:00:00Z`),
-          recurrenceRule,
+          startDate: new Date(`${input.startDate}T00:00:00Z`),
+          endDate: new Date(`${addDaysToIsoDate(input.startDate, durationDays)}T00:00:00Z`),
+          ...(isRoot ? { recurrenceRule } : {}),
           seriesId: recurrenceRule === null ? null : rootId,
         },
         include: WITH_SERIES_RULE,
       }),
       prisma.event.createMany({ data: newRows }),
+      ...rootRuleUpdate,
     ]);
 
     return {
       events: [
-        toPlannerEvent(updatedRoot),
+        toPlannerEvent(updatedExisting),
         ...newRows.map((row) => toPlannerEvent({ ...row, recurrenceRule })),
       ],
       truncated,
@@ -201,12 +203,8 @@ export async function updateEvent(
     return { events: [toPlannerEvent(updated)], truncated: false };
   }
 
-  // Whole-series edit: shift every occurrence by the same number of days the
-  // edited occurrence moved, preserving each occurrence's own original date
-  // and the new span, rather than collapsing them onto a single date.
-  const seriesEvents = await prisma.event.findMany({
-    where: { seriesId: existing.seriesId, deletedAt: null },
-  });
+  // Shift each affected occurrence by the days the edited one moved.
+  const seriesEvents = await prisma.event.findMany({ where: fromThisOn });
 
   const updated = await prisma.$transaction(
     seriesEvents.map((event) => {
@@ -241,7 +239,7 @@ function toPlannerEvent(event: {
   seriesId: string | null;
   planId: string | null;
   recurrenceRule?: string | null;
-  // Only the series root stores the rule, so occurrences read it via the series relation.
+  // Only the root stores the rule; occurrences read it through the series relation.
   series?: { recurrenceRule: string | null } | null;
 }): PlannerEvent {
   return {

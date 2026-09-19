@@ -168,17 +168,17 @@ describe('updateEvent', () => {
     expect(result.events[0].title).toBe('Evening Run');
   });
 
-  it('treats ALL_EVENTS on a non-recurring event as a single-row update', async () => {
+  it('treats THIS_AND_FUTURE_EVENTS on a non-recurring event as a single-row update', async () => {
     prismaEvent.findFirst.mockResolvedValue(mockRow());
     prismaEvent.update.mockResolvedValue(mockRow());
 
-    await updateEvent('user-1', 'event-1', { ...baseUpdateInput, scope: 'ALL_EVENTS' });
+    await updateEvent('user-1', 'event-1', { ...baseUpdateInput, scope: 'THIS_AND_FUTURE_EVENTS' });
 
     expect(prismaEvent.update).toHaveBeenCalledTimes(1);
     expect(prismaTransaction).not.toHaveBeenCalled();
   });
 
-  it('shifts every occurrence in the series by the same delta when scope is ALL_EVENTS', async () => {
+  it('shifts this and later occurrences by the same delta when scope is THIS_AND_FUTURE_EVENTS', async () => {
     const root = mockRow({
       id: 'root-1',
       seriesId: 'root-1',
@@ -210,9 +210,12 @@ describe('updateEvent', () => {
       ...baseUpdateInput,
       startDate: '2026-09-16',
       endDate: '2026-09-16',
-      scope: 'ALL_EVENTS',
+      scope: 'THIS_AND_FUTURE_EVENTS',
     });
 
+    expect(prismaEvent.findMany).toHaveBeenCalledWith({
+      where: { seriesId: 'root-1', deletedAt: null, startDate: { gte: root.startDate } },
+    });
     expect(prismaTransaction).toHaveBeenCalledTimes(1);
     expect(result.events).toHaveLength(2);
 
@@ -247,12 +250,17 @@ describe('updateEvent', () => {
     it('regenerates the occurrences from the new rule, keeping the root row', async () => {
       const result = await updateEvent('user-1', 'root-1', {
         ...baseUpdateInput,
-        scope: 'ALL_EVENTS',
+        scope: 'THIS_AND_FUTURE_EVENTS',
         recurrenceRule: 'FREQ=DAILY;COUNT=3',
       });
 
       expect(prismaEvent.updateMany).toHaveBeenCalledWith({
-        where: { seriesId: 'root-1', id: { not: 'root-1' }, deletedAt: null },
+        where: {
+          seriesId: 'root-1',
+          deletedAt: null,
+          startDate: { gte: root.startDate },
+          id: { notIn: ['root-1', 'root-1'] },
+        },
         data: { deletedAt: expect.any(Date) },
       });
       const { data: created } = prismaEvent.createMany.mock.calls[0][0] as {
@@ -272,7 +280,7 @@ describe('updateEvent', () => {
     it('turns the series into a single event when the rule is null', async () => {
       const result = await updateEvent('user-1', 'root-1', {
         ...baseUpdateInput,
-        scope: 'ALL_EVENTS',
+        scope: 'THIS_AND_FUTURE_EVENTS',
         recurrenceRule: null,
       });
 
@@ -296,6 +304,92 @@ describe('updateEvent', () => {
 
       expect(prismaTransaction).not.toHaveBeenCalled();
       expect(prismaEvent.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('anchors on the edited occurrence and leaves earlier ones alone', async () => {
+      const edited = mockRow({
+        id: 'occ-3',
+        seriesId: 'root-1',
+        startDate: new Date('2026-09-29T00:00:00Z'),
+        endDate: new Date('2026-09-29T00:00:00Z'),
+      });
+      prismaEvent.findFirst.mockResolvedValue(edited);
+      prismaEvent.update.mockImplementation(
+        ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => ({
+          ...edited,
+          id: where.id,
+          ...data,
+        }),
+      );
+
+      const result = await updateEvent('user-1', 'occ-3', {
+        ...baseUpdateInput,
+        startDate: '2026-09-29',
+        endDate: '2026-09-29',
+        scope: 'THIS_AND_FUTURE_EVENTS',
+        recurrenceRule: 'FREQ=DAILY;COUNT=2',
+      });
+
+      expect(prismaEvent.updateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({
+          seriesId: 'root-1',
+          startDate: { gte: edited.startDate },
+          id: { notIn: ['root-1', 'occ-3'] },
+        }),
+        data: { deletedAt: expect.any(Date) },
+      });
+      const { data: created } = prismaEvent.createMany.mock.calls[0][0] as {
+        data: { startDate: Date }[];
+      };
+      expect(created.every((row) => row.startDate > edited.startDate)).toBe(true);
+      expect(result.events[0]).toMatchObject({ id: 'occ-3', startDate: '2026-09-29' });
+      // the stored rule lives on the root so the edit form can read it back
+      expect(prismaEvent.update).toHaveBeenCalledWith({
+        where: { id: 'root-1' },
+        data: { recurrenceRule: 'FREQ=DAILY;COUNT=2' },
+      });
+    });
+
+    it('detaches only the edited occurrence when a later one is set to not repeat', async () => {
+      const edited = mockRow({ id: 'occ-3', seriesId: 'root-1' });
+      prismaEvent.findFirst.mockResolvedValue(edited);
+      prismaEvent.update.mockImplementation(
+        ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => ({
+          ...edited,
+          id: where.id,
+          ...data,
+        }),
+      );
+
+      const result = await updateEvent('user-1', 'occ-3', {
+        ...baseUpdateInput,
+        scope: 'THIS_AND_FUTURE_EVENTS',
+        recurrenceRule: null,
+      });
+
+      expect(prismaEvent.update).toHaveBeenCalledTimes(1);
+      expect(prismaEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'occ-3' },
+          data: expect.objectContaining({ seriesId: null }),
+        }),
+      );
+      expect(result.events).toHaveLength(1);
+    });
+
+    it('never soft-deletes other one-off events when a one-off becomes a series', async () => {
+      const oneOff = mockRow({ id: 'solo-1' });
+      prismaEvent.findFirst.mockResolvedValue(oneOff);
+
+      await updateEvent('user-1', 'solo-1', {
+        ...baseUpdateInput,
+        recurrenceRule: 'FREQ=WEEKLY;COUNT=3',
+      });
+
+      expect(prismaEvent.updateMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({ seriesId: 'solo-1' }),
+        data: { deletedAt: expect.any(Date) },
+      });
     });
 
     it('turns a one-off event into a series', async () => {

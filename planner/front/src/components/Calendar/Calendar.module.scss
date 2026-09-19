@@ -66,6 +66,10 @@
     height: 100%;
     padding: 0;
   }
+
+  :global(.fc .fc-daygrid-body-natural .fc-daygrid-day-events) {
+    margin-bottom: var(--space-1);
+  }
 }
 
 .toolbar {
@@ -135,10 +139,14 @@
 
 .dayHeaderContent {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-2) 0;
+
+  @media (max-width: 30rem) {
+    flex-direction: column;
+  }
 }
 
 .weekdayLabel {

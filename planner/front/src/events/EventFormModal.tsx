@@ -12,6 +12,7 @@ import type { EventEditScope, SportType } from '@common/planner-types';
 import { TypographySmall } from '@common/styles/Typography';
 
 import styles from './EventFormModal.module.scss';
+import { browserTimeZone } from './events-service';
 
 const SPORT_TYPE_OPTIONS: { value: SportType; label: string }[] = [
   { value: 'RUNNING', label: '🏃 Running' },
@@ -176,7 +177,7 @@ export function toEventFields(form: EventFormValues) {
     endDate: form.endDate,
     startTime: form.allDay || !form.startTime ? null : `${form.startTime}:00`,
     endTime: form.allDay || !form.endTime ? null : `${form.endTime}:00`,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: browserTimeZone(),
     sportType: form.sportType as SportType,
     description: form.description.trim() || null,
     location: form.location.trim() || null,
@@ -211,8 +212,8 @@ export type EventFormModalProps = {
   submitLabel: string;
   initialValues: EventFormValues;
   showRepeat?: boolean;
-  // Lets the user choose between the current occurrence and the whole series;
-  // the repeat controls then only apply (and show) when the whole series is picked.
+  // Lets the user choose between the current occurrence and this one plus later ones;
+  // the repeat controls then only apply (and show) when this-and-future is picked.
   showScope?: boolean;
   onSubmit: (values: EventFormValues) => Promise<void>;
   onClose: () => void;
@@ -234,7 +235,7 @@ export function EventFormModal({
   const rowClass = [styles.row, form.allDay ? styles['-single'] : undefined]
     .filter(Boolean)
     .join(' ');
-  const repeatVisible = showRepeat && (!showScope || form.scope === 'ALL_EVENTS');
+  const repeatVisible = showRepeat && (!showScope || form.scope === 'THIS_AND_FUTURE_EVENTS');
 
   function setField<K extends keyof EventFormValues>(field: K, value: EventFormValues[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -357,8 +358,10 @@ export function EventFormModal({
             <FieldRow icon="🔗" centered>
               <Checkbox
                 label="Update this and future events"
-                checked={form.scope === 'ALL_EVENTS'}
-                onChange={(checked) => setField('scope', checked ? 'ALL_EVENTS' : 'THIS_EVENT')}
+                checked={form.scope === 'THIS_AND_FUTURE_EVENTS'}
+                onChange={(checked) =>
+                  setField('scope', checked ? 'THIS_AND_FUTURE_EVENTS' : 'THIS_EVENT')
+                }
               />
             </FieldRow>
           ) : null}

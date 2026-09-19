@@ -25,7 +25,7 @@ export type CreateEventResult = {
   truncated: boolean;
 };
 
-export type EventEditScope = 'THIS_EVENT' | 'ALL_EVENTS';
+export type EventEditScope = 'THIS_EVENT' | 'THIS_AND_FUTURE_EVENTS';
 
 export type UpdateEventInput = {
   title: string;

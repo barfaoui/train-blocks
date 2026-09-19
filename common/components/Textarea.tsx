@@ -1,20 +1,14 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
+import { type InputWithHelperProps } from './input-props';
 import styles from './Textarea.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
-export type TextareaProps = {
-  label?: string | null;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  helperText?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<
-  ComponentPropsWithoutRef<'textarea'>,
-  'id' | 'value' | 'onChange' | 'className' | 'required'
->;
+export type TextareaProps = InputWithHelperProps &
+  Omit<
+    ComponentPropsWithoutRef<'textarea'>,
+    'id' | 'value' | 'onChange' | 'className' | 'required'
+  >;
 
 export function Textarea({
   label,
