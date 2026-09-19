@@ -46,3 +46,5 @@ export type UpdateEventResult = {
   events: PlannerEvent[];
   truncated: boolean;
 };
+
+export type EventDeleteScope = EventEditScope | 'ALL_EVENTS';

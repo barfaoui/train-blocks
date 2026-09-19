@@ -12,6 +12,7 @@ import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
 import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar';
 import { CreateEventModal } from '../events/CreateEventModal';
+import { DeleteEventModal } from '../events/DeleteEventModal';
 import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
 import { browserTimeZone, updateEvent } from '../events/events-service';
@@ -33,6 +34,7 @@ export function HomePage() {
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState<PlannerEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [moveError, setMoveError] = useState<string | null>(null);
 
@@ -111,6 +113,20 @@ export function HomePage() {
           onEdit={() => {
             setEditingEvent(selectedEvent.event);
             setSelectedEvent(null);
+          }}
+          onDelete={() => {
+            setDeletingEvent(selectedEvent.event);
+            setSelectedEvent(null);
+          }}
+        />
+      ) : null}
+      {deletingEvent ? (
+        <DeleteEventModal
+          event={deletingEvent}
+          onClose={() => setDeletingEvent(null)}
+          onDeleted={() => {
+            setDeletingEvent(null);
+            setReloadKey((key) => key + 1);
           }}
         />
       ) : null}

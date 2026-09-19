@@ -22,6 +22,7 @@ export type EventDetailsModalProps = {
   anchor: DOMRect;
   onClose: () => void;
   onEdit: () => void;
+  onDelete: () => void;
 };
 
 function toLocalDate(dateStr: string): Date {
@@ -64,7 +65,13 @@ function isRecurring(event: PlannerEvent): boolean {
   return event.seriesId !== null;
 }
 
-export function EventDetailsModal({ event, anchor, onClose, onEdit }: EventDetailsModalProps) {
+export function EventDetailsModal({
+  event,
+  anchor,
+  onClose,
+  onEdit,
+  onDelete,
+}: EventDetailsModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<CSSProperties>({ visibility: 'hidden' });
 
@@ -147,7 +154,11 @@ export function EventDetailsModal({ event, anchor, onClose, onEdit }: EventDetai
         <button type="button" className={styles.actionButton}>
           <TypographySmall>📄 Duplicate</TypographySmall>
         </button>
-        <button type="button" className={[styles.actionButton, styles['-danger']].join(' ')}>
+        <button
+          type="button"
+          className={[styles.actionButton, styles['-danger']].join(' ')}
+          onClick={onDelete}
+        >
           <TypographySmall>🗑️ Delete</TypographySmall>
         </button>
       </div>

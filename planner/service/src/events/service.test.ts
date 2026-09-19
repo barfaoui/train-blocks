@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createEvent, updateEvent } from './service';
+import { createEvent, deleteEvent, updateEvent } from './service';
 import { Prisma } from '../../generated/client';
 import { prisma } from '../data/prisma';
 import { EventNotFoundError, PlanNotFoundError } from '../data/types/errors';
@@ -411,6 +411,67 @@ describe('updateEvent', () => {
         }),
       );
       expect(result.events.length).toBeGreaterThan(1);
+    });
+  });
+});
+
+describe('deleteEvent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws EventNotFoundError when the event does not exist or is not owned by the user', async () => {
+    prismaEvent.findFirst.mockResolvedValue(null);
+
+    await expect(deleteEvent('user-1', 'missing-id', 'THIS_EVENT')).rejects.toBeInstanceOf(
+      EventNotFoundError,
+    );
+    expect(prismaEvent.update).not.toHaveBeenCalled();
+    expect(prismaEvent.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('soft-deletes only the targeted row when scope is THIS_EVENT', async () => {
+    prismaEvent.findFirst.mockResolvedValue(mockRow({ seriesId: 'series-1' }));
+
+    await deleteEvent('user-1', 'event-1', 'THIS_EVENT');
+
+    expect(prismaEvent.update).toHaveBeenCalledWith({
+      where: { id: 'event-1' },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(prismaEvent.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('deletes just the event when a non-recurring event is deleted with a series scope', async () => {
+    prismaEvent.findFirst.mockResolvedValue(mockRow());
+
+    await deleteEvent('user-1', 'event-1', 'ALL_EVENTS');
+
+    expect(prismaEvent.update).toHaveBeenCalledTimes(1);
+    expect(prismaEvent.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('deletes this and later occurrences of the series for THIS_AND_FUTURE_EVENTS', async () => {
+    const startDate = new Date('2026-09-22T00:00:00Z');
+    prismaEvent.findFirst.mockResolvedValue(mockRow({ seriesId: 'series-1', startDate }));
+
+    await deleteEvent('user-1', 'event-1', 'THIS_AND_FUTURE_EVENTS');
+
+    expect(prismaEvent.updateMany).toHaveBeenCalledWith({
+      where: { seriesId: 'series-1', deletedAt: null, startDate: { gte: startDate } },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(prismaEvent.update).not.toHaveBeenCalled();
+  });
+
+  it('deletes every occurrence of the series for ALL_EVENTS, including earlier ones', async () => {
+    prismaEvent.findFirst.mockResolvedValue(mockRow({ seriesId: 'series-1' }));
+
+    await deleteEvent('user-1', 'event-1', 'ALL_EVENTS');
+
+    expect(prismaEvent.updateMany).toHaveBeenCalledWith({
+      where: { seriesId: 'series-1', deletedAt: null },
+      data: { deletedAt: expect.any(Date) },
     });
   });
 });

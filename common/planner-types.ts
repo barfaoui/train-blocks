@@ -53,6 +53,8 @@ export type UpdateEventBody = {
   scope: EventEditScope;
 };
 
+export type EventDeleteScope = EventEditScope | 'ALL_EVENTS';
+
 export type UpdateEventResponse = {
   events: PlannerEvent[];
   truncated: boolean;
