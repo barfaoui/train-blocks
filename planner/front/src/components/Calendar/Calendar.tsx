@@ -17,8 +17,8 @@ import type { PlannerEvent } from '@common/planner-types';
 
 import {
   type CalendarViewSlug,
-  DEFAULT_VIEW_SLUG,
   VIEW_OPTIONS,
+  defaultViewSlug,
   fcViewNameFor,
   persistView,
   readStoredView,
@@ -80,7 +80,7 @@ function maxAllDayEventsPerDay(events: PlannerEvent[], range: DateRange | null):
 export function Calendar({ onCreateRequested, onEventClick, reloadKey }: CalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
   const [viewSlug, setViewSlug] = useState<CalendarViewSlug>(
-    () => readStoredView() ?? DEFAULT_VIEW_SLUG,
+    () => readStoredView() ?? defaultViewSlug(),
   );
   const [range, setRange] = useState<DateRange | null>(null);
   const [title, setTitle] = useState('');

@@ -4,7 +4,7 @@ import styles from './DateTimeInput.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
 export type DateTimeInputProps = {
-  label: string;
+  label?: string | null;
   type: 'date' | 'time';
   value: string;
   onChange: (value: string) => void;
@@ -32,14 +32,16 @@ export function DateTimeInput({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       <input
         {...inputProps}
         id={id}

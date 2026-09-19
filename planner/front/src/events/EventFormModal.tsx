@@ -61,7 +61,7 @@ function intervalUnitLabel(frequency: RepeatFrequency, interval: number): string
 
 export type EventFormValues = {
   title: string;
-  sportType: SportType;
+  sportType: SportType | '';
   allDay: boolean;
   startDate: string;
   endDate: string;
@@ -76,12 +76,12 @@ export type EventFormValues = {
 };
 
 type FieldErrors = Partial<
-  Record<'title' | 'startDate' | 'endDate' | 'endTime' | 'repeatInterval', string>
+  Record<'title' | 'sportType' | 'startDate' | 'endDate' | 'endTime' | 'repeatInterval', string>
 >;
 
 export const EMPTY_FORM_VALUES: EventFormValues = {
   title: '',
-  sportType: 'RUNNING',
+  sportType: '',
   allDay: true,
   startDate: '',
   endDate: '',
@@ -100,6 +100,9 @@ function validate(form: EventFormValues, showRepeat: boolean): FieldErrors {
 
   if (!form.title.trim()) {
     errors.title = 'Title is required';
+  }
+  if (!form.sportType) {
+    errors.sportType = 'Sport is required';
   }
   if (!form.startDate) {
     errors.startDate = 'Start date is required';
@@ -174,7 +177,7 @@ export function toEventFields(form: EventFormValues) {
     startTime: form.allDay || !form.startTime ? null : `${form.startTime}:00`,
     endTime: form.allDay || !form.endTime ? null : `${form.endTime}:00`,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    sportType: form.sportType,
+    sportType: form.sportType as SportType,
     description: form.description.trim() || null,
     location: form.location.trim() || null,
   };
@@ -205,6 +208,9 @@ export function EventFormModal({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const rowClass = [styles.row, form.allDay ? styles['-single'] : undefined]
+    .filter(Boolean)
+    .join(' ');
   const repeatVisible = showRepeat && (!showScope || form.scope === 'ALL_EVENTS');
 
   function setField<K extends keyof EventFormValues>(field: K, value: EventFormValues[K]) {
@@ -246,7 +252,8 @@ export function EventFormModal({
       <Modal title={title} onClose={onClose}>
         <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
           <TextInput
-            label="✏️ Title"
+            aria-label="Title"
+            placeholder="✏️ Title *"
             required
             value={form.title}
             error={errors.title}
@@ -254,55 +261,65 @@ export function EventFormModal({
           />
 
           <Select
-            label="🏃 Sport"
+            aria-label="Sport"
+            placeholder="🏃 Sport *"
             required
             value={form.sportType}
+            error={errors.sportType}
             options={SPORT_TYPE_OPTIONS}
             onChange={(value) => setField('sportType', value as SportType)}
           />
 
-          <Checkbox
-            label="🗓️ All day"
-            checked={form.allDay}
-            onChange={(checked) => setField('allDay', checked)}
-          />
-
-          <div className={styles.row}>
-            <DateTimeInput
-              label="📅 Start date"
-              type="date"
-              required
-              value={form.startDate}
-              error={errors.startDate}
-              onChange={(value) => setField('startDate', value)}
+          <div className={styles.dateTimeContainer}>
+            <Checkbox
+              label="🗓️ All day"
+              checked={form.allDay}
+              onChange={(checked) => setField('allDay', checked)}
             />
-            <DateTimeInput
-              label="📆 End date"
-              type="date"
-              required
-              value={form.endDate}
-              error={errors.endDate}
-              onChange={(value) => setField('endDate', value)}
-            />
-          </div>
 
-          {!form.allDay ? (
-            <div className={styles.row}>
+            <div className={rowClass}>
               <DateTimeInput
-                label="⏰ Start time"
-                type="time"
-                value={form.startTime}
-                onChange={(value) => setField('startTime', value)}
+                aria-label="Start date"
+                title="Start date"
+                type="date"
+                required
+                value={form.startDate}
+                error={errors.startDate}
+                onChange={(value) => setField('startDate', value)}
               />
-              <DateTimeInput
-                label="⏱️ End time"
-                type="time"
-                value={form.endTime}
-                error={errors.endTime}
-                onChange={(value) => setField('endTime', value)}
-              />
+              {!form.allDay ? (
+                <DateTimeInput
+                  aria-label="Start time"
+                  title="Start time"
+                  type="time"
+                  value={form.startTime}
+                  onChange={(value) => setField('startTime', value)}
+                />
+              ) : null}
             </div>
-          ) : null}
+
+            <div className={rowClass}>
+              <DateTimeInput
+                aria-label="End date"
+                title="End date"
+                type="date"
+                required
+                value={form.endDate}
+                error={errors.endDate}
+                onChange={(value) => setField('endDate', value)}
+              />
+              {!form.allDay ? (
+                <DateTimeInput
+                  aria-label="End time"
+                  title="End time"
+                  type="time"
+                  value={form.endTime}
+                  error={errors.endTime}
+                  onChange={(value) => setField('endTime', value)}
+                />
+              ) : null}
+            </div>
+          </div>
 
           {showScope ? (
             <Checkbox
@@ -315,7 +332,7 @@ export function EventFormModal({
           {repeatVisible ? (
             <>
               <Select
-                label="🔁 Repeat"
+                aria-label="Repeat"
                 value={form.repeatFrequency}
                 options={REPEAT_FREQUENCY_OPTIONS}
                 onChange={(value) => setField('repeatFrequency', value as RepeatFrequency)}
@@ -323,8 +340,9 @@ export function EventFormModal({
 
               {form.repeatFrequency ? (
                 <div className={styles.intervalRow}>
+                  <TypographySmall className={styles.intervalUnit}>🔢 Every</TypographySmall>
                   <TextInput
-                    label="🔢 Every"
+                    aria-label="Every"
                     type="number"
                     min="1"
                     className={styles.intervalNumber}
@@ -365,13 +383,15 @@ export function EventFormModal({
           ) : null}
 
           <TextInput
-            label="📍 Location"
+            aria-label="Location"
+            placeholder="📍 Location"
             value={form.location}
             onChange={(value) => setField('location', value)}
           />
 
           <Textarea
-            label="📝 Description"
+            aria-label="Description"
+            placeholder="📝 Description"
             value={form.description}
             onChange={(value) => setField('description', value)}
           />

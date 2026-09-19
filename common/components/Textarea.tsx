@@ -4,7 +4,7 @@ import styles from './Textarea.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
 export type TextareaProps = {
-  label: string;
+  label?: string | null;
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -37,14 +37,16 @@ export function Textarea({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       <textarea
         {...textareaProps}
         id={id}

@@ -4,12 +4,22 @@
   gap: var(--space-4);
 }
 
+.dateTimeContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
+  gap: var(--space-2);
 
   @media (max-width: 30rem) {
+    grid-template-columns: 1fr;
+  }
+
+  &.-single {
     grid-template-columns: 1fr;
   }
 }

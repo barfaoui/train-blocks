@@ -9,10 +9,11 @@ export type SelectOption = {
 };
 
 export type SelectProps = {
-  label: string;
+  label?: string | null;
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
+  placeholder?: string;
   error?: string;
   helperText?: string;
   required?: boolean;
@@ -27,6 +28,7 @@ export function Select({
   value,
   onChange,
   options,
+  placeholder,
   error,
   helperText,
   required,
@@ -43,19 +45,25 @@ export function Select({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       <select
         {...selectProps}
         id={id}
         value={value}
-        className={[styles.field, invalid ? styles['-invalid'] : undefined]
+        className={[
+          styles.field,
+          placeholder && value === '' ? styles['-placeholder'] : undefined,
+          invalid ? styles['-invalid'] : undefined,
+        ]
           .filter(Boolean)
           .join(' ')}
         aria-invalid={invalid}
@@ -63,6 +71,11 @@ export function Select({
         aria-describedby={describedBy || undefined}
         onChange={(event) => onChange(event.target.value)}
       >
+        {placeholder ? (
+          <option value="" disabled hidden>
+            {placeholder}
+          </option>
+        ) : null}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
