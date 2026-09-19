@@ -89,7 +89,6 @@ export function HomePage() {
         onCreateRequested={(date, time) => setCreateRequest({ date, time })}
         onEventClick={(event, anchor) => setSelectedEvent({ event, anchor })}
         onEventMove={moveEvent}
-        // The edit form lets the user pick whether the change applies to the whole series.
         onRecurringEventMove={(event, changes) => setEditingEvent({ ...event, ...changes })}
         reloadKey={reloadKey}
       />

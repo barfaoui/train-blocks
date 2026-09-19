@@ -32,8 +32,6 @@ type ParsedEventFields = {
   location: string | null;
 };
 
-// Shared by create and update: both accept the same core event fields and
-// apply the same validation rules to them.
 function parseEventFields(
   body: Record<string, unknown>,
 ): { error: string } | { value: ParsedEventFields } {
