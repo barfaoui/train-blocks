@@ -69,7 +69,7 @@ export const SPORT_TYPES = [
   // Precision
   'GOLF',
   'BOWLING',
-  'BILLARDS',
+  'BILLIARDS',
   'ARCHERY',
   'SHOOTING',
   'FISHING',

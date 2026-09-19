@@ -82,7 +82,7 @@ enum SportType {
   // Precision
   GOLF
   BOWLING
-  BILLARDS
+  BILLIARDS
   ARCHERY
   SHOOTING
   FISHING

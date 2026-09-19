@@ -56,7 +56,7 @@ ALTER TYPE "planner"."SportType" ADD VALUE 'HOCKEY';
 ALTER TYPE "planner"."SportType" ADD VALUE 'FRISBEE';
 ALTER TYPE "planner"."SportType" ADD VALUE 'GOLF';
 ALTER TYPE "planner"."SportType" ADD VALUE 'BOWLING';
-ALTER TYPE "planner"."SportType" ADD VALUE 'BILLARDS';
+ALTER TYPE "planner"."SportType" ADD VALUE 'BILLIARDS';
 ALTER TYPE "planner"."SportType" ADD VALUE 'ARCHERY';
 ALTER TYPE "planner"."SportType" ADD VALUE 'SHOOTING';
 ALTER TYPE "planner"."SportType" ADD VALUE 'FISHING';
