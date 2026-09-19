@@ -7,6 +7,7 @@ import BaseballIcon from '../../assets/sports/baseball.svg';
 import BasketballIcon from '../../assets/sports/basketball.svg';
 import BoxingIcon from '../../assets/sports/boxing.svg';
 import ClimbingIcon from '../../assets/sports/climbing.svg';
+import CrossCountrySkiingIcon from '../../assets/sports/cross-country-skiing.svg';
 import CrossfitIcon from '../../assets/sports/crossfit.svg';
 import CyclingIcon from '../../assets/sports/cycling.svg';
 import DanceIcon from '../../assets/sports/dance.svg';
@@ -73,6 +74,7 @@ export const SPORT_TYPE_INFO: Record<SportType, SportTypeInfo> = {
   STRETCHING: { label: 'Stretching', icon: StretchingIcon },
   JUMP_ROPE: { label: 'Jump rope', icon: JumpRopeIcon },
   CLIMBING: { label: 'Climbing', icon: ClimbingIcon },
+  CROSS_COUNTRY_SKIING: { label: 'Cross country skiing', icon: CrossCountrySkiingIcon },
   SKIING: { label: 'Skiing', icon: SkiingIcon },
   SNOWBOARDING: { label: 'Snowboarding', icon: SnowboardingIcon },
   ICE_SKATING: { label: 'Ice skating', icon: IceSkatingIcon },

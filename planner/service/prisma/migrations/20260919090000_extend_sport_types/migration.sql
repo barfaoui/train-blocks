@@ -17,6 +17,7 @@ ALTER TYPE "planner"."SportType" ADD VALUE 'STRETCHING';
 ALTER TYPE "planner"."SportType" ADD VALUE 'JUMP_ROPE';
 ALTER TYPE "planner"."SportType" ADD VALUE 'CLIMBING';
 ALTER TYPE "planner"."SportType" ADD VALUE 'SKIING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'CROSS COUNTRY SKIING';
 ALTER TYPE "planner"."SportType" ADD VALUE 'SNOWBOARDING';
 ALTER TYPE "planner"."SportType" ADD VALUE 'ICE_SKATING';
 ALTER TYPE "planner"."SportType" ADD VALUE 'ROLLER_SKATING';

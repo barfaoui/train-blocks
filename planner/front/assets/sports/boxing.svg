@@ -1,17 +1,10 @@
-<svg
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
-  class="icon icon-tabler icons-tabler-outline icon-tabler-help-circle"
->
-  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-  <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" />
-  <path d="M12 16v.01" />
-  <path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483" />
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_18003_4365)">
+<path d="M5.63168 13.1044C5.63168 13.1044 6.18072 15.1534 9.21181 16.9034C12.2429 18.6534 14.2919 18.1044 14.2919 18.1044M5.63168 13.1044C6.05145 2.37707 12.4485 0.296184 16.3457 2.54622C20.2428 4.79626 20.5416 7.27817 19.7917 8.57727C19.0419 9.87638 17.2428 9.99241 17.7917 12.0414M5.63168 13.1044L3.63155 16.5678C3.07926 17.5244 3.40708 18.7475 4.36366 19.2998L9.55981 22.2998C10.5164 22.8521 11.7396 22.5243 12.2919 21.5677L14.2919 18.1044M14.2919 18.1044C16.4078 16.4392 19.823 15.5235 20.823 13.7915C21.823 12.0594 21.2739 10.0104 19.2917 9.4433" stroke="#26272B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_18003_4365">
+<rect width="24" height="24" fill="white"/>
+</clipPath>
+</defs>
 </svg>
