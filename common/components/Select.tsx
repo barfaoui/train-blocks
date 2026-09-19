@@ -355,24 +355,29 @@ export function Select({
               style={{ ...position, visibility: position ? 'visible' : 'hidden' }}
             >
               {searchable ? (
-                <input
-                  ref={searchRef}
-                  type="text"
-                  className={styles.search}
-                  value={query}
-                  placeholder="Search…"
-                  autoComplete="off"
-                  role="searchbox"
-                  aria-label="Search options"
-                  aria-controls={listId}
-                  aria-activedescendant={
-                    activeIndex >= 0 && visibleOptions[activeIndex]
-                      ? `${id}-option-${activeIndex}`
-                      : undefined
-                  }
-                  onChange={(event) => updateQuery(event.target.value)}
-                  onKeyDown={(event) => handleKeyDown(event, true)}
-                />
+                <div className={styles.searchBox}>
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    className={styles.search}
+                    value={query}
+                    placeholder="Search…"
+                    autoComplete="off"
+                    role="searchbox"
+                    aria-label="Search options"
+                    aria-controls={listId}
+                    aria-activedescendant={
+                      activeIndex >= 0 && visibleOptions[activeIndex]
+                        ? `${id}-option-${activeIndex}`
+                        : undefined
+                    }
+                    onChange={(event) => updateQuery(event.target.value)}
+                    onKeyDown={(event) => handleKeyDown(event, true)}
+                  />
+                  <span className={styles.count} aria-live="polite">
+                    {visibleOptions.length}
+                  </span>
+                </div>
               ) : null}
               <ul
                 ref={listRef}

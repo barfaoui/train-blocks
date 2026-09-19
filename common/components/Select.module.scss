@@ -81,10 +81,15 @@
   box-shadow: var(--shadow-lg);
 }
 
-.search {
+.searchBox {
+  position: relative;
   flex: none;
   margin: var(--space-1);
-  padding: var(--space-2) var(--space-3);
+}
+
+.search {
+  width: 100%;
+  padding: var(--space-2) 3rem var(--space-2) var(--space-3);
   color: var(--color-text);
   font: inherit;
   background: var(--color-bg);
@@ -95,6 +100,16 @@
     outline: 2px solid var(--color-primary);
     outline-offset: -1px;
   }
+}
+
+.count {
+  position: absolute;
+  top: 50%;
+  right: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 .list {
