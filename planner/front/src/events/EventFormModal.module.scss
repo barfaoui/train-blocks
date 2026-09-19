@@ -10,6 +10,38 @@
   gap: var(--space-2);
 }
 
+.fieldRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+
+  &.-centered {
+    align-items: center;
+  }
+}
+
+// Height matches a single-line input so the icon lines up with the first control.
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-5);
+  height: var(--space-7);
+
+  .-centered > & {
+    height: auto;
+  }
+}
+
+.control {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -36,6 +68,10 @@
 
 .intervalUnit {
   padding-bottom: var(--space-2);
+}
+
+.allDay {
+  padding-left: calc(var(--space-5) + var(--space-2));
 }
 
 .weekdays {

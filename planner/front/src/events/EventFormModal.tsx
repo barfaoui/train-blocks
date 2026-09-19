@@ -1,4 +1,4 @@
-import { type SubmitEvent, useState } from 'react';
+import { type ReactNode, type SubmitEvent, useState } from 'react';
 
 import { Button } from '@common/components/Button';
 import { Checkbox } from '@common/components/Checkbox';
@@ -183,6 +183,29 @@ export function toEventFields(form: EventFormValues) {
   };
 }
 
+function FieldRow({
+  icon,
+  centered,
+  children,
+}: {
+  icon: string;
+  centered?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={[styles.fieldRow, centered ? styles['-centered'] : undefined]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <span className={styles.icon} aria-hidden="true">
+        {icon}
+      </span>
+      <div className={styles.control}>{children}</div>
+    </div>
+  );
+}
+
 export type EventFormModalProps = {
   title: string;
   submitLabel: string;
@@ -251,86 +274,97 @@ export function EventFormModal({
     <>
       <Modal title={title} onClose={onClose}>
         <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
-          <TextInput
-            aria-label="Title"
-            placeholder="✏️ Title *"
-            required
-            value={form.title}
-            error={errors.title}
-            onChange={(value) => setField('title', value)}
-          />
+          <FieldRow icon="✏️">
+            <TextInput
+              aria-label="Title"
+              placeholder="Title *"
+              required
+              value={form.title}
+              error={errors.title}
+              onChange={(value) => setField('title', value)}
+            />
+          </FieldRow>
 
-          <Select
-            aria-label="Sport"
-            placeholder="🏃 Sport *"
-            required
-            value={form.sportType}
-            error={errors.sportType}
-            options={SPORT_TYPE_OPTIONS}
-            onChange={(value) => setField('sportType', value as SportType)}
-          />
+          <FieldRow icon="🏃">
+            <Select
+              aria-label="Sport"
+              placeholder="Sport *"
+              required
+              value={form.sportType}
+              error={errors.sportType}
+              options={SPORT_TYPE_OPTIONS}
+              onChange={(value) => setField('sportType', value as SportType)}
+            />
+          </FieldRow>
 
           <div className={styles.dateTimeContainer}>
             <Checkbox
-              label="🗓️ All day"
+              className={styles.allDay}
+              label="🕒 All day"
               checked={form.allDay}
               onChange={(checked) => setField('allDay', checked)}
             />
 
-            <div className={rowClass}>
-              <DateTimeInput
-                aria-label="Start date"
-                title="Start date"
-                type="date"
-                required
-                value={form.startDate}
-                error={errors.startDate}
-                onChange={(value) => setField('startDate', value)}
-              />
-              {!form.allDay ? (
+            <FieldRow icon="🕒">
+              <div className={rowClass}>
                 <DateTimeInput
-                  aria-label="Start time"
-                  title="Start time"
-                  type="time"
-                  value={form.startTime}
-                  onChange={(value) => setField('startTime', value)}
+                  aria-label="Start date"
+                  title="Start date"
+                  type="date"
+                  required
+                  value={form.startDate}
+                  error={errors.startDate}
+                  onChange={(value) => setField('startDate', value)}
                 />
-              ) : null}
-            </div>
+                {!form.allDay ? (
+                  <DateTimeInput
+                    aria-label="Start time"
+                    title="Start time"
+                    type="time"
+                    value={form.startTime}
+                    onChange={(value) => setField('startTime', value)}
+                  />
+                ) : null}
+              </div>
+            </FieldRow>
 
-            <div className={rowClass}>
-              <DateTimeInput
-                aria-label="End date"
-                title="End date"
-                type="date"
-                required
-                value={form.endDate}
-                error={errors.endDate}
-                onChange={(value) => setField('endDate', value)}
-              />
-              {!form.allDay ? (
+            <FieldRow icon="🕒">
+              <div className={rowClass}>
                 <DateTimeInput
-                  aria-label="End time"
-                  title="End time"
-                  type="time"
-                  value={form.endTime}
-                  error={errors.endTime}
-                  onChange={(value) => setField('endTime', value)}
+                  aria-label="End date"
+                  title="End date"
+                  type="date"
+                  required
+                  value={form.endDate}
+                  error={errors.endDate}
+                  onChange={(value) => setField('endDate', value)}
                 />
-              ) : null}
-            </div>
+                {!form.allDay ? (
+                  <DateTimeInput
+                    aria-label="End time"
+                    title="End time"
+                    type="time"
+                    value={form.endTime}
+                    error={errors.endTime}
+                    onChange={(value) => setField('endTime', value)}
+                  />
+                ) : null}
+              </div>
+            </FieldRow>
           </div>
 
           {showScope ? (
-            <Checkbox
-              label="🔁 Update this and future events"
-              checked={form.scope === 'ALL_EVENTS'}
-              onChange={(checked) => setField('scope', checked ? 'ALL_EVENTS' : 'THIS_EVENT')}
-            />
+            <FieldRow icon="🔗" centered>
+              <Checkbox
+                label="Update this and future events"
+                checked={form.scope === 'ALL_EVENTS'}
+                onChange={(checked) => setField('scope', checked ? 'ALL_EVENTS' : 'THIS_EVENT')}
+              />
+            </FieldRow>
           ) : null}
 
           {repeatVisible ? (
-            <>
+            <FieldRow icon="🔁">
               <Select
                 aria-label="Repeat"
                 value={form.repeatFrequency}
@@ -340,7 +374,7 @@ export function EventFormModal({
 
               {form.repeatFrequency ? (
                 <div className={styles.intervalRow}>
-                  <TypographySmall className={styles.intervalUnit}>🔢 Every</TypographySmall>
+                  <TypographySmall className={styles.intervalUnit}>Every</TypographySmall>
                   <TextInput
                     aria-label="Every"
                     type="number"
@@ -379,26 +413,30 @@ export function EventFormModal({
                   })}
                 </div>
               ) : null}
-            </>
+            </FieldRow>
           ) : null}
 
-          <TextInput
-            aria-label="Location"
-            placeholder="📍 Location"
-            value={form.location}
-            onChange={(value) => setField('location', value)}
-          />
+          <FieldRow icon="📍">
+            <TextInput
+              aria-label="Location"
+              placeholder="Location"
+              value={form.location}
+              onChange={(value) => setField('location', value)}
+            />
+          </FieldRow>
 
-          <Textarea
-            aria-label="Description"
-            placeholder="📝 Description"
-            value={form.description}
-            onChange={(value) => setField('description', value)}
-          />
+          <FieldRow icon="📝">
+            <Textarea
+              aria-label="Description"
+              placeholder="Description"
+              value={form.description}
+              onChange={(value) => setField('description', value)}
+            />
+          </FieldRow>
 
           <div className={styles.actions}>
-            <Button type="button" label="Cancel" outlined onClick={onClose} />
-            <Button type="submit" label={submitLabel} isLoading={submitting} />
+            <Button type="button" style="small" label="Cancel" outlined onClick={onClose} />
+            <Button type="submit" style="small" label={submitLabel} isLoading={submitting} />
           </div>
         </form>
       </Modal>
