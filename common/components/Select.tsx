@@ -1,5 +1,6 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
+import { type InputWithHelperProps } from './input-props';
 import styles from './Select.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
@@ -9,24 +10,17 @@ export type SelectOption = {
 };
 
 export type SelectProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
   options: SelectOption[];
-  error?: string;
-  helperText?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<
-  ComponentPropsWithoutRef<'select'>,
-  'id' | 'value' | 'onChange' | 'className' | 'required'
->;
+  placeholder?: string;
+} & InputWithHelperProps &
+  Omit<ComponentPropsWithoutRef<'select'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
 
 export function Select({
   label,
   value,
   onChange,
   options,
+  placeholder,
   error,
   helperText,
   required,
@@ -43,19 +37,25 @@ export function Select({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       <select
         {...selectProps}
         id={id}
         value={value}
-        className={[styles.field, invalid ? styles['-invalid'] : undefined]
+        className={[
+          styles.field,
+          placeholder && value === '' ? styles['-placeholder'] : undefined,
+          invalid ? styles['-invalid'] : undefined,
+        ]
           .filter(Boolean)
           .join(' ')}
         aria-invalid={invalid}
@@ -63,6 +63,11 @@ export function Select({
         aria-describedby={describedBy || undefined}
         onChange={(event) => onChange(event.target.value)}
       >
+        {placeholder ? (
+          <option value="" disabled hidden>
+            {placeholder}
+          </option>
+        ) : null}
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

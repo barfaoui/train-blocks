@@ -1,6 +1,12 @@
 export type CalendarViewSlug = 'day' | '3day' | 'week' | 'month';
 
-export const DEFAULT_VIEW_SLUG: CalendarViewSlug = 'week';
+const DEFAULT_VIEW_SLUG: CalendarViewSlug = 'week';
+const SMALL_SCREEN_QUERY = '(max-width: 30rem)';
+
+// A full week is too cramped on a phone, so small screens start on 3 days
+export function defaultViewSlug(): CalendarViewSlug {
+  return window.matchMedia(SMALL_SCREEN_QUERY).matches ? '3day' : DEFAULT_VIEW_SLUG;
+}
 
 export const VIEW_OPTIONS: { slug: CalendarViewSlug; fcView: string; label: string }[] = [
   { slug: 'day', fcView: 'timeGridDay', label: 'Day' },

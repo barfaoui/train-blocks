@@ -1,20 +1,14 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
+import { type InputWithHelperProps } from './input-props';
 import styles from './Textarea.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
-export type TextareaProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  helperText?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<
-  ComponentPropsWithoutRef<'textarea'>,
-  'id' | 'value' | 'onChange' | 'className' | 'required'
->;
+export type TextareaProps = InputWithHelperProps &
+  Omit<
+    ComponentPropsWithoutRef<'textarea'>,
+    'id' | 'value' | 'onChange' | 'className' | 'required'
+  >;
 
 export function Textarea({
   label,
@@ -37,14 +31,16 @@ export function Textarea({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       <textarea
         {...textareaProps}
         id={id}

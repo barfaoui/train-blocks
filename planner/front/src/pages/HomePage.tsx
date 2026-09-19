@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { authsProfileHref } from '@common/app-urls';
 import { ThemeToggle } from '@common/components/ThemeToggle';
+import { Toast } from '@common/components/Toast';
 import type { PlannerEvent } from '@common/planner-types';
 import { TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
@@ -9,9 +10,11 @@ import styles from './HomePage.module.scss';
 import watermelonLogo from '../../assets/watermelon.svg';
 import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
-import { Calendar } from '../components/Calendar/Calendar';
+import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar';
 import { CreateEventModal } from '../events/CreateEventModal';
+import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
+import { browserTimeZone, updateEvent } from '../events/events-service';
 
 const profileHref = authsProfileHref(authsFrontBase);
 
@@ -29,7 +32,27 @@ export function HomePage() {
   const { user, logout } = useSession();
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [moveError, setMoveError] = useState<string | null>(null);
+
+  async function moveEvent(event: PlannerEvent, changes: EventMoveChanges) {
+    try {
+      await updateEvent(event.id, {
+        title: event.title,
+        timezone: browserTimeZone(),
+        sportType: event.sportType,
+        description: event.description,
+        location: event.location,
+        ...changes,
+        scope: 'THIS_EVENT',
+      });
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      setMoveError(error instanceof Error ? error.message : 'Failed to move event');
+      throw error;
+    }
+  }
 
   return (
     <main className={styles.page}>
@@ -65,6 +88,8 @@ export function HomePage() {
       <Calendar
         onCreateRequested={(date, time) => setCreateRequest({ date, time })}
         onEventClick={(event, anchor) => setSelectedEvent({ event, anchor })}
+        onEventMove={moveEvent}
+        onRecurringEventMove={(event, changes) => setEditingEvent({ ...event, ...changes })}
         reloadKey={reloadKey}
       />
       {createRequest ? (
@@ -83,7 +108,24 @@ export function HomePage() {
           event={selectedEvent.event}
           anchor={selectedEvent.anchor}
           onClose={() => setSelectedEvent(null)}
+          onEdit={() => {
+            setEditingEvent(selectedEvent.event);
+            setSelectedEvent(null);
+          }}
         />
+      ) : null}
+      {editingEvent ? (
+        <EditEventModal
+          event={editingEvent}
+          onClose={() => setEditingEvent(null)}
+          onUpdated={() => {
+            setEditingEvent(null);
+            setReloadKey((key) => key + 1);
+          }}
+        />
+      ) : null}
+      {moveError ? (
+        <Toast message={moveError} variant="error" onClose={() => setMoveError(null)} />
       ) : null}
     </main>
   );

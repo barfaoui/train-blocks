@@ -1,18 +1,12 @@
 import { type ComponentPropsWithoutRef, useId, useState } from 'react';
 
+import { type InputWithHelperProps } from './input-props';
 import { ShowHideButton } from './ShowHideButton';
 import styles from './TextInput.module.scss';
 import { TypographySmall } from '../styles/Typography';
 
-export type TextInputProps = {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  helperText?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
+export type TextInputProps = InputWithHelperProps &
+  Omit<ComponentPropsWithoutRef<'input'>, 'id' | 'value' | 'onChange' | 'className' | 'required'>;
 
 export function TextInput({
   label,
@@ -57,14 +51,16 @@ export function TextInput({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       {isPassword ? (
         <div className={styles.fieldWrap}>
           {field}

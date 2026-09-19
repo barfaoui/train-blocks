@@ -1,20 +1,16 @@
 import { type ComponentPropsWithoutRef, useId } from 'react';
 
 import styles from './DateTimeInput.module.scss';
+import { type InputProps } from './input-props';
 import { TypographySmall } from '../styles/Typography';
 
 export type DateTimeInputProps = {
-  label: string;
   type: 'date' | 'time';
-  value: string;
-  onChange: (value: string) => void;
-  error?: string;
-  required?: boolean;
-  className?: string;
-} & Omit<
-  ComponentPropsWithoutRef<'input'>,
-  'id' | 'type' | 'value' | 'onChange' | 'className' | 'required'
->;
+} & InputProps &
+  Omit<
+    ComponentPropsWithoutRef<'input'>,
+    'id' | 'type' | 'value' | 'onChange' | 'className' | 'required'
+  >;
 
 export function DateTimeInput({
   label,
@@ -32,14 +28,16 @@ export function DateTimeInput({
 
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
-      <TypographySmall as="label" htmlFor={id}>
-        {label}
-        {required ? (
-          <span className={styles.requiredAsterisk} aria-hidden="true">
-            {' *'}
-          </span>
-        ) : null}
-      </TypographySmall>
+      {label ? (
+        <TypographySmall as="label" htmlFor={id}>
+          {label}
+          {required ? (
+            <span className={styles.requiredAsterisk} aria-hidden="true">
+              {' *'}
+            </span>
+          ) : null}
+        </TypographySmall>
+      ) : null}
       <input
         {...inputProps}
         id={id}

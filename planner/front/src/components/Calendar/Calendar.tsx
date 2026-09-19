@@ -2,12 +2,17 @@ import type {
   DatesSetArg,
   DayCellContentArg,
   DayHeaderContentArg,
+  EventApi,
   EventClickArg,
+  EventDropArg,
   EventInput,
   MoreLinkArg,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction';
+import interactionPlugin, {
+  type DateClickArg,
+  type EventResizeDoneArg,
+} from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useRef, useState } from 'react';
@@ -17,8 +22,8 @@ import type { PlannerEvent } from '@common/planner-types';
 
 import {
   type CalendarViewSlug,
-  DEFAULT_VIEW_SLUG,
   VIEW_OPTIONS,
+  defaultViewSlug,
   fcViewNameFor,
   persistView,
   readStoredView,
@@ -26,9 +31,19 @@ import {
 import styles from './Calendar.module.scss';
 import { type DateRange, useEvents } from '../../events/useEvents';
 
+export type EventMoveChanges = Pick<
+  PlannerEvent,
+  'startDate' | 'endDate' | 'startTime' | 'endTime'
+>;
+
 export type CalendarProps = {
   onCreateRequested: (date: string, time?: string) => void;
   onEventClick: (event: PlannerEvent, anchor: DOMRect) => void;
+  // Rejecting reverts the event to where it was dragged from.
+  onEventMove: (event: PlannerEvent, changes: EventMoveChanges) => Promise<void>;
+  // Recurring events aren't saved on drop: the drag is undone and the caller
+  // decides what to do with the proposed changes.
+  onRecurringEventMove: (event: PlannerEvent, changes: EventMoveChanges) => void;
   reloadKey?: number;
 };
 
@@ -47,6 +62,49 @@ function toLocalDateAndTime(date: Date): { date: string; time: string } {
   return {
     date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
     time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  };
+}
+
+function shiftDate(dateStr: string, days: number): string {
+  const date = new Date(`${dateStr}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+// Translates FullCalendar's dropped event back into the API's inclusive-end
+// date/time fields (its all-day `end` is exclusive, and `end` is null when the
+// event had no end time).
+function toMoveChanges(original: PlannerEvent, moved: EventApi): EventMoveChanges {
+  const start = toLocalDateAndTime(moved.start as Date);
+
+  if (moved.allDay) {
+    return {
+      startDate: start.date,
+      endDate: moved.end ? shiftDate(toLocalDateAndTime(moved.end).date, -1) : start.date,
+      startTime: null,
+      endTime: null,
+    };
+  }
+
+  if (moved.end) {
+    const end = toLocalDateAndTime(moved.end);
+    return {
+      startDate: start.date,
+      endDate: end.date,
+      startTime: `${start.time}:00`,
+      endTime: `${end.time}:00`,
+    };
+  }
+
+  const spanDays = Math.round(
+    (Date.parse(`${original.endDate}T00:00:00Z`) - Date.parse(`${original.startDate}T00:00:00Z`)) /
+      86_400_000,
+  );
+  return {
+    startDate: start.date,
+    endDate: shiftDate(start.date, spanDays),
+    startTime: `${start.time}:00`,
+    endTime: null,
   };
 }
 
@@ -77,10 +135,16 @@ function maxAllDayEventsPerDay(events: PlannerEvent[], range: DateRange | null):
   return counts.size > 0 ? Math.max(...counts.values()) : 0;
 }
 
-export function Calendar({ onCreateRequested, onEventClick, reloadKey }: CalendarProps) {
+export function Calendar({
+  onCreateRequested,
+  onEventClick,
+  onEventMove,
+  onRecurringEventMove,
+  reloadKey,
+}: CalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
   const [viewSlug, setViewSlug] = useState<CalendarViewSlug>(
-    () => readStoredView() ?? DEFAULT_VIEW_SLUG,
+    () => readStoredView() ?? defaultViewSlug(),
   );
   const [range, setRange] = useState<DateRange | null>(null);
   const [title, setTitle] = useState('');
@@ -90,6 +154,22 @@ export function Calendar({ onCreateRequested, onEventClick, reloadKey }: Calenda
   const needsAllDayCollapse = maxAllDayEventsPerDay(events, range) > ALL_DAY_COLLAPSE_THRESHOLD;
   const allDayRowLimit =
     needsAllDayCollapse && allDayCollapsed ? ALL_DAY_COLLAPSE_THRESHOLD : false;
+
+  // Shared by dragging an event to a new slot and by resizing it.
+  function handleEventChange(info: EventDropArg | EventResizeDoneArg) {
+    const plannerEvent = events.find((event) => event.id === info.event.id);
+    if (!plannerEvent || !info.event.start) {
+      info.revert();
+      return;
+    }
+    const changes = toMoveChanges(plannerEvent, info.event);
+    if (plannerEvent.seriesId) {
+      info.revert();
+      onRecurringEventMove(plannerEvent, changes);
+      return;
+    }
+    onEventMove(plannerEvent, changes).catch(() => info.revert());
+  }
 
   function goToView(slug: CalendarViewSlug) {
     setViewSlug(slug);
@@ -206,6 +286,9 @@ export function Calendar({ onCreateRequested, onEventClick, reloadKey }: Calenda
           const { date, time } = toLocalDateAndTime(info.date);
           onCreateRequested(date, time);
         }}
+        editable
+        eventDrop={handleEventChange}
+        eventResize={handleEventChange}
         eventClick={(info: EventClickArg) => {
           const plannerEvent = events.find((event) => event.id === info.event.id);
           if (plannerEvent) {

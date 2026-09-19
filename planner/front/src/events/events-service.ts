@@ -3,12 +3,19 @@ import type {
   CreateEventResponse,
   PlannerEvent,
   SportType,
+  UpdateEventBody,
+  UpdateEventResponse,
 } from '@common/planner-types';
 import { request } from '@common/utils/request.util';
 
 import { plannerServiceBase } from '../auth/url-bases';
 
 const apiBase = `${plannerServiceBase}/api/events`;
+
+// Event times are wall-clock in the browser's zone, so that is the zone to store.
+export function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
 
 export type ListEventsParams = {
   startDate: string;
@@ -37,6 +44,15 @@ export function createEvent(body: CreateEventBody): Promise<CreateEventResponse>
   return request<CreateEventResponse>('', {
     baseUrl: apiBase,
     method: 'POST',
+    body: JSON.stringify(body),
+    parseError: eventsApiErrorFrom,
+  });
+}
+
+export function updateEvent(eventId: string, body: UpdateEventBody): Promise<UpdateEventResponse> {
+  return request<UpdateEventResponse>(`/${eventId}`, {
+    baseUrl: apiBase,
+    method: 'PATCH',
     body: JSON.stringify(body),
     parseError: eventsApiErrorFrom,
   });
