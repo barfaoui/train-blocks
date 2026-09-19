@@ -22,6 +22,7 @@ export type EventDetailsModalProps = {
   anchor: DOMRect;
   onClose: () => void;
   onEdit: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -70,6 +71,7 @@ export function EventDetailsModal({
   anchor,
   onClose,
   onEdit,
+  onDuplicate,
   onDelete,
 }: EventDetailsModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -151,9 +153,11 @@ export function EventDetailsModal({
         <button type="button" className={styles.actionButton} onClick={onEdit}>
           <TypographySmall>✏️ Edit</TypographySmall>
         </button>
-        <button type="button" className={styles.actionButton}>
-          <TypographySmall>📄 Duplicate</TypographySmall>
-        </button>
+        {isRecurring(event) ? null : (
+          <button type="button" className={styles.actionButton} onClick={onDuplicate}>
+            <TypographySmall>📄 Duplicate</TypographySmall>
+          </button>
+        )}
         <button
           type="button"
           className={[styles.actionButton, styles['-danger']].join(' ')}

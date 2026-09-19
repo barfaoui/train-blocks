@@ -13,6 +13,7 @@ import { authsFrontBase } from '../auth/url-bases';
 import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar';
 import { CreateEventModal } from '../events/CreateEventModal';
 import { DeleteEventModal } from '../events/DeleteEventModal';
+import { DuplicateEventModal } from '../events/DuplicateEventModal';
 import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
 import { browserTimeZone, updateEvent } from '../events/events-service';
@@ -34,10 +35,10 @@ export function HomePage() {
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null);
+  const [duplicatingEvent, setDuplicatingEvent] = useState<PlannerEvent | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<PlannerEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [moveError, setMoveError] = useState<string | null>(null);
-
   async function moveEvent(event: PlannerEvent, changes: EventMoveChanges) {
     try {
       await updateEvent(event.id, {
@@ -114,6 +115,10 @@ export function HomePage() {
             setEditingEvent(selectedEvent.event);
             setSelectedEvent(null);
           }}
+          onDuplicate={() => {
+            setDuplicatingEvent(selectedEvent.event);
+            setSelectedEvent(null);
+          }}
           onDelete={() => {
             setDeletingEvent(selectedEvent.event);
             setSelectedEvent(null);
@@ -126,6 +131,16 @@ export function HomePage() {
           onClose={() => setDeletingEvent(null)}
           onDeleted={() => {
             setDeletingEvent(null);
+            setReloadKey((key) => key + 1);
+          }}
+        />
+      ) : null}
+      {duplicatingEvent ? (
+        <DuplicateEventModal
+          event={duplicatingEvent}
+          onClose={() => setDuplicatingEvent(null)}
+          onCreated={() => {
+            setDuplicatingEvent(null);
             setReloadKey((key) => key + 1);
           }}
         />
