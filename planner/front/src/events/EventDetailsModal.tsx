@@ -1,18 +1,11 @@
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import type { PlannerEvent, SportType } from '@common/planner-types';
+import type { PlannerEvent } from '@common/planner-types';
 import { TypographyLarge, TypographySmall } from '@common/styles/Typography';
 
 import styles from './EventDetailsModal.module.scss';
-
-const SPORT_TYPE_LABELS: Record<SportType, string> = {
-  RUNNING: '🏃 Running',
-  CYCLING: '🚴 Cycling',
-  SWIMMING: '🏊 Swimming',
-  STRENGTH: '🏋️ Strength',
-  YOGA: '🧘 Yoga',
-  OTHER: '🎯 Other',
-};
+import { SPORT_TYPE_INFO } from './sport-types';
+import { SportIcon } from '../components/SportIcon/SportIcon';
 
 const GAP = 12;
 const VIEWPORT_PADDING = 8;
@@ -139,8 +132,9 @@ export function EventDetailsModal({
         {isRecurring(event) ? (
           <TypographySmall className={styles.detailRow}>🔁 Recurring</TypographySmall>
         ) : null}
-        <TypographySmall className={styles.detailRow}>
-          {SPORT_TYPE_LABELS[event.sportType]}
+        <TypographySmall className={[styles.detailRow, styles.sportRow].join(' ')}>
+          <SportIcon sportType={event.sportType} />
+          {SPORT_TYPE_INFO[event.sportType].label}
         </TypographySmall>
         {event.location ? (
           <TypographySmall className={styles.detailRow}>📍 {event.location}</TypographySmall>

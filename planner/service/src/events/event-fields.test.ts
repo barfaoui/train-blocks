@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { SPORT_TYPES } from '@common/planner-types';
+
 import { parseEventFields } from './event-fields';
 
 const validBody = {
@@ -7,7 +9,7 @@ const validBody = {
   startDate: '2026-09-15',
   endDate: '2026-09-15',
   timezone: 'Europe/Paris',
-  sportType: 'RUNNING',
+  sportType: 'OUTSIDE_RUNNING',
 };
 
 function errorFor(overrides: Record<string, unknown>): string | undefined {
@@ -27,7 +29,7 @@ describe('parseEventFields', () => {
         startTime: null,
         endTime: null,
         timezone: 'Europe/Paris',
-        sportType: 'RUNNING',
+        sportType: 'OUTSIDE_RUNNING',
         description: null,
         location: null,
       },
@@ -79,7 +81,7 @@ describe('parseEventFields', () => {
     [
       'a missing sport type',
       { sportType: undefined },
-      'sportType must be one of RUNNING, CYCLING, SWIMMING, STRENGTH, YOGA, OTHER',
+      `sportType must be one of ${SPORT_TYPES.join(', ')}`,
     ],
     ['a non-string description', { description: 42 }, 'description must be a string'],
   ])('rejects %s', (_label, overrides, message) => {

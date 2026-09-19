@@ -9,7 +9,7 @@
 
 INSERT INTO "planner"."plan_prototypes" (id, sport_type, fields)
 VALUES
-  ('00000000-0000-0000-0000-000000000401', 'RUNNING',
+  ('00000000-0000-0000-0000-000000000401', 'OUTSIDE_RUNNING',
     '[{"key": "distanceKm", "label": "Distance (km)", "type": "number", "required": true}, {"key": "targetPaceMinPerKm", "label": "Target pace (min/km)", "type": "number", "required": false}]'::jsonb),
   ('00000000-0000-0000-0000-000000000402', 'STRENGTH',
     '[{"key": "exercises", "label": "Exercises", "type": "list", "required": true}]'::jsonb)
@@ -17,7 +17,7 @@ ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO "planner"."plans" (id, name, sport_type, notes, details, created_by_id)
 VALUES
-  ('00000000-0000-0000-0000-000000000201', '5k Easy Run', 'RUNNING', 'Seed: 5k easy run',
+  ('00000000-0000-0000-0000-000000000201', '5k Easy Run', 'OUTSIDE_RUNNING', 'Seed: 5k easy run',
     '{"distanceKm": 5, "targetPaceMinPerKm": 5.5}'::jsonb, '00000000-0000-0000-0000-000000000001'),
   ('00000000-0000-0000-0000-000000000202', 'Full-Body Strength', 'STRENGTH', 'Seed: full-body strength',
     '{"exercises": [{"name": "Back squat", "sets": 4, "reps": 8, "weightKg": 60}, {"name": "Bench press", "sets": 4, "reps": 8, "weightKg": 40}]}'::jsonb,
@@ -31,13 +31,13 @@ INSERT INTO "planner"."events"
   (id, title, start_date, end_date, start_time, end_time, timezone, description, location, sport_type, created_by_id, recurrence_rule, series_id, plan_id)
 VALUES
   ('00000000-0000-0000-0000-000000000101', 'Morning Run', CURRENT_DATE, CURRENT_DATE, '07:00', '08:00', 'Europe/Paris',
-    'Easy 5k loop around the park before work.', 'Riverside Park', 'RUNNING', '00000000-0000-0000-0000-000000000001',
+    'Easy 5k loop around the park before work.', 'Riverside Park', 'OUTSIDE_RUNNING', '00000000-0000-0000-0000-000000000001',
     NULL, NULL, '00000000-0000-0000-0000-000000000201'),
   ('00000000-0000-0000-0000-000000000102', 'Rest & Stretch Day', CURRENT_DATE + 1, CURRENT_DATE + 1, NULL, NULL, 'Europe/Paris',
     'Whole-day recovery: light stretching, no fixed time.', NULL, 'YOGA', '00000000-0000-0000-0000-000000000001',
     NULL, NULL, NULL),
   ('00000000-0000-0000-0000-000000000103', 'Sunday Long Ride', CURRENT_DATE + 3, CURRENT_DATE + 3, '09:00', '11:30', 'Europe/Paris',
-    'Weekend endurance ride, moderate pace.', 'Forest Loop Trail', 'CYCLING', '00000000-0000-0000-0000-000000000001',
+    'Weekend endurance ride, moderate pace.', 'Forest Loop Trail', 'STATIC_CYCLING', '00000000-0000-0000-0000-000000000001',
     NULL, NULL, NULL),
   ('00000000-0000-0000-0000-000000000104', 'Strength Training Weekend', CURRENT_DATE + 5, CURRENT_DATE + 7, NULL, NULL, 'Europe/Paris',
     'Three-day multi-day strength camp, whole-day block on the calendar.', 'Lakeside Sports Center', 'STRENGTH', '00000000-0000-0000-0000-000000000001',

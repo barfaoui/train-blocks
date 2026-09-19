@@ -8,20 +8,19 @@ import { Select } from '@common/components/Select';
 import { Textarea } from '@common/components/Textarea';
 import { TextInput } from '@common/components/TextInput';
 import { Toast } from '@common/components/Toast';
-import type { EventEditScope, SportType } from '@common/planner-types';
+import { type EventEditScope, SPORT_TYPES, type SportType } from '@common/planner-types';
 import { TypographySmall } from '@common/styles/Typography';
 
 import styles from './EventFormModal.module.scss';
 import { browserTimeZone } from './events-service';
+import { SPORT_TYPE_INFO } from './sport-types';
+import { SportIcon } from '../components/SportIcon/SportIcon';
 
-const SPORT_TYPE_OPTIONS: { value: SportType; label: string }[] = [
-  { value: 'RUNNING', label: '🏃 Running' },
-  { value: 'CYCLING', label: '🚴 Cycling' },
-  { value: 'SWIMMING', label: '🏊 Swimming' },
-  { value: 'STRENGTH', label: '🏋️ Strength' },
-  { value: 'YOGA', label: '🧘 Yoga' },
-  { value: 'OTHER', label: '🎯 Other' },
-];
+const SPORT_TYPE_OPTIONS = SPORT_TYPES.map((sportType) => ({
+  value: sportType,
+  label: SPORT_TYPE_INFO[sportType].label,
+  icon: <SportIcon sportType={sportType} />,
+}));
 
 export type RepeatFrequency = '' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
