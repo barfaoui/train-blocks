@@ -8,6 +8,7 @@ import { EventNotFoundError, PlanNotFoundError } from '../data/types/errors';
 import type {
   CreateEventInput,
   CreateEventResult,
+  EventDeleteScope,
   ListEventsFilters,
   UpdateEventInput,
   UpdateEventResult,
@@ -223,6 +224,34 @@ export async function updateEvent(
   );
 
   return { events: updated.map((event) => toPlannerEvent(event)), truncated: false };
+}
+
+export async function deleteEvent(
+  userId: string,
+  eventId: string,
+  scope: EventDeleteScope,
+): Promise<void> {
+  const existing = await prisma.event.findFirst({
+    where: { id: eventId, deletedAt: null, createdById: userId },
+  });
+  if (!existing) {
+    throw new EventNotFoundError();
+  }
+
+  // A one-off has no series, so any scope means just this event.
+  if (!existing.seriesId || scope === 'THIS_EVENT') {
+    await prisma.event.update({ where: { id: eventId }, data: { deletedAt: new Date() } });
+    return;
+  }
+
+  await prisma.event.updateMany({
+    where: {
+      seriesId: existing.seriesId,
+      deletedAt: null,
+      ...(scope === 'THIS_AND_FUTURE_EVENTS' ? { startDate: { gte: existing.startDate } } : {}),
+    },
+    data: { deletedAt: new Date() },
+  });
 }
 
 function toPlannerEvent(event: {

@@ -5,16 +5,21 @@ import type { SportType } from '@common/planner-types';
 import { requireAuth } from '@common/utils/auth-middleware.util';
 
 import { SPORT_TYPES, parseEventFields } from './event-fields';
-import { createEvent, listEvents, updateEvent } from './service';
+import { createEvent, deleteEvent, listEvents, updateEvent } from './service';
 import {
   EventNotFoundError,
   InvalidRecurrenceRuleError,
   PlanNotFoundError,
 } from '../data/types/errors';
-import type { EventEditScope } from '../data/types/events';
+import type { EventDeleteScope, EventEditScope } from '../data/types/events';
 import { isValidIsoDate } from '../utils/date.util';
 
 const EVENT_EDIT_SCOPES: EventEditScope[] = ['THIS_EVENT', 'THIS_AND_FUTURE_EVENTS'];
+const EVENT_DELETE_SCOPES: EventDeleteScope[] = [
+  'THIS_EVENT',
+  'THIS_AND_FUTURE_EVENTS',
+  'ALL_EVENTS',
+];
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const eventsRouter = Router();
@@ -154,6 +159,34 @@ eventsRouter.patch('/:id', requireAuth, async (req, res) => {
     }
     if (error instanceof InvalidRecurrenceRuleError) {
       res.status(400).json({ error: error.message });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+eventsRouter.delete('/:id', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  if (typeof id !== 'string' || !UUID_PATTERN.test(id)) {
+    res.status(400).json({ error: 'id must be a valid UUID' });
+    return;
+  }
+
+  const { scope } = req.query;
+  if (typeof scope !== 'string' || !EVENT_DELETE_SCOPES.includes(scope as EventDeleteScope)) {
+    res.status(400).json({ error: `scope must be one of ${EVENT_DELETE_SCOPES.join(', ')}` });
+    return;
+  }
+
+  const { user } = req as AuthenticatedRequest;
+
+  try {
+    await deleteEvent(user.id, id, scope as EventDeleteScope);
+    res.status(204).end();
+  } catch (error) {
+    if (error instanceof EventNotFoundError) {
+      res.status(404).json({ error: error.message });
       return;
     }
     console.error(error);

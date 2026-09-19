@@ -1,6 +1,7 @@
 import type {
   CreateEventBody,
   CreateEventResponse,
+  EventDeleteScope,
   PlannerEvent,
   SportType,
   UpdateEventBody,
@@ -54,6 +55,14 @@ export function updateEvent(eventId: string, body: UpdateEventBody): Promise<Upd
     baseUrl: apiBase,
     method: 'PATCH',
     body: JSON.stringify(body),
+    parseError: eventsApiErrorFrom,
+  });
+}
+
+export function deleteEvent(eventId: string, scope: EventDeleteScope): Promise<void> {
+  return request<void>(`/${eventId}?scope=${scope}`, {
+    baseUrl: apiBase,
+    method: 'DELETE',
     parseError: eventsApiErrorFrom,
   });
 }
