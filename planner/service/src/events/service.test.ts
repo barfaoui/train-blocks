@@ -12,6 +12,7 @@ vi.mock('../data/prisma', () => ({
       findFirst: vi.fn(),
       findMany: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -22,6 +23,7 @@ const prismaEvent = prisma.event as unknown as {
   findFirst: ReturnType<typeof vi.fn>;
   findMany: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
+  updateMany: ReturnType<typeof vi.fn>;
 };
 const prismaTransaction = prisma.$transaction as unknown as ReturnType<typeof vi.fn>;
 
@@ -219,5 +221,102 @@ describe('updateEvent', () => {
     expect(shiftedRoot?.startDate).toBe('2026-09-16');
     expect(shiftedOccurrence?.startDate).toBe('2026-09-23');
     expect(result.events.every((event) => event.title === 'Evening Run')).toBe(true);
+  });
+
+  describe('changing the recurrence', () => {
+    const root = mockRow({
+      id: 'root-1',
+      seriesId: 'root-1',
+      recurrenceRule: 'FREQ=WEEKLY;COUNT=2',
+      startDate: new Date('2026-09-15T00:00:00Z'),
+      endDate: new Date('2026-09-15T00:00:00Z'),
+    });
+
+    beforeEach(() => {
+      prismaEvent.findFirst.mockResolvedValue(root);
+      prismaEvent.findMany.mockResolvedValue([root]);
+      prismaEvent.updateMany.mockReturnValue({ count: 1 });
+      prismaEvent.update.mockImplementation(({ data }: { data: Record<string, unknown> }) => ({
+        ...root,
+        ...data,
+      }));
+      prismaEvent.createMany.mockReturnValue({ count: 0 });
+      prismaTransaction.mockImplementation((ops: unknown[]) => Promise.all(ops));
+    });
+
+    it('regenerates the occurrences from the new rule, keeping the root row', async () => {
+      const result = await updateEvent('user-1', 'root-1', {
+        ...baseUpdateInput,
+        scope: 'ALL_EVENTS',
+        recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      });
+
+      expect(prismaEvent.updateMany).toHaveBeenCalledWith({
+        where: { seriesId: 'root-1', id: { not: 'root-1' }, deletedAt: null },
+        data: { deletedAt: expect.any(Date) },
+      });
+      const { data: created } = prismaEvent.createMany.mock.calls[0][0] as {
+        data: { startDate: Date; seriesId: string; recurrenceRule: null }[];
+      };
+      expect(created.length).toBeGreaterThan(0);
+      expect(created.every((row) => row.seriesId === 'root-1' && row.recurrenceRule === null)).toBe(
+        true,
+      );
+      expect(result.events[0]).toMatchObject({
+        id: 'root-1',
+        recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      });
+      expect(result.events).toHaveLength(created.length + 1);
+    });
+
+    it('turns the series into a single event when the rule is null', async () => {
+      const result = await updateEvent('user-1', 'root-1', {
+        ...baseUpdateInput,
+        scope: 'ALL_EVENTS',
+        recurrenceRule: null,
+      });
+
+      expect(prismaEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ seriesId: null, recurrenceRule: null }),
+        }),
+      );
+      expect(prismaEvent.createMany).toHaveBeenCalledWith({ data: [] });
+      expect(result.events).toHaveLength(1);
+    });
+
+    it('ignores a recurrence change when only this occurrence is edited', async () => {
+      prismaEvent.update.mockResolvedValue(root);
+
+      await updateEvent('user-1', 'root-1', {
+        ...baseUpdateInput,
+        scope: 'THIS_EVENT',
+        recurrenceRule: 'FREQ=DAILY',
+      });
+
+      expect(prismaTransaction).not.toHaveBeenCalled();
+      expect(prismaEvent.update).toHaveBeenCalledTimes(1);
+    });
+
+    it('turns a one-off event into a series', async () => {
+      const oneOff = mockRow({ id: 'solo-1' });
+      prismaEvent.findFirst.mockResolvedValue(oneOff);
+
+      const result = await updateEvent('user-1', 'solo-1', {
+        ...baseUpdateInput,
+        recurrenceRule: 'FREQ=WEEKLY;COUNT=3',
+      });
+
+      expect(prismaEvent.findMany).not.toHaveBeenCalled();
+      expect(prismaEvent.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            seriesId: 'solo-1',
+            recurrenceRule: 'FREQ=WEEKLY;COUNT=3',
+          }),
+        }),
+      );
+      expect(result.events.length).toBeGreaterThan(1);
+    });
   });
 });

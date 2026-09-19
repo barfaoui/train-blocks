@@ -37,9 +37,12 @@ export type UpdateEventInput = {
   sportType: SportType;
   description: string | null;
   location: string | null;
+  // undefined keeps the current recurrence; null removes it.
+  recurrenceRule?: string | null;
   scope: EventEditScope;
 };
 
 export type UpdateEventResult = {
   events: PlannerEvent[];
+  truncated: boolean;
 };

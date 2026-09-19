@@ -235,17 +235,35 @@ eventsRouter.patch('/:id', requireAuth, async (req, res) => {
     return;
   }
 
+  // Absent keeps the current recurrence; null removes it.
+  let recurrenceRule: string | null | undefined;
+  if (body.recurrenceRule !== undefined) {
+    if (
+      body.recurrenceRule !== null &&
+      (typeof body.recurrenceRule !== 'string' || body.recurrenceRule.trim().length === 0)
+    ) {
+      res.status(400).json({ error: 'recurrenceRule must be a non-empty string or null' });
+      return;
+    }
+    recurrenceRule = body.recurrenceRule;
+  }
+
   const { user } = req as AuthenticatedRequest;
 
   try {
     const result = await updateEvent(user.id, id, {
       ...parsed.value,
+      recurrenceRule,
       scope: body.scope as EventEditScope,
     });
     res.status(200).json(result);
   } catch (error) {
     if (error instanceof EventNotFoundError) {
       res.status(404).json({ error: error.message });
+      return;
+    }
+    if (error instanceof InvalidRecurrenceRuleError) {
+      res.status(400).json({ error: error.message });
       return;
     }
     console.error(error);

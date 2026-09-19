@@ -12,6 +12,7 @@ export type PlannerEvent = {
   description: string | null;
   location: string | null;
   seriesId: string | null;
+  recurrenceRule: string | null;
   planId: string | null;
 };
 
@@ -46,9 +47,13 @@ export type UpdateEventBody = {
   sportType: SportType;
   description?: string | null;
   location?: string | null;
+  // Omit to keep the current recurrence; null turns the series into a single
+  // event. Only applied when scope is ALL_EVENTS (or the event isn't recurring yet).
+  recurrenceRule?: string | null;
   scope: EventEditScope;
 };
 
 export type UpdateEventResponse = {
   events: PlannerEvent[];
+  truncated: boolean;
 };
