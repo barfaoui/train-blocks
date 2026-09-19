@@ -9,7 +9,10 @@ import type {
   MoreLinkArg,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction';
+import interactionPlugin, {
+  type DateClickArg,
+  type EventResizeDoneArg,
+} from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useRef, useState } from 'react';
@@ -152,6 +155,22 @@ export function Calendar({
   const allDayRowLimit =
     needsAllDayCollapse && allDayCollapsed ? ALL_DAY_COLLAPSE_THRESHOLD : false;
 
+  // Shared by dragging an event to a new slot and by resizing it.
+  function handleEventChange(info: EventDropArg | EventResizeDoneArg) {
+    const plannerEvent = events.find((event) => event.id === info.event.id);
+    if (!plannerEvent || !info.event.start) {
+      info.revert();
+      return;
+    }
+    const changes = toMoveChanges(plannerEvent, info.event);
+    if (plannerEvent.seriesId) {
+      info.revert();
+      onRecurringEventMove(plannerEvent, changes);
+      return;
+    }
+    onEventMove(plannerEvent, changes).catch(() => info.revert());
+  }
+
   function goToView(slug: CalendarViewSlug) {
     setViewSlug(slug);
     persistView(slug);
@@ -268,21 +287,8 @@ export function Calendar({
           onCreateRequested(date, time);
         }}
         editable
-        eventDurationEditable={false}
-        eventDrop={(info: EventDropArg) => {
-          const plannerEvent = events.find((event) => event.id === info.event.id);
-          if (!plannerEvent || !info.event.start) {
-            info.revert();
-            return;
-          }
-          const changes = toMoveChanges(plannerEvent, info.event);
-          if (plannerEvent.seriesId) {
-            info.revert();
-            onRecurringEventMove(plannerEvent, changes);
-            return;
-          }
-          onEventMove(plannerEvent, changes).catch(() => info.revert());
-        }}
+        eventDrop={handleEventChange}
+        eventResize={handleEventChange}
         eventClick={(info: EventClickArg) => {
           const plannerEvent = events.find((event) => event.id === info.event.id);
           if (plannerEvent) {
