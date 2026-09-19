@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
 import type { AuthenticatedRequest } from '@common/auth-types';
-import type { SportType } from '@common/planner-types';
+import { SPORT_TYPES, type SportType } from '@common/planner-types';
 import { requireAuth } from '@common/utils/auth-middleware.util';
 
-import { SPORT_TYPES, parseEventFields } from './event-fields';
+import { parseEventFields } from './event-fields';
 import { createEvent, deleteEvent, listEvents, updateEvent } from './service';
 import {
   EventNotFoundError,

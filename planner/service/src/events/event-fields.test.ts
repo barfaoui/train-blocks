@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { SPORT_TYPES } from '@common/planner-types';
+
 import { parseEventFields } from './event-fields';
 
 const validBody = {
@@ -79,7 +81,7 @@ describe('parseEventFields', () => {
     [
       'a missing sport type',
       { sportType: undefined },
-      'sportType must be one of RUNNING, CYCLING, SWIMMING, STRENGTH, YOGA, OTHER',
+      `sportType must be one of ${SPORT_TYPES.join(', ')}`,
     ],
     ['a non-string description', { description: 42 }, 'description must be a string'],
   ])('rejects %s', (_label, overrides, message) => {

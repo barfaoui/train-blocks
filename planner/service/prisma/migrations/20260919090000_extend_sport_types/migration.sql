@@ -1,0 +1,41 @@
+-- AlterEnum
+-- Adds the extended list of sport types. Values are only added (never removed or
+-- renamed), so existing rows are untouched.
+ALTER TYPE "planner"."SportType" ADD VALUE 'TRAIL_RUNNING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'TREADMILL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'WALKING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'HIKING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'MOUNTAIN_BIKING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'ROWING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'KAYAKING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'SAILING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'SURFING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'CROSSFIT';
+ALTER TYPE "planner"."SportType" ADD VALUE 'GYMNASTICS';
+ALTER TYPE "planner"."SportType" ADD VALUE 'PILATES';
+ALTER TYPE "planner"."SportType" ADD VALUE 'STRETCHING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'JUMP_ROPE';
+ALTER TYPE "planner"."SportType" ADD VALUE 'CLIMBING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'SKIING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'SNOWBOARDING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'ICE_SKATING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'ROLLER_SKATING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'SKATEBOARDING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'TENNIS';
+ALTER TYPE "planner"."SportType" ADD VALUE 'BADMINTON';
+ALTER TYPE "planner"."SportType" ADD VALUE 'TABLE_TENNIS';
+ALTER TYPE "planner"."SportType" ADD VALUE 'FOOTBALL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'BASKETBALL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'VOLLEYBALL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'HANDBALL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'RUGBY';
+ALTER TYPE "planner"."SportType" ADD VALUE 'AMERICAN_FOOTBALL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'BASEBALL';
+ALTER TYPE "planner"."SportType" ADD VALUE 'HOCKEY';
+ALTER TYPE "planner"."SportType" ADD VALUE 'GOLF';
+ALTER TYPE "planner"."SportType" ADD VALUE 'BOXING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'MARTIAL_ARTS';
+ALTER TYPE "planner"."SportType" ADD VALUE 'DANCE';
+ALTER TYPE "planner"."SportType" ADD VALUE 'HORSEBACK_RIDING';
+ALTER TYPE "planner"."SportType" ADD VALUE 'ARCHERY';
+ALTER TYPE "planner"."SportType" ADD VALUE 'FENCING';

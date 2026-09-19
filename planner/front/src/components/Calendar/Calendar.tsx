@@ -1,5 +1,6 @@
 import type {
   DatesSetArg,
+  EventContentArg,
   DayCellContentArg,
   DayHeaderContentArg,
   EventApi,
@@ -18,7 +19,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import { useRef, useState } from 'react';
 
 import { Button } from '@common/components/Button';
-import type { PlannerEvent } from '@common/planner-types';
+import type { PlannerEvent, SportType } from '@common/planner-types';
 
 import {
   type CalendarViewSlug,
@@ -30,6 +31,7 @@ import {
 } from './calendar-view.util';
 import styles from './Calendar.module.scss';
 import { type DateRange, useEvents } from '../../events/useEvents';
+import { SportIcon } from '../SportIcon/SportIcon';
 
 export type EventMoveChanges = Pick<
   PlannerEvent,
@@ -244,6 +246,7 @@ export function Calendar({
         height="auto"
         dayCellContent={renderDayCellContent}
         dayHeaderContent={renderDayHeaderContent}
+        eventContent={renderEventContent}
         allDayContent={() =>
           needsAllDayCollapse ? (
             <button
@@ -321,6 +324,21 @@ function renderDayCellContent(arg: DayCellContentArg) {
   );
 }
 
+function renderEventContent(arg: EventContentArg) {
+  return (
+    <div className={styles.eventContent}>
+      <SportIcon
+        sportType={arg.event.extendedProps.sportType as SportType}
+        className={styles.eventIcon}
+      />
+      <div className={styles.eventText}>
+        <span className={styles.eventTitle}>{arg.event.title}</span>
+        {arg.timeText ? <span className={styles.eventTime}>{arg.timeText}</span> : null}
+      </div>
+    </div>
+  );
+}
+
 function renderDayHeaderContent(arg: DayHeaderContentArg) {
   if (arg.view.type === 'dayGridMonth') {
     return arg.text;
@@ -355,6 +373,7 @@ function toFullCalendarEvent(event: PlannerEvent): EventInput {
         ? `${event.endDate}T${event.endTime}`
         : undefined,
     allDay,
+    extendedProps: { sportType: event.sportType },
   };
 }
 

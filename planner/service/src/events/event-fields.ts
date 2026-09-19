@@ -1,15 +1,7 @@
-import type { SportType } from '@common/planner-types';
+import { SPORT_TYPES, type SportType } from '@common/planner-types';
 
 import { isValidIsoDate, isValidIsoTime } from '../utils/date.util';
 
-export const SPORT_TYPES: SportType[] = [
-  'RUNNING',
-  'CYCLING',
-  'SWIMMING',
-  'STRENGTH',
-  'YOGA',
-  'OTHER',
-];
 const TITLE_MAX_LENGTH = 255;
 const LOCATION_MAX_LENGTH = 255;
 const TIMEZONE_MAX_LENGTH = 64;
