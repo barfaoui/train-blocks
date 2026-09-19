@@ -39,7 +39,11 @@ export function DeleteEventModal({ event, onClose, onDeleted }: DeleteEventModal
   }
 
   return (
-    <Modal title="🗑️ Delete event" onClose={onClose} className={styles.modal}>
+    <Modal
+      title="🗑️ Delete event"
+      onClose={submitting ? () => {} : onClose}
+      className={styles.modal}
+    >
       <div className={styles.content}>
         <TypographyMedium>Would you like to delete this event : {event.title}?</TypographyMedium>
         {isRecurring ? (
