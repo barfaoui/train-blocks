@@ -1,33 +1,62 @@
 export const SPORT_TYPES = [
-  'RUNNING',
+  // Running
+  'OUTSIDE_RUNNING',
   'TRAIL_RUNNING',
   'TREADMILL',
+  'MARATHON',
+  // Walking
   'WALKING',
   'HIKING',
-  'CYCLING',
+  // Cycling
+  'STATIC_CYCLING',
+  'BIKING',
   'MOUNTAIN_BIKING',
+  // Water
   'SWIMMING',
+  'WATER_POLO',
+  'DIVING',
+  'SCUBA',
   'ROWING',
   'KAYAKING',
   'SAILING',
   'SURFING',
+  // Fitness
   'STRENGTH',
+  'WEIGHT_TRAINING',
   'CROSSFIT',
-  'GYMNASTICS',
+  'CORE_TRAINING',
+  'INDOOR_FITNESS',
+  'FREE_TRAINING',
+  'ELLIPTICAL',
+  'STAIRS_CLIMBING',
+  'JUMP_ROPE',
+  'HULA_HOOP',
+  // Mind and body
   'YOGA',
   'PILATES',
   'STRETCHING',
-  'JUMP_ROPE',
-  'CLIMBING',
-  'CROSS_COUNTRY_SKIING',
+  'MEDITATION',
+  'GYMNASTICS',
+  'DANCE',
+  // Climbing
+  'ROCK_CLIMBING',
+  // Winter
   'SKIING',
+  'CROSS_COUNTRY_SKIING',
   'SNOWBOARDING',
   'ICE_SKATING',
+  'FIGURE_SKATING',
+  'SPEED_SKATING',
+  'CURLING',
+  // Wheels
   'ROLLER_SKATING',
   'SKATEBOARDING',
+  'SCOOTER_RIDING',
+  // Racket
   'TENNIS',
-  'BADMINTON',
   'TABLE_TENNIS',
+  'BADMINTON',
+  // Team ball
   'FOOTBALL',
   'BASKETBALL',
   'VOLLEYBALL',
@@ -36,13 +65,22 @@ export const SPORT_TYPES = [
   'AMERICAN_FOOTBALL',
   'BASEBALL',
   'HOCKEY',
+  'FRISBEE',
+  // Precision
   'GOLF',
+  'BOWLING',
+  'BILLARDS',
+  'ARCHERY',
+  'SHOOTING',
+  'FISHING',
+  // Combat
   'BOXING',
   'MARTIAL_ARTS',
-  'DANCE',
-  'HORSEBACK_RIDING',
-  'ARCHERY',
   'FENCING',
+  // Air and riding
+  'HORSEBACK_RIDING',
+  'SKYDIVING',
+  // Other
   'OTHER',
 ] as const;
 

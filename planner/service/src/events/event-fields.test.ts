@@ -9,7 +9,7 @@ const validBody = {
   startDate: '2026-09-15',
   endDate: '2026-09-15',
   timezone: 'Europe/Paris',
-  sportType: 'RUNNING',
+  sportType: 'OUTSIDE_RUNNING',
 };
 
 function errorFor(overrides: Record<string, unknown>): string | undefined {
@@ -29,7 +29,7 @@ describe('parseEventFields', () => {
         startTime: null,
         endTime: null,
         timezone: 'Europe/Paris',
-        sportType: 'RUNNING',
+        sportType: 'OUTSIDE_RUNNING',
         description: null,
         location: null,
       },
