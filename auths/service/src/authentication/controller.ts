@@ -33,7 +33,7 @@ export const authenticationRouter = Router();
 authenticationRouter.get('/usernames/:username/availability', async (req, res) => {
   const parsed = username.safeParse(req.params.username);
   if (!parsed.success) {
-    res.status(400).json(formatZodError(parsed.error));
+    res.status(400).json(formatZodError(parsed.error, 'username'));
     return;
   }
 

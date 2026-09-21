@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { password, signInBody, signUpBody, username } from './validation';
+import { calendarPreferencesBody } from '@common/auth-validation';
+
+import { formatZodError, password, signInBody, signUpBody, username } from './validation';
 
 describe('username', () => {
   it('trims and lowercases a valid username', () => {
@@ -110,5 +112,35 @@ describe('signInBody', () => {
       username: 'bochra',
       password: 'weak',
     });
+  });
+});
+
+describe('formatZodError', () => {
+  function issuesFor(result: { success: boolean; error?: unknown }) {
+    if (result.success) {
+      throw new Error('expected validation to fail');
+    }
+    return formatZodError(result.error as Parameters<typeof formatZodError>[0]);
+  }
+
+  it('names the failing field', () => {
+    const formatted = issuesFor(signInBody.safeParse({ username: 'ab', password: 'x' }));
+
+    expect(formatted.details.map((detail) => detail.path)).toEqual(['username']);
+  });
+
+  it('labels an issue about the whole body as "body"', () => {
+    const formatted = issuesFor(calendarPreferencesBody.safeParse({}));
+
+    expect(formatted.details).toEqual([{ path: 'body', message: 'Nothing to update' }]);
+  });
+
+  it('uses the given name for a bare value', () => {
+    const result = username.safeParse('ab');
+    if (result.success) {
+      throw new Error('expected validation to fail');
+    }
+
+    expect(formatZodError(result.error, 'username').details[0].path).toBe('username');
   });
 });

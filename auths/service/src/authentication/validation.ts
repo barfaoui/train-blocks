@@ -12,11 +12,16 @@ export {
   username,
 } from '@common/auth-validation';
 
-export function formatZodError(error: ZodError): { error: string; details: FieldError[] } {
+// Issues about the whole value, such as a missing body or an unknown key, have no field
+// name; `rootPath` names what was being validated in that case.
+export function formatZodError(
+  error: ZodError,
+  rootPath = 'body',
+): { error: string; details: FieldError[] } {
   return {
     error: 'Invalid request',
     details: error.issues.map((issue) => ({
-      path: issue.path.length === 0 ? 'username' : issue.path.join('.'),
+      path: issue.path.length === 0 ? rootPath : issue.path.join('.'),
       message: issue.message,
     })),
   };
