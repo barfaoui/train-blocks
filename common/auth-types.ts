@@ -37,6 +37,32 @@ export type UserPreferences = {
   profileVisibility: 'PRIVATE' | 'PARTICIPANTS';
 };
 
+// Mirrors the column defaults of `UserPreferences` in auths/service/prisma/schema.prisma,
+// for users who don't have a preferences row yet.
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  weekStart: 'MONDAY',
+  timeFormat: 'H24',
+  defaultView: 'WEEK',
+  locale: 'en',
+  timezone: 'UTC',
+  showWeekNumbers: false,
+  workDayStart: 8,
+  workDayEnd: 20,
+  units: 'METRIC',
+  favoriteSports: [],
+  defaultSportType: null,
+  defaultEventDurationMin: 60,
+  defaultReminders: [30],
+  theme: 'SYSTEM',
+  notifyByEmail: false,
+  profileVisibility: 'PRIVATE',
+};
+
+export type UpdateAvatarBody = {
+  avatarIcon: string;
+  avatarColor: string;
+};
+
 export type MeUser = AuthUser & {
   email: string | null;
   emailVerifiedAt: string | null;

@@ -1,0 +1,80 @@
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-5);
+
+  @media (max-width: 40rem) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.paneLabel {
+  color: var(--color-text-muted);
+}
+
+.emojiPicker {
+  --epr-bg-color: var(--color-surface);
+  --epr-picker-border-color: var(--color-border);
+  --epr-picker-border-radius: var(--radius);
+}
+
+.colorPicker {
+  width: 100%;
+
+  :global(.react-colorful__saturation),
+  :global(.react-colorful__hue) {
+    border-radius: var(--radius);
+  }
+
+  :global(.react-colorful__saturation) {
+    height: 12rem;
+    margin-bottom: var(--space-3);
+  }
+
+  :global(.react-colorful__hue) {
+    height: 1.25rem;
+  }
+}
+
+.hexInput {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-text);
+  font: inherit;
+  text-transform: uppercase;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.hint {
+  margin-right: auto;
+  color: var(--color-text-muted);
+}

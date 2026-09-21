@@ -10,7 +10,13 @@ const apiBase = authsApiBaseHref(authsServiceBase);
 export function register(username: string, password: string): Promise<{ user: AuthUser }> {
   return authsRequest('/sign-up', {
     method: 'POST',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({
+      username,
+      password,
+      // Hints for the starting preferences.
+      locale: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }),
   });
 }
 

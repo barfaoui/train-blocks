@@ -5,7 +5,7 @@ VALUES (
   'testuser',
   '$2b$12$SwJXLm3yITO3RiO8pCCZVuInpFKK8eihEiS.yHxRQUKitu06frtV2',
   'Test User',
-  'star',
+  '🏃',
   '#7C3AED'
 )
 ON CONFLICT (username) DO NOTHING;

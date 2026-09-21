@@ -1,3 +1,5 @@
+import { addMinutesToTime } from '@common/utils/time.util';
+
 import {
   EMPTY_FORM_VALUES,
   EventFormModal,
@@ -6,6 +8,9 @@ import {
   toEventFields,
 } from './EventFormModal';
 import { createEvent } from './events-service';
+import { useSession } from '../auth/session';
+
+const FALLBACK_DURATION_MIN = 60;
 
 export type CreateEventModalProps = {
   initialDate: string;
@@ -14,23 +19,18 @@ export type CreateEventModalProps = {
   onCreated: () => void;
 };
 
-// Caps at 23:59 rather than rolling into the next day, since the form treats
-// a single click as a same-day block.
-function addOneHour(time: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  const totalMinutes = Math.min(hours * 60 + minutes + 60, 23 * 60 + 59);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${pad(Math.floor(totalMinutes / 60))}:${pad(totalMinutes % 60)}`;
-}
-
-function initialValues(initialDate: string, initialTime?: string): EventFormValues {
+function initialValues(
+  initialDate: string,
+  durationMin: number,
+  initialTime?: string,
+): EventFormValues {
   return {
     ...EMPTY_FORM_VALUES,
     allDay: !initialTime,
     startDate: initialDate,
     endDate: initialDate,
     startTime: initialTime ?? '',
-    endTime: initialTime ? addOneHour(initialTime) : '',
+    endTime: initialTime ? addMinutesToTime(initialTime, durationMin) : '',
   };
 }
 
@@ -40,11 +40,15 @@ export function CreateEventModal({
   onClose,
   onCreated,
 }: CreateEventModalProps) {
+  const { user } = useSession();
+  const durationMin = user?.preferences?.defaultEventDurationMin ?? FALLBACK_DURATION_MIN;
+
   return (
     <EventFormModal
       title="✨ New event"
       submitLabel="Create event"
-      initialValues={initialValues(initialDate, initialTime)}
+      initialValues={initialValues(initialDate, durationMin, initialTime)}
+      defaultDurationMin={durationMin}
       showRepeat
       onClose={onClose}
       onSubmit={async (form) => {

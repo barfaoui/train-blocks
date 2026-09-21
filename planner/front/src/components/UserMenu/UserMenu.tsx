@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Avatar } from '@common/components/Avatar';
 import { TypographySmall } from '@common/styles/Typography';
@@ -9,11 +10,10 @@ export type UserMenuProps = {
   name: string;
   avatarIcon: string | null;
   avatarColor: string | null;
-  profileHref: string;
   onSignOut: () => void;
 };
 
-export function UserMenu({ name, avatarIcon, avatarColor, profileHref, onSignOut }: UserMenuProps) {
+export function UserMenu({ name, avatarIcon, avatarColor, onSignOut }: UserMenuProps) {
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +62,13 @@ export function UserMenu({ name, avatarIcon, avatarColor, profileHref, onSignOut
       </button>
       {open ? (
         <div id={menuId} role="menu" className={styles.menu}>
-          <TypographySmall as="a" role="menuitem" href={profileHref} className={styles.item}>
+          <TypographySmall
+            as={Link}
+            to="/profile"
+            role="menuitem"
+            className={styles.item}
+            onClick={() => setOpen(false)}
+          >
             Profile
           </TypographySmall>
           <TypographySmall
