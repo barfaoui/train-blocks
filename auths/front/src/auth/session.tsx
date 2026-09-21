@@ -69,7 +69,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       try {
         applyUser(await getMe());
       } catch {
-        applyUser({ ...user, email: null, createdAt: '' });
+        applyUser({
+          ...user,
+          email: null,
+          emailVerifiedAt: null,
+          displayName: null,
+          avatarIcon: null,
+          avatarColor: null,
+          createdAt: '',
+          preferences: null,
+        });
       }
     },
     [applyUser],

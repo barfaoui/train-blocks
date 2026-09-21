@@ -8,13 +8,97 @@ datasource db {
   schemas  = ["auth"]
 }
 
+enum WeekStart {
+  SUNDAY
+  MONDAY
+  SATURDAY
+
+  @@schema("auth")
+}
+
+enum TimeFormat {
+  H12
+  H24
+
+  @@schema("auth")
+}
+
+enum CalendarView {
+  MONTH
+  WEEK
+  DAY
+
+  @@schema("auth")
+}
+
+enum UnitSystem {
+  METRIC
+  IMPERIAL
+
+  @@schema("auth")
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  SYSTEM
+
+  @@schema("auth")
+}
+
+enum ProfileVisibility {
+  PRIVATE
+  PARTICIPANTS
+
+  @@schema("auth")
+}
+
 model User {
-  id           String   @id @default(uuid()) @db.Uuid
-  username     String   @unique @db.VarChar(32)
-  passwordHash String   @map("password_hash") @db.VarChar(255)
-  email        String?  @db.VarChar(255)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id              String    @id @default(uuid()) @db.Uuid
+  username        String    @unique @db.VarChar(32)
+  passwordHash    String    @map("password_hash") @db.VarChar(255)
+  email           String?   @db.VarChar(255)
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  displayName     String?   @map("display_name") @db.VarChar(64)
+  // Avatar is a preset: a common icon name plus a #RRGGBB color.
+  avatarIcon      String?   @map("avatar_icon") @db.VarChar(32)
+  avatarColor     String?   @map("avatar_color") @db.VarChar(7)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  preferences UserPreferences?
 
   @@map("users")
+  @@schema("auth")
+}
+
+model UserPreferences {
+  userId String @id @map("user_id") @db.Uuid
+
+  // Calendar
+  weekStart       WeekStart    @default(MONDAY) @map("week_start")
+  timeFormat      TimeFormat   @default(H24) @map("time_format")
+  defaultView     CalendarView @default(WEEK) @map("default_view")
+  locale          String       @default("en") @db.VarChar(16)
+  timezone        String       @default("UTC") @db.VarChar(64)
+  showWeekNumbers Boolean      @default(false) @map("show_week_numbers")
+  workDayStart    Int          @default(8) @map("work_day_start")
+  workDayEnd      Int          @default(20) @map("work_day_end")
+
+  // Training. Sport types live in the planner schema, so they are stored as
+  // plain names rather than a cross-schema enum.
+  units                   UnitSystem @default(METRIC)
+  favoriteSports          String[]   @default([]) @map("favorite_sports")
+  defaultSportType        String?    @map("default_sport_type") @db.VarChar(64)
+  defaultEventDurationMin Int        @default(60) @map("default_event_duration_min")
+  defaultReminders        Int[]      @default([30]) @map("default_reminders")
+
+  // UI, notifications, privacy
+  theme             Theme             @default(SYSTEM)
+  notifyByEmail     Boolean           @default(false) @map("notify_by_email")
+  profileVisibility ProfileVisibility @default(PRIVATE) @map("profile_visibility")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
   @@schema("auth")
 }
