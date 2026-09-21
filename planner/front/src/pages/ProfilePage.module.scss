@@ -54,6 +54,24 @@
   gap: var(--space-2);
 }
 
+.textButton {
+  padding: 0;
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
 .avatar {
   width: 5rem;
   height: 5rem;

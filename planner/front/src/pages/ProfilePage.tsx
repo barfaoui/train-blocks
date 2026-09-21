@@ -48,13 +48,14 @@ export function ProfilePage() {
               name={name}
             />
             {avatarDraft ? null : (
-              <Button
+              <TypographySmall
+                as="button"
                 type="button"
-                style="small"
-                outlined
-                label="Edit avatar"
+                className={styles.textButton}
                 onClick={() => setAvatarDraft(savedAvatar)}
-              />
+              >
+                Edit avatar
+              </TypographySmall>
             )}
           </div>
           <div className={styles.identity}>
