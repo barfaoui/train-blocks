@@ -139,19 +139,13 @@ export const PREFERENCE_CATEGORIES: PreferenceCategory[] = [
   {
     id: 'notifications-privacy',
     title: 'Notifications & privacy',
-    description: 'What we send you and who can see your profile.',
+    description: 'What we send you and whether other people can find you.',
     fields: [
       { key: 'notifyByEmail', label: 'Email notifications', kind: { type: 'boolean' } },
       {
-        key: 'profileVisibility',
-        label: 'Profile visibility',
-        kind: {
-          type: 'select',
-          options: [
-            { value: 'PRIVATE', label: 'Only me' },
-            { value: 'PARTICIPANTS', label: 'People I train with' },
-          ],
-        },
+        key: 'searchable',
+        label: 'Can people find me using my username?',
+        kind: { type: 'boolean' },
       },
     ],
   },

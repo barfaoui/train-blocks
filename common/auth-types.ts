@@ -23,7 +23,6 @@ export const TIME_FORMATS = ['H12', 'H24'] as const;
 export const CALENDAR_VIEWS = ['MONTH', 'WEEK', 'DAY'] as const;
 export const UNIT_SYSTEMS = ['METRIC', 'IMPERIAL'] as const;
 export const THEMES = ['LIGHT', 'DARK', 'SYSTEM'] as const;
-export const PROFILE_VISIBILITIES = ['PRIVATE', 'PARTICIPANTS'] as const;
 
 export type UserPreferences = {
   weekStart: (typeof WEEK_STARTS)[number];
@@ -41,7 +40,7 @@ export type UserPreferences = {
   defaultReminders: number[];
   theme: (typeof THEMES)[number];
   notifyByEmail: boolean;
-  profileVisibility: (typeof PROFILE_VISIBILITIES)[number];
+  searchable: boolean;
 };
 
 // Preferences are edited one category at a time, each with its own endpoint.
@@ -75,12 +74,16 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   defaultReminders: [30],
   theme: 'SYSTEM',
   notifyByEmail: false,
-  profileVisibility: 'PRIVATE',
+  searchable: false,
 };
 
 export type UpdateAvatarBody = {
   avatarIcon: string;
   avatarColor: string;
+};
+
+export type UpdateDisplayNameBody = {
+  displayName: string;
 };
 
 export type MeUser = AuthUser & {

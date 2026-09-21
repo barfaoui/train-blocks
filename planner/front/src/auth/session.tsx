@@ -18,6 +18,7 @@ import type {
 import {
   logout as apiLogout,
   updateAvatar as apiUpdateAvatar,
+  updateDisplayName as apiUpdateDisplayName,
   updatePreferences as apiUpdatePreferences,
   getMe,
 } from './auths-service';
@@ -29,6 +30,7 @@ export type SessionValue = {
   user: MeUser | null;
   logout: () => Promise<void>;
   updateAvatar: (avatar: UpdateAvatarBody) => Promise<void>;
+  updateDisplayName: (displayName: string) => Promise<void>;
   updatePreferences: (
     category: PreferenceCategoryId,
     changes: UpdatePreferencesBody,
@@ -86,6 +88,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [applyUser],
   );
 
+  const updateDisplayName = useCallback(
+    async (displayName: string) => {
+      applyUser(await apiUpdateDisplayName(displayName));
+    },
+    [applyUser],
+  );
+
   const updatePreferences = useCallback(
     async (category: PreferenceCategoryId, changes: UpdatePreferencesBody) => {
       applyUser(await apiUpdatePreferences(category, changes));
@@ -94,8 +103,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ status, user, logout, updateAvatar, updatePreferences }),
-    [status, user, logout, updateAvatar, updatePreferences],
+    () => ({ status, user, logout, updateAvatar, updateDisplayName, updatePreferences }),
+    [status, user, logout, updateAvatar, updateDisplayName, updatePreferences],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

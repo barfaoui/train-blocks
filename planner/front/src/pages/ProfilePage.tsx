@@ -4,12 +4,13 @@ import { Link } from 'react-router-dom';
 import { DEFAULT_USER_PREFERENCES } from '@common/auth-types';
 import { Avatar } from '@common/components/Avatar';
 import { Button } from '@common/components/Button';
-import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
+import { TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './ProfilePage.module.scss';
 import { useSession } from '../auth/session';
 import { AccountSection } from '../profile/AccountSection';
 import { type AvatarDraft, DEFAULT_AVATAR_COLOR } from '../profile/avatar';
+import { DisplayNameEditor } from '../profile/DisplayNameEditor';
 import { PREFERENCE_CATEGORIES } from '../profile/preference-fields';
 import { PreferenceSection } from '../profile/PreferenceSection';
 import { SectionCard } from '../profile/SectionCard';
@@ -63,9 +64,11 @@ export function ProfilePage() {
             )}
           </div>
           <div className={styles.identity}>
-            <TypographyLarge as="h1" variant="bold" className={styles.name}>
-              {name}
-            </TypographyLarge>
+            <DisplayNameEditor
+              name={name}
+              displayName={user.displayName}
+              username={user.username}
+            />
             <TypographyMedium as="p" className={styles.handle}>
               @{user.username}
             </TypographyMedium>

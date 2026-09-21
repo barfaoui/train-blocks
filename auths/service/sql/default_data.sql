@@ -15,13 +15,13 @@ INSERT INTO "auth"."user_preferences" (
   user_id, week_start, time_format, default_view, locale, timezone,
   show_week_numbers, work_day_start, work_day_end, units, favorite_sports,
   default_sport_type, default_event_duration_min, default_reminders, theme,
-  notify_by_email, profile_visibility
+  notify_by_email, searchable
 )
 VALUES (
   '00000000-0000-0000-0000-000000000001',
   'SUNDAY', 'H12', 'MONTH', 'en', 'Europe/Paris',
   true, 6, 22, 'IMPERIAL', ARRAY['OUTSIDE_RUNNING', 'SWIMMING', 'STRENGTH'],
   'OUTSIDE_RUNNING', 45, ARRAY[15, 60], 'DARK',
-  false, 'PARTICIPANTS'
+  false, true
 )
 ON CONFLICT (user_id) DO NOTHING;

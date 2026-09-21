@@ -9,6 +9,7 @@ import {
   signIn,
   signUp,
   updateAvatar,
+  updateDisplayName,
   updatePreferences,
 } from './service';
 import { prisma } from '../data/prisma';
@@ -275,6 +276,68 @@ describe('updateAvatar', () => {
   });
 });
 
+describe('updateDisplayName', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('saves the name and returns the refreshed profile', async () => {
+    prismaUser.update.mockResolvedValue({});
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      email: null,
+      emailVerifiedAt: null,
+      displayName: 'Bochra A.',
+      avatarIcon: null,
+      avatarColor: null,
+      createdAt: new Date('2026-08-15T07:00:00.000Z'),
+      preferences: null,
+    });
+
+    const me = await updateDisplayName('user-1', 'Bochra A.');
+
+    expect(prismaUser.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { displayName: 'Bochra A.' },
+    });
+    expect(me.displayName).toBe('Bochra A.');
+  });
+
+  it('clears the name with null', async () => {
+    prismaUser.update.mockResolvedValue({});
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      email: null,
+      emailVerifiedAt: null,
+      displayName: null,
+      avatarIcon: null,
+      avatarColor: null,
+      createdAt: new Date('2026-08-15T07:00:00.000Z'),
+      preferences: null,
+    });
+
+    await updateDisplayName('user-1', null);
+
+    expect(prismaUser.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { displayName: null },
+    });
+  });
+
+  it('throws UnauthorizedError when the user no longer exists', async () => {
+    prismaUser.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(updateDisplayName('user-1', 'Bochra')).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+});
+
 describe('updatePreferences', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -332,6 +395,39 @@ describe('updatePreferences', () => {
     await expect(
       updatePreferences('user-1', { workDayStart: 6, workDayEnd: 22 }),
     ).resolves.toBeDefined();
+  });
+
+  it('refuses email notifications for an account without an email', async () => {
+    prismaUser.findUnique.mockResolvedValue({ email: null });
+
+    await expect(updatePreferences('user-1', { notifyByEmail: true })).rejects.toBeInstanceOf(
+      InvalidPreferencesError,
+    );
+    expect(prismaPreferences.upsert).not.toHaveBeenCalled();
+  });
+
+  it('allows email notifications once an email is set', async () => {
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      email: 'bochra@example.com',
+      emailVerifiedAt: null,
+      displayName: null,
+      avatarIcon: null,
+      avatarColor: null,
+      createdAt: new Date('2026-08-15T07:00:00.000Z'),
+      preferences: { notifyByEmail: true },
+    });
+
+    await expect(updatePreferences('user-1', { notifyByEmail: true })).resolves.toBeDefined();
+    expect(prismaPreferences.upsert).toHaveBeenCalled();
+  });
+
+  it('lets a user without an email turn email notifications off', async () => {
+    // The default mock is an account without an email.
+    await updatePreferences('user-1', { notifyByEmail: false });
+
+    expect(prismaPreferences.upsert).toHaveBeenCalled();
   });
 
   it('throws UnauthorizedError when the user no longer exists', async () => {

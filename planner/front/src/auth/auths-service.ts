@@ -3,6 +3,7 @@ import type {
   MeUser,
   PreferenceCategoryId,
   UpdateAvatarBody,
+  UpdateDisplayNameBody,
   UpdatePreferencesBody,
 } from '@common/auth-types';
 import { request } from '@common/utils/request.util';
@@ -17,6 +18,15 @@ export function getMe(): Promise<MeUser> {
 
 export function updateAvatar(avatar: UpdateAvatarBody): Promise<MeUser> {
   return authsRequest('/me/avatar', { method: 'PATCH', body: JSON.stringify(avatar) });
+}
+
+export function updateDisplayName(
+  displayName: UpdateDisplayNameBody['displayName'],
+): Promise<MeUser> {
+  return authsRequest('/me/display-name', {
+    method: 'PATCH',
+    body: JSON.stringify({ displayName }),
+  });
 }
 
 export function updatePreferences(

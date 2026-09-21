@@ -9,6 +9,7 @@ export {
   signUpBody,
   signUpRequest,
   updateAvatarBody,
+  updateDisplayNameBody,
   username,
 } from '@common/auth-validation';
 

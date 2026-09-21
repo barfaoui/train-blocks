@@ -8,6 +8,7 @@ import {
   resetPasswordForm,
   trainingPreferencesBody,
   updateAvatarBody,
+  updateDisplayNameBody,
 } from './auth-validation';
 
 describe('resetPasswordForm', () => {
@@ -133,11 +134,39 @@ describe('preference category bodies', () => {
     expect(
       notificationsPrivacyPreferencesBody.parse({
         notifyByEmail: true,
-        profileVisibility: 'PRIVATE',
+        searchable: true,
       }),
-    ).toEqual({ notifyByEmail: true, profileVisibility: 'PRIVATE' });
+    ).toEqual({ notifyByEmail: true, searchable: true });
+    expect(notificationsPrivacyPreferencesBody.safeParse({ searchable: 'PRIVATE' }).success).toBe(
+      false,
+    );
+    expect(
+      notificationsPrivacyPreferencesBody.safeParse({ profileVisibility: 'PRIVATE' }).success,
+    ).toBe(false);
     expect(notificationsPrivacyPreferencesBody.safeParse({ notifyByEmail: 'yes' }).success).toBe(
       false,
     );
+  });
+});
+
+describe('updateDisplayNameBody', () => {
+  it('trims the name', () => {
+    expect(updateDisplayNameBody.parse({ displayName: '  Bochra A.  ' }).displayName).toBe(
+      'Bochra A.',
+    );
+  });
+
+  it.each(['', '   '])('turns %j into null, which clears the name', (displayName) => {
+    expect(updateDisplayNameBody.parse({ displayName }).displayName).toBeNull();
+  });
+
+  it('rejects a name longer than 64 characters', () => {
+    expect(updateDisplayNameBody.safeParse({ displayName: 'a'.repeat(65) }).success).toBe(false);
+    expect(updateDisplayNameBody.safeParse({ displayName: 'a'.repeat(64) }).success).toBe(true);
+  });
+
+  it('rejects a missing or non-string name', () => {
+    expect(updateDisplayNameBody.safeParse({}).success).toBe(false);
+    expect(updateDisplayNameBody.safeParse({ displayName: 42 }).success).toBe(false);
   });
 });

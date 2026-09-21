@@ -103,25 +103,35 @@ type FieldInputProps = {
   field: PreferenceField;
   draft: Draft;
   errors: DraftErrors;
+  hasEmail: boolean;
   onChange: (value: string) => void;
 };
 
-function FieldInput({ field, draft, errors, onChange }: FieldInputProps) {
+function FieldInput({ field, draft, errors, hasEmail, onChange }: FieldInputProps) {
   const { kind, label } = field;
   const value = draft[field.key];
 
   switch (kind.type) {
     case 'select':
       return <Select label={label} value={value} options={kind.options} onChange={onChange} />;
-    case 'boolean':
+    case 'boolean': {
+      const needsEmail = field.key === 'notifyByEmail' && !hasEmail;
       return (
-        <Checkbox
-          className={styles.checkbox}
-          label={label}
-          checked={value === 'true'}
-          onChange={(checked) => onChange(String(checked))}
-        />
+        <div className={styles.checkbox}>
+          <Checkbox
+            label={label}
+            checked={value === 'true' && !needsEmail}
+            disabled={needsEmail}
+            onChange={(checked) => onChange(String(checked))}
+          />
+          {needsEmail ? (
+            <TypographySmall as="p" className={styles.hint}>
+              Add an email address to your account to turn this on.
+            </TypographySmall>
+          ) : null}
+        </div>
       );
+    }
     case 'number':
       return (
         <TextInput
@@ -177,7 +187,7 @@ export type PreferenceSectionProps = {
 
 export function PreferenceSection({ category, preferences }: PreferenceSectionProps) {
   const [editing, setEditing] = useState(false);
-  const { updatePreferences } = useSession();
+  const { user, updatePreferences } = useSession();
   const [draft, setDraft] = useState<Draft>(() => toDraft(preferences));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -240,6 +250,7 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
                 field={field}
                 draft={draft}
                 errors={errors}
+                hasEmail={Boolean(user?.email)}
                 onChange={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
               />
             ))}

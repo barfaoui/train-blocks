@@ -2,7 +2,6 @@ import { type ZodError, z } from 'zod';
 
 import {
   CALENDAR_VIEWS,
-  PROFILE_VISIBILITIES,
   type PreferenceCategoryId,
   THEMES,
   TIME_FORMATS,
@@ -59,6 +58,15 @@ export const avatarColor = z
   .regex(/^#[0-9a-fA-F]{6}$/, 'Avatar color must be a #RRGGBB hex');
 
 export const updateAvatarBody = z.object({ avatarIcon, avatarColor });
+
+// An empty name clears it, and the username is shown instead.
+export const updateDisplayNameBody = z.object({
+  displayName: z
+    .string()
+    .trim()
+    .max(64, 'Display name must be 64 characters or fewer')
+    .transform((value) => value || null),
+});
 
 export function confirmPassword(password: string) {
   return z
@@ -140,7 +148,7 @@ export const appearancePreferencesBody = partialBody({ theme: z.enum(THEMES) });
 
 export const notificationsPrivacyPreferencesBody = partialBody({
   notifyByEmail: z.boolean(),
-  profileVisibility: z.enum(PROFILE_VISIBILITIES),
+  searchable: z.boolean(),
 });
 
 export const preferenceCategoryBodies: Record<

@@ -92,9 +92,12 @@ export async function getMe(userId: string): Promise<MeUser> {
   };
 }
 
-export async function updateAvatar(userId: string, avatar: UpdateAvatarBody): Promise<MeUser> {
+async function updateProfileFields(
+  userId: string,
+  data: Pick<Prisma.UserUpdateInput, 'avatarIcon' | 'avatarColor' | 'displayName'>,
+): Promise<MeUser> {
   try {
-    await prisma.user.update({ where: { id: userId }, data: avatar });
+    await prisma.user.update({ where: { id: userId }, data });
   } catch (error) {
     // P2025: the user no longer exists.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
@@ -104,6 +107,15 @@ export async function updateAvatar(userId: string, avatar: UpdateAvatarBody): Pr
   }
 
   return getMe(userId);
+}
+
+export function updateAvatar(userId: string, avatar: UpdateAvatarBody): Promise<MeUser> {
+  return updateProfileFields(userId, avatar);
+}
+
+// `null` clears the name, so the username is shown instead.
+export function updateDisplayName(userId: string, displayName: string | null): Promise<MeUser> {
+  return updateProfileFields(userId, { displayName });
 }
 
 // `changes` has already been validated field by field, but the active day's start and end
@@ -124,12 +136,32 @@ async function assertActiveDayIsValid(userId: string, changes: UpdatePreferences
   }
 }
 
+async function assertEmailIsSet(userId: string, changes: UpdatePreferencesBody) {
+  if (changes.notifyByEmail !== true) {
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!user) {
+    throw new UnauthorizedError();
+  }
+  if (!user.email) {
+    throw new InvalidPreferencesError([
+      {
+        path: 'notifyByEmail',
+        message: 'Add an email address to turn on email notifications',
+      },
+    ]);
+  }
+}
+
 // Also creates the preferences row for accounts that predate it.
 export async function updatePreferences(
   userId: string,
   changes: UpdatePreferencesBody,
 ): Promise<MeUser> {
   await assertActiveDayIsValid(userId, changes);
+  await assertEmailIsSet(userId, changes);
 
   try {
     await prisma.userPreferences.upsert({
