@@ -81,9 +81,34 @@ describe('signUp', () => {
 
     expect(hashPasswordMock).toHaveBeenCalledWith('Secret1!');
     expect(prismaUser.create).toHaveBeenCalledWith({
-      data: { username: 'bochra', passwordHash: 'hashed-password' },
+      data: {
+        username: 'bochra',
+        passwordHash: 'hashed-password',
+        preferences: { create: {} },
+      },
     });
     expect(signTokenMock).toHaveBeenCalledWith({ sub: 'user-1', username: 'bochra' });
+  });
+
+  it('creates the starting preferences from the browser hints', async () => {
+    prismaUser.create.mockResolvedValue({ id: 'user-1', username: 'bochra' });
+
+    await signUp('bochra', 'Secret1!', { locale: 'fr-FR', timezone: 'Europe/Paris' });
+
+    expect(prismaUser.create).toHaveBeenCalledWith({
+      data: {
+        username: 'bochra',
+        passwordHash: 'hashed-password',
+        preferences: {
+          create: {
+            locale: 'fr-FR',
+            timezone: 'Europe/Paris',
+            timeFormat: 'H24',
+            weekStart: 'MONDAY',
+          },
+        },
+      },
+    });
   });
 
   it('throws UsernameTakenError on unique constraint failure', async () => {

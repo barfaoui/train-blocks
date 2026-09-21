@@ -16,8 +16,6 @@ export function GuestGuard({ children }: { children: ReactNode }) {
   const destination =
     redirect !== null && isAllowedAppRedirect(redirect) ? redirect : plannerHomeHref;
 
-  // Signed-in users have nothing to do on the login page: send them on to the
-  // page they were after, or to the planner.
   useEffect(() => {
     if (authenticated) {
       window.location.assign(destination);

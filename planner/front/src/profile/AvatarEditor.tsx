@@ -6,16 +6,10 @@ import { Button } from '@common/components/Button';
 import { useTheme } from '@common/styles/ThemeProvider';
 import { TypographySmall } from '@common/styles/Typography';
 
+import { type AvatarDraft } from './avatar';
 import styles from './AvatarEditor.module.scss';
 import { SectionCard } from './SectionCard';
 import { useSession } from '../auth/session';
-
-export type AvatarDraft = {
-  icon: string | null;
-  color: string;
-};
-
-export const DEFAULT_AVATAR_COLOR = '#0f766e';
 
 // A picked color can be a 3-digit hex, which the server doesn't accept.
 function toSixDigitHex(color: string): string {
@@ -27,7 +21,6 @@ export type AvatarEditorProps = {
   saved: AvatarDraft;
   draft: AvatarDraft;
   onDraftChange: (draft: AvatarDraft) => void;
-  // Leaves the editor, whether after saving or cancelling.
   onClose: () => void;
 };
 

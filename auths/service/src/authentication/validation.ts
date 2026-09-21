@@ -6,6 +6,7 @@ export {
   password,
   signInBody,
   signUpBody,
+  signUpRequest,
   updateAvatarBody,
   username,
 } from '@common/auth-validation';

@@ -24,7 +24,6 @@ const SPORT_TYPE_OPTIONS = SPORT_TYPES.map((sportType) => ({
   icon: <SportIcon sportType={sportType} />,
 }));
 
-// The user's favorite sports first, in the order they chose them, then everything else.
 function sportOptionsWithFavoritesFirst(favorites: string[]) {
   const favoriteOptions = favorites
     .map((favorite) => SPORT_TYPE_OPTIONS.find((option) => option.value === favorite))

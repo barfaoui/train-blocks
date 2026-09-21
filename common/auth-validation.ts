@@ -1,5 +1,7 @@
 import { type ZodError, z } from 'zod';
 
+import { firstEmoji } from './utils/emoji.util';
+
 export const username = z
   .string()
   .trim()
@@ -21,16 +23,24 @@ export const signUpBody = z.object({
   password,
 });
 
+// What the browser reports at sign-up, used to pick starting preferences. It is only a hint,
+// so it is not validated here.
+export const signUpRequest = signUpBody.extend({
+  locale: z.string().max(64).optional(),
+  timezone: z.string().max(64).optional(),
+});
+
 export const signInBody = z.object({
   username,
   password: z.string().min(1, 'Password is required'),
 });
 
-// An emoji, possibly a multi-part one (skin tone, ZWJ sequence, flag).
+// Only the first emoji is kept; anything after it is dropped.
 export const avatarIcon = z
   .string()
-  .max(32, 'Avatar emoji is too long')
-  .regex(/^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u, 'Avatar must be an emoji');
+  .max(64, 'Avatar emoji is too long')
+  .refine((value) => firstEmoji(value) !== null, 'Avatar must be an emoji')
+  .transform((value) => firstEmoji(value) as string);
 
 export const avatarColor = z
   .string()

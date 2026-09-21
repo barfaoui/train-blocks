@@ -1,8 +1,8 @@
 import styles from './Avatar.module.scss';
+import { firstEmoji } from '../utils/emoji.util';
 
 const FALLBACK_COLOR = '#0f766e';
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-const EMOJI = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
 
 // Black or white, whichever reads better on the given #RRGGBB background.
 function contrastColor(hex: string): string {
@@ -12,9 +12,7 @@ function contrastColor(hex: string): string {
 }
 
 export type AvatarProps = {
-  // An emoji.
   icon?: string | null;
-  // A #RRGGBB background.
   color?: string | null;
   // Its first letter is shown when there is no emoji.
   name?: string | null;
@@ -23,7 +21,7 @@ export type AvatarProps = {
 
 export function Avatar({ icon, color, name, className }: AvatarProps) {
   const background = color && HEX_COLOR.test(color) ? color : FALLBACK_COLOR;
-  const emoji = icon && EMOJI.test(icon) ? icon : null;
+  const emoji = icon ? firstEmoji(icon) : null;
   const initial = name?.trim().charAt(0).toUpperCase();
 
   return (

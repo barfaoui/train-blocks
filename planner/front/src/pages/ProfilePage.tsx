@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { DEFAULT_USER_PREFERENCES } from '@common/auth-types';
@@ -9,15 +9,19 @@ import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styl
 import styles from './ProfilePage.module.scss';
 import { useSession } from '../auth/session';
 import { AccountSection } from '../profile/AccountSection';
-import { type AvatarDraft, AvatarEditor, DEFAULT_AVATAR_COLOR } from '../profile/AvatarEditor';
+import { type AvatarDraft, DEFAULT_AVATAR_COLOR } from '../profile/avatar';
 import { PREFERENCE_CATEGORIES } from '../profile/preference-fields';
 import { PreferenceSection } from '../profile/PreferenceSection';
 import { SectionCard } from '../profile/SectionCard';
 
+// The emoji and color pickers are heavy, and only needed once the user starts editing.
+const AvatarEditor = lazy(() =>
+  import('../profile/AvatarEditor').then((module) => ({ default: module.AvatarEditor })),
+);
+
 export function ProfilePage() {
   const { user, logout } = useSession();
-  // The avatar being edited, or null when not editing. Cancelling drops it, which puts
-  // the saved avatar back.
+  // Null unless editing; dropping it puts the saved avatar back.
   const [avatarDraft, setAvatarDraft] = useState<AvatarDraft | null>(null);
 
   if (!user) {
@@ -81,12 +85,22 @@ export function ProfilePage() {
         </header>
 
         {avatarDraft ? (
-          <AvatarEditor
-            saved={savedAvatar}
-            draft={avatarDraft}
-            onDraftChange={setAvatarDraft}
-            onClose={() => setAvatarDraft(null)}
-          />
+          <Suspense
+            fallback={
+              <SectionCard title="Edit avatar">
+                <TypographySmall as="p" className={styles.loading}>
+                  Loading the editor…
+                </TypographySmall>
+              </SectionCard>
+            }
+          >
+            <AvatarEditor
+              saved={savedAvatar}
+              draft={avatarDraft}
+              onDraftChange={setAvatarDraft}
+              onClose={() => setAvatarDraft(null)}
+            />
+          </Suspense>
         ) : null}
 
         <AccountSection user={user} />

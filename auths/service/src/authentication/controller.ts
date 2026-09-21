@@ -4,7 +4,13 @@ import { requireAuth } from '@common/utils/auth-middleware.util';
 import { clearAuthCookie, setAuthCookie } from '@common/utils/cookie.util';
 
 import { getMe, isUsernameAvailable, signIn, signUp, updateAvatar } from './service';
-import { formatZodError, signInBody, signUpBody, updateAvatarBody, username } from './validation';
+import {
+  formatZodError,
+  signInBody,
+  signUpRequest,
+  updateAvatarBody,
+  username,
+} from './validation';
 import type { AuthenticatedRequest } from '../data/types/authentication';
 import {
   InvalidCredentialsError,
@@ -31,14 +37,17 @@ authenticationRouter.get('/usernames/:username/availability', async (req, res) =
 });
 
 authenticationRouter.post('/sign-up', async (req, res) => {
-  const parsed = signUpBody.safeParse(req.body);
+  const parsed = signUpRequest.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json(formatZodError(parsed.error));
     return;
   }
 
   try {
-    const result = await signUp(parsed.data.username, parsed.data.password);
+    const result = await signUp(parsed.data.username, parsed.data.password, {
+      locale: parsed.data.locale,
+      timezone: parsed.data.timezone,
+    });
     setAuthCookie(res, result.token);
     res.status(201).json({ user: result.user });
   } catch (error) {

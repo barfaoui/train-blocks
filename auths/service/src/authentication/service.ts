@@ -10,18 +10,27 @@ import {
   UsernameTakenError,
 } from '../data/types/errors';
 import { hashPassword, verifyPassword } from '../utils/password.util';
+import { type BrowserHints, initialPreferencesFor } from '../utils/preferences.util';
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   const existing = await prisma.user.findUnique({ where: { username } });
   return existing === null;
 }
 
-export async function signUp(username: string, password: string): Promise<AuthResult> {
+export async function signUp(
+  username: string,
+  password: string,
+  hints: BrowserHints = {},
+): Promise<AuthResult> {
   const passwordHash = await hashPassword(password);
 
   try {
     const user = await prisma.user.create({
-      data: { username, passwordHash },
+      data: {
+        username,
+        passwordHash,
+        preferences: { create: initialPreferencesFor(hints) },
+      },
     });
 
     const token = signToken({ sub: user.id, username: user.username });

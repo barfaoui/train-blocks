@@ -43,10 +43,18 @@ describe('resetPasswordForm', () => {
 
 describe('updateAvatarBody', () => {
   it.each(['🏃', '🏃🏽', '👨‍👩‍👧', '🇹🇳'])('accepts the emoji %s', (avatarIcon) => {
-    expect(updateAvatarBody.safeParse({ avatarIcon, avatarColor: '#7C3AED' }).success).toBe(true);
+    expect(updateAvatarBody.parse({ avatarIcon, avatarColor: '#7C3AED' }).avatarIcon).toBe(
+      avatarIcon,
+    );
   });
 
-  it.each(['star', 'A', '', ' 🏃'])('rejects %j as an icon', (avatarIcon) => {
+  it('keeps only the first emoji', () => {
+    const parsed = updateAvatarBody.parse({ avatarIcon: '🏃 and more 🏊', avatarColor: '#7C3AED' });
+
+    expect(parsed.avatarIcon).toBe('🏃');
+  });
+
+  it.each(['star', 'A', ''])('rejects %j as an icon', (avatarIcon) => {
     expect(updateAvatarBody.safeParse({ avatarIcon, avatarColor: '#7C3AED' }).success).toBe(false);
   });
 

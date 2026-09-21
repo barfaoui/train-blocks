@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { DEFAULT_USER_PREFERENCES } from '@common/auth-types';
 import { ThemeToggle } from '@common/components/ThemeToggle';
 import { Toast } from '@common/components/Toast';
 import type { PlannerEvent } from '@common/planner-types';
@@ -81,7 +82,7 @@ export function HomePage() {
         onEventMove={moveEvent}
         onRecurringEventMove={(event, changes) => setEditingEvent({ ...event, ...changes })}
         reloadKey={reloadKey}
-        preferences={user?.preferences ?? null}
+        preferences={user?.preferences ?? DEFAULT_USER_PREFERENCES}
       />
       {createRequest ? (
         <CreateEventModal

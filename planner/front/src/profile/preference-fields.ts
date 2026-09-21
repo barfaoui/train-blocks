@@ -157,7 +157,6 @@ function sportLabel(sport: string): string {
   return SPORT_TYPE_INFO[sport as SportType]?.label ?? sport;
 }
 
-// What the user sees for a stored value when not editing.
 export function displayValue(field: PreferenceField, preferences: UserPreferences): string {
   const value = preferences[field.key];
 

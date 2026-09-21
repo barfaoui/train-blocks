@@ -10,7 +10,6 @@
   &.-danger {
     border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
 
-    // The card has no body, so its action sits centered against the text.
     .header {
       align-items: center;
     }
