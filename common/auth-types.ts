@@ -18,24 +18,42 @@ export type AuthUser = {
   username: string;
 };
 
+export const WEEK_STARTS = ['SUNDAY', 'MONDAY', 'SATURDAY'] as const;
+export const TIME_FORMATS = ['H12', 'H24'] as const;
+export const CALENDAR_VIEWS = ['MONTH', 'WEEK', 'DAY'] as const;
+export const UNIT_SYSTEMS = ['METRIC', 'IMPERIAL'] as const;
+export const THEMES = ['LIGHT', 'DARK', 'SYSTEM'] as const;
+
 export type UserPreferences = {
-  weekStart: 'SUNDAY' | 'MONDAY' | 'SATURDAY';
-  timeFormat: 'H12' | 'H24';
-  defaultView: 'MONTH' | 'WEEK' | 'DAY';
+  weekStart: (typeof WEEK_STARTS)[number];
+  timeFormat: (typeof TIME_FORMATS)[number];
+  defaultView: (typeof CALENDAR_VIEWS)[number];
   locale: string;
   timezone: string;
   showWeekNumbers: boolean;
   workDayStart: number;
   workDayEnd: number;
-  units: 'METRIC' | 'IMPERIAL';
+  units: (typeof UNIT_SYSTEMS)[number];
   favoriteSports: string[];
   defaultSportType: string | null;
   defaultEventDurationMin: number;
   defaultReminders: number[];
-  theme: 'LIGHT' | 'DARK' | 'SYSTEM';
+  theme: (typeof THEMES)[number];
   notifyByEmail: boolean;
-  profileVisibility: 'PRIVATE' | 'PARTICIPANTS';
+  searchable: boolean;
 };
+
+export const PREFERENCE_CATEGORY_IDS = [
+  'calendar',
+  'training',
+  'appearance',
+  'notifications-privacy',
+] as const;
+
+export type PreferenceCategoryId = (typeof PREFERENCE_CATEGORY_IDS)[number];
+
+// Reminders can't be edited yet.
+export type UpdatePreferencesBody = Partial<Omit<UserPreferences, 'defaultReminders'>>;
 
 // Mirrors the column defaults of `UserPreferences` in auths/service/prisma/schema.prisma,
 // for users who don't have a preferences row yet.
@@ -55,12 +73,16 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   defaultReminders: [30],
   theme: 'SYSTEM',
   notifyByEmail: false,
-  profileVisibility: 'PRIVATE',
+  searchable: false,
 };
 
 export type UpdateAvatarBody = {
   avatarIcon: string;
   avatarColor: string;
+};
+
+export type UpdateDisplayNameBody = {
+  displayName: string;
 };
 
 export type MeUser = AuthUser & {

@@ -46,13 +46,6 @@ enum Theme {
   @@schema("auth")
 }
 
-enum ProfileVisibility {
-  PRIVATE
-  PARTICIPANTS
-
-  @@schema("auth")
-}
-
 model User {
   id              String    @id @default(uuid()) @db.Uuid
   username        String    @unique @db.VarChar(32)
@@ -60,7 +53,7 @@ model User {
   email           String?   @db.VarChar(255)
   emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
   displayName     String?   @map("display_name") @db.VarChar(64)
-  // Avatar is a preset: a common icon name plus a #RRGGBB color.
+  // Avatar is an emoji plus a #RRGGBB background color.
   avatarIcon      String?   @map("avatar_icon") @db.VarChar(32)
   avatarColor     String?   @map("avatar_color") @db.VarChar(7)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -93,9 +86,10 @@ model UserPreferences {
   defaultReminders        Int[]      @default([30]) @map("default_reminders")
 
   // UI, notifications, privacy
-  theme             Theme             @default(SYSTEM)
-  notifyByEmail     Boolean           @default(false) @map("notify_by_email")
-  profileVisibility ProfileVisibility @default(PRIVATE) @map("profile_visibility")
+  theme         Theme   @default(SYSTEM)
+  notifyByEmail Boolean @default(false) @map("notify_by_email")
+  // Whether other people can find this user by searching.
+  searchable    Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

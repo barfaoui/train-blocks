@@ -4,18 +4,24 @@ import type { FieldError } from '../data/types/authentication';
 
 export {
   password,
+  preferenceCategoryBodies,
   signInBody,
   signUpBody,
   signUpRequest,
   updateAvatarBody,
+  updateDisplayNameBody,
   username,
 } from '@common/auth-validation';
 
-export function formatZodError(error: ZodError): { error: string; details: FieldError[] } {
+// `rootPath` labels issues about the whole value, like a missing body or an unknown key.
+export function formatZodError(
+  error: ZodError,
+  rootPath = 'body',
+): { error: string; details: FieldError[] } {
   return {
     error: 'Invalid request',
     details: error.issues.map((issue) => ({
-      path: issue.path.length === 0 ? 'username' : issue.path.join('.'),
+      path: issue.path.length === 0 ? rootPath : issue.path.join('.'),
       message: issue.message,
     })),
   };

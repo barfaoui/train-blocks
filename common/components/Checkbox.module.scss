@@ -10,8 +10,16 @@
   accent-color: var(--color-primary);
   cursor: pointer;
 
+  &:disabled {
+    cursor: not-allowed;
+  }
+
   &:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+}
+
+.root:has(.field:disabled) {
+  opacity: 0.6;
 }

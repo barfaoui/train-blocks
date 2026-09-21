@@ -15,6 +15,7 @@ import {
   type DraftErrors,
   type PreferenceCategory,
   type PreferenceField,
+  changesFor,
   displayValue,
   parseList,
   toDraft,
@@ -23,6 +24,7 @@ import {
 import styles from './PreferenceSection.module.scss';
 import { SectionCard } from './SectionCard';
 import { timeZoneOptions } from './timezones';
+import { useSession } from '../auth/session';
 import { SportIcon } from '../components/SportIcon/SportIcon';
 import { SPORT_TYPE_INFO } from '../events/sport-types';
 
@@ -101,25 +103,35 @@ type FieldInputProps = {
   field: PreferenceField;
   draft: Draft;
   errors: DraftErrors;
+  hasEmail: boolean;
   onChange: (value: string) => void;
 };
 
-function FieldInput({ field, draft, errors, onChange }: FieldInputProps) {
+function FieldInput({ field, draft, errors, hasEmail, onChange }: FieldInputProps) {
   const { kind, label } = field;
   const value = draft[field.key];
 
   switch (kind.type) {
     case 'select':
       return <Select label={label} value={value} options={kind.options} onChange={onChange} />;
-    case 'boolean':
+    case 'boolean': {
+      const needsEmail = field.key === 'notifyByEmail' && !hasEmail;
       return (
-        <Checkbox
-          className={styles.checkbox}
-          label={label}
-          checked={value === 'true'}
-          onChange={(checked) => onChange(String(checked))}
-        />
+        <div className={styles.checkbox}>
+          <Checkbox
+            label={label}
+            checked={value === 'true' && !needsEmail}
+            disabled={needsEmail}
+            onChange={(checked) => onChange(String(checked))}
+          />
+          {needsEmail ? (
+            <TypographySmall as="p" className={styles.hint}>
+              Add an email address to your account to turn this on.
+            </TypographySmall>
+          ) : null}
+        </div>
       );
+    }
     case 'number':
       return (
         <TextInput
@@ -175,7 +187,10 @@ export type PreferenceSectionProps = {
 
 export function PreferenceSection({ category, preferences }: PreferenceSectionProps) {
   const [editing, setEditing] = useState(false);
+  const { user, updatePreferences } = useSession();
   const [draft, setDraft] = useState<Draft>(() => toDraft(preferences));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const initial = toDraft(preferences);
   const dirty = category.fields.some((field) => draft[field.key] !== initial[field.key]);
@@ -184,12 +199,29 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
 
   function startEditing() {
     setDraft(toDraft(preferences));
+    setError(null);
     setEditing(true);
   }
 
   function cancel() {
     setDraft(toDraft(preferences));
     setEditing(false);
+  }
+
+  async function save() {
+    if (!dirty || hasErrors) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await updatePreferences(category.id, changesFor(category, initial, draft));
+      setEditing(false);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Failed to save your preferences');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -207,8 +239,8 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
           className={styles.form}
           noValidate
           onSubmit={(event) => {
-            // TODO: persist the changes once the preferences endpoint exists.
             event.preventDefault();
+            void save();
           }}
         >
           <div className={styles.fields}>
@@ -218,10 +250,16 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
                 field={field}
                 draft={draft}
                 errors={errors}
+                hasEmail={Boolean(user?.email)}
                 onChange={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
               />
             ))}
           </div>
+          {error ? (
+            <TypographySmall as="p" className={styles.error}>
+              {error}
+            </TypographySmall>
+          ) : null}
           <div className={styles.footer}>
             <Button type="button" style="small" outlined label="Cancel" onClick={cancel} />
             <Button
@@ -229,6 +267,7 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
               style="small"
               label="Save changes"
               disabled={!dirty || hasErrors}
+              isLoading={saving}
             />
           </div>
         </form>
