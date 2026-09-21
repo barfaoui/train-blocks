@@ -1,0 +1,18 @@
+.avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+}
+
+.icon {
+  width: 60%;
+  height: 60%;
+}

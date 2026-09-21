@@ -4,13 +4,14 @@ import { authsProfileHref } from '@common/app-urls';
 import { ThemeToggle } from '@common/components/ThemeToggle';
 import { Toast } from '@common/components/Toast';
 import type { PlannerEvent } from '@common/planner-types';
-import { TypographyMedium, TypographySmall } from '@common/styles/Typography';
+import { TypographyMedium } from '@common/styles/Typography';
 
 import styles from './HomePage.module.scss';
 import watermelonLogo from '../../assets/watermelon.svg';
 import { useSession } from '../auth/session';
 import { authsFrontBase } from '../auth/url-bases';
 import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar';
+import { UserMenu } from '../components/UserMenu/UserMenu';
 import { CreateEventModal } from '../events/CreateEventModal';
 import { DeleteEventModal } from '../events/DeleteEventModal';
 import { DuplicateEventModal } from '../events/DuplicateEventModal';
@@ -69,23 +70,14 @@ export function HomePage() {
           </div>
         </div>
         <nav className={styles.headerActions}>
-          <TypographySmall
-            as="button"
-            type="button"
-            className={styles.signOutButton}
-            onClick={() => void logout()}
-          >
-            Sign out
-          </TypographySmall>
-          <TypographySmall
-            as="a"
-            variant="bold"
-            href={profileHref}
-            className={styles.profileButton}
-          >
-            Profile
-          </TypographySmall>
           <ThemeToggle />
+          <UserMenu
+            name={user?.displayName ?? user?.username ?? ''}
+            avatarIcon={user?.avatarIcon ?? null}
+            avatarColor={user?.avatarColor ?? null}
+            profileHref={profileHref}
+            onSignOut={() => void logout()}
+          />
         </nav>
       </header>
       <Calendar
@@ -94,6 +86,7 @@ export function HomePage() {
         onEventMove={moveEvent}
         onRecurringEventMove={(event, changes) => setEditingEvent({ ...event, ...changes })}
         reloadKey={reloadKey}
+        preferences={user?.preferences ?? null}
       />
       {createRequest ? (
         <CreateEventModal
