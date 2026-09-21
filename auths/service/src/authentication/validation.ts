@@ -13,8 +13,7 @@ export {
   username,
 } from '@common/auth-validation';
 
-// Issues about the whole value, such as a missing body or an unknown key, have no field
-// name; `rootPath` names what was being validated in that case.
+// `rootPath` labels issues about the whole value, like a missing body or an unknown key.
 export function formatZodError(
   error: ZodError,
   rootPath = 'body',

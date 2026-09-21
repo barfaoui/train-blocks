@@ -34,8 +34,7 @@ export const signUpBody = z.object({
   password,
 });
 
-// What the browser reports at sign-up, used to pick starting preferences. It is only a hint,
-// so it is not validated here.
+// Browser hints for the starting preferences; invalid ones are ignored by the service.
 export const signUpRequest = signUpBody.extend({
   locale: z.string().max(64).optional(),
   timezone: z.string().max(64).optional(),
@@ -59,7 +58,6 @@ export const avatarColor = z
 
 export const updateAvatarBody = z.object({ avatarIcon, avatarColor });
 
-// An empty name clears it, and the username is shown instead.
 export const updateDisplayNameBody = z.object({
   displayName: z
     .string()
@@ -113,7 +111,7 @@ const timezone = z
 
 const sportType = z.enum(SPORT_TYPES);
 
-// A partial update: any subset of the fields, but at least one and nothing unknown.
+// Any subset of the fields, at least one, and nothing unknown.
 function partialBody<T extends z.ZodRawShape>(shape: T) {
   return z
     .object(shape)

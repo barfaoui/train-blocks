@@ -32,7 +32,6 @@ import {
 
 export const authenticationRouter = Router();
 
-// Sends the refreshed profile after an update, or the matching error.
 async function respondWithProfile(res: Response, update: () => Promise<MeUser>) {
   try {
     res.status(200).json(await update());

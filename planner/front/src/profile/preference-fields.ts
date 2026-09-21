@@ -232,7 +232,6 @@ function toValue(field: PreferenceField, value: string): unknown {
   }
 }
 
-// The fields of a category the user changed, typed for the update endpoint.
 export function changesFor(
   category: PreferenceCategory,
   initial: Draft,

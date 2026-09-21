@@ -113,13 +113,11 @@ export function updateAvatar(userId: string, avatar: UpdateAvatarBody): Promise<
   return updateProfileFields(userId, avatar);
 }
 
-// `null` clears the name, so the username is shown instead.
 export function updateDisplayName(userId: string, displayName: string | null): Promise<MeUser> {
   return updateProfileFields(userId, { displayName });
 }
 
-// `changes` has already been validated field by field, but the active day's start and end
-// also have to agree with each other and with whatever is stored.
+// The active day's start and end also have to agree with each other and with the stored values.
 async function assertActiveDayIsValid(userId: string, changes: UpdatePreferencesBody) {
   if (changes.workDayStart === undefined && changes.workDayEnd === undefined) {
     return;

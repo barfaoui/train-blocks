@@ -43,7 +43,6 @@ export type UserPreferences = {
   searchable: boolean;
 };
 
-// Preferences are edited one category at a time, each with its own endpoint.
 export const PREFERENCE_CATEGORY_IDS = [
   'calendar',
   'training',
@@ -53,7 +52,7 @@ export const PREFERENCE_CATEGORY_IDS = [
 
 export type PreferenceCategoryId = (typeof PREFERENCE_CATEGORY_IDS)[number];
 
-// Any subset of a category's preferences. Reminders can't be edited yet.
+// Reminders can't be edited yet.
 export type UpdatePreferencesBody = Partial<Omit<UserPreferences, 'defaultReminders'>>;
 
 // Mirrors the column defaults of `UserPreferences` in auths/service/prisma/schema.prisma,

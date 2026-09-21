@@ -45,7 +45,6 @@ const TICK = (
 );
 
 export type DisplayNameEditorProps = {
-  // What is shown when not editing: the display name, or the username without one.
   name: string;
   displayName: string | null;
   username: string;

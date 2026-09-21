@@ -51,7 +51,7 @@ function authsRequest<T>(path: string, init?: RequestInit): Promise<T> {
   });
 }
 
-// Prefers the service's field messages ("Enter a valid time zone") over the bare status text.
+// Prefers the service's field messages over the bare status text.
 async function parseAuthsError(response: Response): Promise<Error> {
   try {
     const body = (await response.json()) as { error?: string; details?: { message: string }[] };
