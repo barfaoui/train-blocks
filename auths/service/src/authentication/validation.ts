@@ -4,6 +4,7 @@ import type { FieldError } from '../data/types/authentication';
 
 export {
   password,
+  preferenceCategoryBodies,
   signInBody,
   signUpBody,
   signUpRequest,

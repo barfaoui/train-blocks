@@ -1,11 +1,13 @@
 import { Prisma } from '@prisma/client';
 
+import { DEFAULT_USER_PREFERENCES, type UpdatePreferencesBody } from '@common/auth-types';
 import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
 import type { AuthResult, MeUser, UpdateAvatarBody } from '../data/types/authentication';
 import {
   InvalidCredentialsError,
+  InvalidPreferencesError,
   UnauthorizedError,
   UsernameTakenError,
 } from '../data/types/errors';
@@ -96,6 +98,48 @@ export async function updateAvatar(userId: string, avatar: UpdateAvatarBody): Pr
   } catch (error) {
     // P2025: the user no longer exists.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      throw new UnauthorizedError();
+    }
+    throw error;
+  }
+
+  return getMe(userId);
+}
+
+// `changes` has already been validated field by field, but the active day's start and end
+// also have to agree with each other and with whatever is stored.
+async function assertActiveDayIsValid(userId: string, changes: UpdatePreferencesBody) {
+  if (changes.workDayStart === undefined && changes.workDayEnd === undefined) {
+    return;
+  }
+
+  const stored = await prisma.userPreferences.findUnique({ where: { userId } });
+  const start =
+    changes.workDayStart ?? stored?.workDayStart ?? DEFAULT_USER_PREFERENCES.workDayStart;
+  const end = changes.workDayEnd ?? stored?.workDayEnd ?? DEFAULT_USER_PREFERENCES.workDayEnd;
+  if (end <= start) {
+    throw new InvalidPreferencesError([
+      { path: 'workDayEnd', message: 'The active day must end after it starts' },
+    ]);
+  }
+}
+
+// Also creates the preferences row for accounts that predate it.
+export async function updatePreferences(
+  userId: string,
+  changes: UpdatePreferencesBody,
+): Promise<MeUser> {
+  await assertActiveDayIsValid(userId, changes);
+
+  try {
+    await prisma.userPreferences.upsert({
+      where: { userId },
+      create: { userId, ...changes },
+      update: changes,
+    });
+  } catch (error) {
+    // P2003: no user with this id, so the row has nothing to belong to.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
       throw new UnauthorizedError();
     }
     throw error;

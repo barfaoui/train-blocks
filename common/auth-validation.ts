@@ -1,6 +1,18 @@
 import { type ZodError, z } from 'zod';
 
+import {
+  CALENDAR_VIEWS,
+  PROFILE_VISIBILITIES,
+  type PreferenceCategoryId,
+  THEMES,
+  TIME_FORMATS,
+  UNIT_SYSTEMS,
+  type UpdatePreferencesBody,
+  WEEK_STARTS,
+} from './auth-types';
+import { SPORT_TYPES } from './planner-types';
 import { firstEmoji } from './utils/emoji.util';
+import { canonicalLocale, canonicalTimeZone } from './utils/intl.util';
 
 export const username = z
   .string()
@@ -77,3 +89,66 @@ export function fieldErrors(error: ZodError): Record<string, string> {
 
   return result;
 }
+
+const locale = z
+  .string()
+  .refine(
+    (value) => canonicalLocale(value) !== undefined,
+    'Enter a valid language tag, like en or fr-FR',
+  )
+  .transform((value) => canonicalLocale(value) as string);
+
+const timezone = z
+  .string()
+  .refine((value) => canonicalTimeZone(value) !== undefined, 'Enter a valid time zone')
+  .transform((value) => canonicalTimeZone(value) as string);
+
+const sportType = z.enum(SPORT_TYPES);
+
+// A partial update: any subset of the fields, but at least one and nothing unknown.
+function partialBody<T extends z.ZodRawShape>(shape: T) {
+  return z
+    .object(shape)
+    .partial()
+    .strict()
+    .refine((body) => Object.keys(body).length > 0, 'Nothing to update');
+}
+
+export const calendarPreferencesBody = partialBody({
+  weekStart: z.enum(WEEK_STARTS),
+  timeFormat: z.enum(TIME_FORMATS),
+  defaultView: z.enum(CALENDAR_VIEWS),
+  locale,
+  timezone,
+  showWeekNumbers: z.boolean(),
+  workDayStart: z.number().int().min(0).max(23),
+  workDayEnd: z.number().int().min(1).max(24),
+}).refine(
+  ({ workDayStart, workDayEnd }) =>
+    workDayStart === undefined || workDayEnd === undefined || workDayEnd > workDayStart,
+  { path: ['workDayEnd'], message: 'The active day must end after it starts' },
+);
+
+export const trainingPreferencesBody = partialBody({
+  units: z.enum(UNIT_SYSTEMS),
+  defaultSportType: sportType.nullable(),
+  favoriteSports: z.array(sportType).transform((sports) => [...new Set(sports)]),
+  defaultEventDurationMin: z.number().int().min(5).max(1440),
+});
+
+export const appearancePreferencesBody = partialBody({ theme: z.enum(THEMES) });
+
+export const notificationsPrivacyPreferencesBody = partialBody({
+  notifyByEmail: z.boolean(),
+  profileVisibility: z.enum(PROFILE_VISIBILITIES),
+});
+
+export const preferenceCategoryBodies: Record<
+  PreferenceCategoryId,
+  z.ZodType<UpdatePreferencesBody>
+> = {
+  calendar: calendarPreferencesBody,
+  training: trainingPreferencesBody,
+  appearance: appearancePreferencesBody,
+  'notifications-privacy': notificationsPrivacyPreferencesBody,
+};

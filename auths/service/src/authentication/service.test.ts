@@ -3,10 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { signToken } from '@common/utils/jwt.util';
 
-import { getMe, isUsernameAvailable, signIn, signUp, updateAvatar } from './service';
+import {
+  getMe,
+  isUsernameAvailable,
+  signIn,
+  signUp,
+  updateAvatar,
+  updatePreferences,
+} from './service';
 import { prisma } from '../data/prisma';
 import {
   InvalidCredentialsError,
+  InvalidPreferencesError,
   UnauthorizedError,
   UsernameTakenError,
 } from '../data/types/errors';
@@ -18,6 +26,10 @@ vi.mock('../data/prisma', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+    },
+    userPreferences: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -35,6 +47,11 @@ const prismaUser = prisma.user as unknown as {
   findUnique: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
+};
+
+const prismaPreferences = prisma.userPreferences as unknown as {
+  findUnique: ReturnType<typeof vi.fn>;
+  upsert: ReturnType<typeof vi.fn>;
 };
 
 const hashPasswordMock = vi.mocked(hashPassword);
@@ -255,5 +272,78 @@ describe('updateAvatar', () => {
     await expect(
       updateAvatar('user-1', { avatarIcon: '🏃', avatarColor: '#7C3AED' }),
     ).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+});
+
+describe('updatePreferences', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaPreferences.upsert.mockResolvedValue({});
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      email: null,
+      emailVerifiedAt: null,
+      displayName: null,
+      avatarIcon: null,
+      avatarColor: null,
+      createdAt: new Date('2026-08-15T07:00:00.000Z'),
+      preferences: { weekStart: 'SUNDAY' },
+    });
+  });
+
+  it('upserts the changes and returns the refreshed profile', async () => {
+    const me = await updatePreferences('user-1', { weekStart: 'SUNDAY' });
+
+    expect(prismaPreferences.upsert).toHaveBeenCalledWith({
+      where: { userId: 'user-1' },
+      create: { userId: 'user-1', weekStart: 'SUNDAY' },
+      update: { weekStart: 'SUNDAY' },
+    });
+    expect(me.preferences).toMatchObject({ weekStart: 'SUNDAY' });
+  });
+
+  it('does not read the stored preferences when the active day is untouched', async () => {
+    await updatePreferences('user-1', { timeFormat: 'H12' });
+
+    expect(prismaPreferences.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('rejects an active day that ends before the stored start', async () => {
+    prismaPreferences.findUnique.mockResolvedValue({ workDayStart: 10, workDayEnd: 20 });
+
+    await expect(updatePreferences('user-1', { workDayEnd: 9 })).rejects.toBeInstanceOf(
+      InvalidPreferencesError,
+    );
+    expect(prismaPreferences.upsert).not.toHaveBeenCalled();
+  });
+
+  it('checks against the defaults when there is no stored row yet', async () => {
+    prismaPreferences.findUnique.mockResolvedValue(null);
+
+    await expect(updatePreferences('user-1', { workDayStart: 21 })).rejects.toBeInstanceOf(
+      InvalidPreferencesError,
+    );
+  });
+
+  it('accepts a start and end that agree with each other', async () => {
+    prismaPreferences.findUnique.mockResolvedValue({ workDayStart: 8, workDayEnd: 20 });
+
+    await expect(
+      updatePreferences('user-1', { workDayStart: 6, workDayEnd: 22 }),
+    ).resolves.toBeDefined();
+  });
+
+  it('throws UnauthorizedError when the user no longer exists', async () => {
+    prismaPreferences.upsert.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
+        code: 'P2003',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(updatePreferences('user-1', { theme: 'DARK' })).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
   });
 });

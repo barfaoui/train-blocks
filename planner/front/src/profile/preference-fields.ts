@@ -1,4 +1,8 @@
-import { type UserPreferences } from '@common/auth-types';
+import {
+  type PreferenceCategoryId,
+  type UpdatePreferencesBody,
+  type UserPreferences,
+} from '@common/auth-types';
 import { type SportType } from '@common/planner-types';
 import { formatHour } from '@common/utils/time.util';
 
@@ -25,7 +29,7 @@ export type PreferenceField = {
 };
 
 export type PreferenceCategory = {
-  id: string;
+  id: PreferenceCategoryId;
   title: string;
   description: string;
   fields: PreferenceField[];
@@ -214,4 +218,35 @@ export function validateDraft(draft: Draft): DraftErrors {
   }
 
   return errors;
+}
+
+function toValue(field: PreferenceField, value: string): unknown {
+  switch (field.kind.type) {
+    case 'boolean':
+      return value === 'true';
+    case 'number':
+    case 'hour':
+      return Number(value);
+    case 'sport':
+      return value || null;
+    case 'sports':
+      return parseList(value);
+    case 'select':
+    case 'timezone':
+    case 'text':
+      return value;
+  }
+}
+
+// The fields of a category the user changed, typed for the update endpoint.
+export function changesFor(
+  category: PreferenceCategory,
+  initial: Draft,
+  draft: Draft,
+): UpdatePreferencesBody {
+  return Object.fromEntries(
+    category.fields
+      .filter((field) => draft[field.key] !== initial[field.key])
+      .map((field) => [field.key, toValue(field, draft[field.key])]),
+  );
 }

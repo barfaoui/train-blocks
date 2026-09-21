@@ -18,3 +18,10 @@ export class UnauthorizedError extends Error {
     this.name = 'UnauthorizedError';
   }
 }
+
+export class InvalidPreferencesError extends Error {
+  constructor(readonly details: { path: string; message: string }[]) {
+    super('Invalid preferences');
+    this.name = 'InvalidPreferencesError';
+  }
+}

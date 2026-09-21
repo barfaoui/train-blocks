@@ -15,6 +15,7 @@ import {
   type DraftErrors,
   type PreferenceCategory,
   type PreferenceField,
+  changesFor,
   displayValue,
   parseList,
   toDraft,
@@ -23,6 +24,7 @@ import {
 import styles from './PreferenceSection.module.scss';
 import { SectionCard } from './SectionCard';
 import { timeZoneOptions } from './timezones';
+import { useSession } from '../auth/session';
 import { SportIcon } from '../components/SportIcon/SportIcon';
 import { SPORT_TYPE_INFO } from '../events/sport-types';
 
@@ -175,7 +177,10 @@ export type PreferenceSectionProps = {
 
 export function PreferenceSection({ category, preferences }: PreferenceSectionProps) {
   const [editing, setEditing] = useState(false);
+  const { updatePreferences } = useSession();
   const [draft, setDraft] = useState<Draft>(() => toDraft(preferences));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const initial = toDraft(preferences);
   const dirty = category.fields.some((field) => draft[field.key] !== initial[field.key]);
@@ -184,12 +189,29 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
 
   function startEditing() {
     setDraft(toDraft(preferences));
+    setError(null);
     setEditing(true);
   }
 
   function cancel() {
     setDraft(toDraft(preferences));
     setEditing(false);
+  }
+
+  async function save() {
+    if (!dirty || hasErrors) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await updatePreferences(category.id, changesFor(category, initial, draft));
+      setEditing(false);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : 'Failed to save your preferences');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -207,8 +229,8 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
           className={styles.form}
           noValidate
           onSubmit={(event) => {
-            // TODO: persist the changes once the preferences endpoint exists.
             event.preventDefault();
+            void save();
           }}
         >
           <div className={styles.fields}>
@@ -222,6 +244,11 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
               />
             ))}
           </div>
+          {error ? (
+            <TypographySmall as="p" className={styles.error}>
+              {error}
+            </TypographySmall>
+          ) : null}
           <div className={styles.footer}>
             <Button type="button" style="small" outlined label="Cancel" onClick={cancel} />
             <Button
@@ -229,6 +256,7 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
               style="small"
               label="Save changes"
               disabled={!dirty || hasErrors}
+              isLoading={saving}
             />
           </div>
         </form>

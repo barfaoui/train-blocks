@@ -8,9 +8,19 @@ import {
   useState,
 } from 'react';
 
-import type { MeUser, UpdateAvatarBody } from '@common/auth-types';
+import type {
+  MeUser,
+  PreferenceCategoryId,
+  UpdateAvatarBody,
+  UpdatePreferencesBody,
+} from '@common/auth-types';
 
-import { logout as apiLogout, updateAvatar as apiUpdateAvatar, getMe } from './auths-service';
+import {
+  logout as apiLogout,
+  updateAvatar as apiUpdateAvatar,
+  updatePreferences as apiUpdatePreferences,
+  getMe,
+} from './auths-service';
 
 export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -19,6 +29,10 @@ export type SessionValue = {
   user: MeUser | null;
   logout: () => Promise<void>;
   updateAvatar: (avatar: UpdateAvatarBody) => Promise<void>;
+  updatePreferences: (
+    category: PreferenceCategoryId,
+    changes: UpdatePreferencesBody,
+  ) => Promise<void>;
 };
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -72,9 +86,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [applyUser],
   );
 
+  const updatePreferences = useCallback(
+    async (category: PreferenceCategoryId, changes: UpdatePreferencesBody) => {
+      applyUser(await apiUpdatePreferences(category, changes));
+    },
+    [applyUser],
+  );
+
   const value = useMemo(
-    () => ({ status, user, logout, updateAvatar }),
-    [status, user, logout, updateAvatar],
+    () => ({ status, user, logout, updateAvatar, updatePreferences }),
+    [status, user, logout, updateAvatar, updatePreferences],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { resetPasswordForm, updateAvatarBody } from './auth-validation';
+import {
+  appearancePreferencesBody,
+  calendarPreferencesBody,
+  notificationsPrivacyPreferencesBody,
+  preferenceCategoryBodies,
+  resetPasswordForm,
+  trainingPreferencesBody,
+  updateAvatarBody,
+} from './auth-validation';
 
 describe('resetPasswordForm', () => {
   const valid = {
@@ -60,5 +68,76 @@ describe('updateAvatarBody', () => {
 
   it.each(['red', '#fff', '7C3AED', '#GGGGGG'])('rejects %s as a color', (avatarColor) => {
     expect(updateAvatarBody.safeParse({ avatarIcon: '🏃', avatarColor }).success).toBe(false);
+  });
+});
+
+describe('preference category bodies', () => {
+  it('has a schema for every category', () => {
+    expect(Object.keys(preferenceCategoryBodies).sort()).toEqual([
+      'appearance',
+      'calendar',
+      'notifications-privacy',
+      'training',
+    ]);
+  });
+
+  it('accepts a partial update and canonicalizes locale and time zone', () => {
+    expect(
+      calendarPreferencesBody.parse({
+        locale: 'fr-fr',
+        timezone: 'europe/paris',
+        weekStart: 'MONDAY',
+      }),
+    ).toEqual({ locale: 'fr-FR', timezone: 'Europe/Paris', weekStart: 'MONDAY' });
+  });
+
+  it.each([
+    [{}, 'an empty body'],
+    [{ weekStart: 'FRIDAY' }, 'an unknown week start'],
+    [{ locale: 'not a locale!' }, 'an invalid locale'],
+    [{ timezone: 'Mars/Olympus' }, 'an unknown time zone'],
+    [{ workDayStart: 24 }, 'a start hour out of range'],
+    [{ workDayEnd: 0 }, 'an end hour out of range'],
+    [{ workDayStart: 10, workDayEnd: 10 }, 'an active day that ends when it starts'],
+    [{ workDayStart: 6.5 }, 'a fractional hour'],
+    [{ theme: 'DARK' }, 'a field from another category'],
+  ])('rejects %j for calendar (%s)', (body) => {
+    expect(calendarPreferencesBody.safeParse(body).success).toBe(false);
+  });
+
+  it('validates the training preferences', () => {
+    expect(
+      trainingPreferencesBody.parse({
+        favoriteSports: ['SWIMMING', 'OUTSIDE_RUNNING', 'SWIMMING'],
+        defaultSportType: null,
+        defaultEventDurationMin: 45,
+        units: 'IMPERIAL',
+      }),
+    ).toEqual({
+      favoriteSports: ['SWIMMING', 'OUTSIDE_RUNNING'],
+      defaultSportType: null,
+      defaultEventDurationMin: 45,
+      units: 'IMPERIAL',
+    });
+    expect(trainingPreferencesBody.safeParse({ favoriteSports: ['CHESS'] }).success).toBe(false);
+    expect(trainingPreferencesBody.safeParse({ defaultEventDurationMin: 4 }).success).toBe(false);
+    expect(trainingPreferencesBody.safeParse({ defaultEventDurationMin: 1441 }).success).toBe(
+      false,
+    );
+    expect(trainingPreferencesBody.safeParse({ defaultReminders: [15] }).success).toBe(false);
+  });
+
+  it('validates the appearance and notification preferences', () => {
+    expect(appearancePreferencesBody.parse({ theme: 'DARK' })).toEqual({ theme: 'DARK' });
+    expect(appearancePreferencesBody.safeParse({ theme: 'BLUE' }).success).toBe(false);
+    expect(
+      notificationsPrivacyPreferencesBody.parse({
+        notifyByEmail: true,
+        profileVisibility: 'PRIVATE',
+      }),
+    ).toEqual({ notifyByEmail: true, profileVisibility: 'PRIVATE' });
+    expect(notificationsPrivacyPreferencesBody.safeParse({ notifyByEmail: 'yes' }).success).toBe(
+      false,
+    );
   });
 });

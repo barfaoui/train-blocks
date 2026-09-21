@@ -1,11 +1,20 @@
 import { Router } from 'express';
 
+import type { PreferenceCategoryId } from '@common/auth-types';
 import { requireAuth } from '@common/utils/auth-middleware.util';
 import { clearAuthCookie, setAuthCookie } from '@common/utils/cookie.util';
 
-import { getMe, isUsernameAvailable, signIn, signUp, updateAvatar } from './service';
+import {
+  getMe,
+  isUsernameAvailable,
+  signIn,
+  signUp,
+  updateAvatar,
+  updatePreferences,
+} from './service';
 import {
   formatZodError,
+  preferenceCategoryBodies,
   signInBody,
   signUpRequest,
   updateAvatarBody,
@@ -14,6 +23,7 @@ import {
 import type { AuthenticatedRequest } from '../data/types/authentication';
 import {
   InvalidCredentialsError,
+  InvalidPreferencesError,
   UnauthorizedError,
   UsernameTakenError,
 } from '../data/types/errors';
@@ -88,6 +98,40 @@ authenticationRouter.patch('/me/avatar', requireAuth, async (req, res) => {
     const me = await updateAvatar(user.id, parsed.data);
     res.status(200).json(me);
   } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+authenticationRouter.patch('/me/preferences/:category', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+  const category = req.params.category as PreferenceCategoryId;
+  const schema = Object.prototype.hasOwnProperty.call(preferenceCategoryBodies, category)
+    ? preferenceCategoryBodies[category]
+    : undefined;
+  if (!schema) {
+    res.status(404).json({ error: 'Unknown preference category' });
+    return;
+  }
+
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json(formatZodError(parsed.error));
+    return;
+  }
+
+  try {
+    const me = await updatePreferences(user.id, parsed.data);
+    res.status(200).json(me);
+  } catch (error) {
+    if (error instanceof InvalidPreferencesError) {
+      res.status(400).json({ error: 'Invalid request', details: error.details });
+      return;
+    }
     if (error instanceof UnauthorizedError) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
