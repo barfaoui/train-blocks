@@ -155,19 +155,30 @@ describe('getMe', () => {
       id: 'user-1',
       username: 'bochra',
       email: null,
+      emailVerifiedAt: null,
+      displayName: 'Bochra',
+      avatarIcon: 'star',
+      avatarColor: '#7C3AED',
       createdAt,
+      preferences: null,
     });
 
     await expect(getMe('user-1')).resolves.toEqual({
       id: 'user-1',
       username: 'bochra',
       email: null,
+      emailVerifiedAt: null,
+      displayName: 'Bochra',
+      avatarIcon: 'star',
+      avatarColor: '#7C3AED',
       createdAt: '2026-08-15T07:00:00.000Z',
+      preferences: null,
     });
 
     expect(prismaUser.findUnique).toHaveBeenCalledWith({
       where: { id: 'user-1' },
       omit: { passwordHash: true },
+      include: { preferences: { omit: { userId: true } } },
     });
   });
 

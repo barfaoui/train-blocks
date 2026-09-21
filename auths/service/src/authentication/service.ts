@@ -61,6 +61,7 @@ export async function getMe(userId: string): Promise<MeUser> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     omit: { passwordHash: true },
+    include: { preferences: { omit: { userId: true } } },
   });
 
   if (!user) {
@@ -71,7 +72,12 @@ export async function getMe(userId: string): Promise<MeUser> {
     id: user.id,
     username: user.username,
     email: user.email,
+    emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+    displayName: user.displayName,
+    avatarIcon: user.avatarIcon,
+    avatarColor: user.avatarColor,
     createdAt: user.createdAt.toISOString(),
+    preferences: user.preferences,
   };
 }
 
