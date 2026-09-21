@@ -18,9 +18,11 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import { useRef, useState } from 'react';
 
+import type { UserPreferences } from '@common/auth-types';
 import { Button } from '@common/components/Button';
 import type { PlannerEvent, SportType } from '@common/planner-types';
 
+import { calendarOptionsFor, viewSlugFor } from './calendar-preferences.util';
 import {
   type CalendarViewSlug,
   VIEW_OPTIONS,
@@ -47,6 +49,7 @@ export type CalendarProps = {
   // decides what to do with the proposed changes.
   onRecurringEventMove: (event: PlannerEvent, changes: EventMoveChanges) => void;
   reloadKey?: number;
+  preferences?: UserPreferences | null;
 };
 
 const ALL_DAY_COLLAPSE_THRESHOLD = 2;
@@ -143,10 +146,13 @@ export function Calendar({
   onEventMove,
   onRecurringEventMove,
   reloadKey,
+  preferences = null,
 }: CalendarProps) {
   const calendarRef = useRef<FullCalendar>(null);
+  // The view the user last picked wins over their default-view preference.
   const [viewSlug, setViewSlug] = useState<CalendarViewSlug>(
-    () => readStoredView() ?? defaultViewSlug(),
+    () =>
+      readStoredView() ?? (preferences ? viewSlugFor(preferences.defaultView) : defaultViewSlug()),
   );
   const [range, setRange] = useState<DateRange | null>(null);
   const [title, setTitle] = useState('');
@@ -230,6 +236,7 @@ export function Calendar({
       <FullCalendar
         ref={calendarRef}
         locale="en"
+        {...calendarOptionsFor(preferences)}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView={fcViewNameFor(viewSlug)}
         views={{
@@ -245,7 +252,7 @@ export function Calendar({
         headerToolbar={false}
         height="auto"
         dayCellContent={renderDayCellContent}
-        dayHeaderContent={renderDayHeaderContent}
+        dayHeaderContent={(arg) => renderDayHeaderContent(arg, preferences?.locale ?? 'en-US')}
         eventContent={renderEventContent}
         allDayContent={() =>
           needsAllDayCollapse ? (
@@ -339,12 +346,12 @@ function renderEventContent(arg: EventContentArg) {
   );
 }
 
-function renderDayHeaderContent(arg: DayHeaderContentArg) {
+function renderDayHeaderContent(arg: DayHeaderContentArg, locale: string) {
   if (arg.view.type === 'dayGridMonth') {
     return arg.text;
   }
 
-  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(arg.date);
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(arg.date);
 
   return (
     <div className={styles.dayHeaderContent}>
