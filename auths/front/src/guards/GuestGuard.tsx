@@ -1,29 +1,31 @@
 import { type ReactNode, useEffect } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import { isAllowedAppRedirect } from '@common/app-urls';
 
 import { useSessionStatus } from '../auth/session';
+import { plannerFrontBase } from '../auth/url-bases';
+
+const plannerHomeHref = plannerFrontBase || '/';
 
 export function GuestGuard({ children }: { children: ReactNode }) {
   const status = useSessionStatus();
   const [params] = useSearchParams();
   const redirect = params.get('redirect');
-  const leaveToRedirect =
-    status === 'authenticated' && redirect !== null && isAllowedAppRedirect(redirect);
+  const authenticated = status === 'authenticated';
+  const destination =
+    redirect !== null && isAllowedAppRedirect(redirect) ? redirect : plannerHomeHref;
 
+  // Signed-in users have nothing to do on the login page: send them on to the
+  // page they were after, or to the planner.
   useEffect(() => {
-    if (leaveToRedirect && redirect) {
-      window.location.assign(redirect);
+    if (authenticated) {
+      window.location.assign(destination);
     }
-  }, [leaveToRedirect, redirect]);
+  }, [authenticated, destination]);
 
-  if (status === 'loading' || leaveToRedirect) {
+  if (status === 'loading' || authenticated) {
     return null;
-  }
-
-  if (status === 'authenticated') {
-    return <Navigate to="/profile" replace />;
   }
 
   return children;

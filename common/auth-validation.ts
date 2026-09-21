@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type ZodError, z } from 'zod';
 
 export const username = z
   .string()
@@ -25,3 +25,33 @@ export const signInBody = z.object({
   username,
   password: z.string().min(1, 'Password is required'),
 });
+
+export function confirmPassword(password: string) {
+  return z
+    .string()
+    .min(1, 'Confirm your password')
+    .refine((value) => value === password, { message: 'Passwords do not match' });
+}
+
+export function resetPasswordForm(values: { currentPassword: string; newPassword: string }) {
+  return z.object({
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: password.refine((value) => value !== values.currentPassword, {
+      message: 'New password must be different from the current one',
+    }),
+    confirmPassword: confirmPassword(values.newPassword),
+  });
+}
+
+export function fieldErrors(error: ZodError): Record<string, string> {
+  const result: Record<string, string> = {};
+
+  for (const issue of error.issues) {
+    const key = issue.path[0];
+    if (typeof key === 'string' && result[key] === undefined) {
+      result[key] = issue.message;
+    }
+  }
+
+  return result;
+}

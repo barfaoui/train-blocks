@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { authsProfileHref } from '@common/app-urls';
 import { ThemeToggle } from '@common/components/ThemeToggle';
 import { Toast } from '@common/components/Toast';
 import type { PlannerEvent } from '@common/planner-types';
@@ -9,7 +8,6 @@ import { TypographyMedium } from '@common/styles/Typography';
 import styles from './HomePage.module.scss';
 import watermelonLogo from '../../assets/watermelon.svg';
 import { useSession } from '../auth/session';
-import { authsFrontBase } from '../auth/url-bases';
 import { Calendar, type EventMoveChanges } from '../components/Calendar/Calendar';
 import { UserMenu } from '../components/UserMenu/UserMenu';
 import { CreateEventModal } from '../events/CreateEventModal';
@@ -18,8 +16,6 @@ import { DuplicateEventModal } from '../events/DuplicateEventModal';
 import { EditEventModal } from '../events/EditEventModal';
 import { EventDetailsModal } from '../events/EventDetailsModal';
 import { browserTimeZone, updateEvent } from '../events/events-service';
-
-const profileHref = authsProfileHref(authsFrontBase);
 
 export type CreateRequest = {
   date: string;
@@ -75,7 +71,6 @@ export function HomePage() {
             name={user?.displayName ?? user?.username ?? ''}
             avatarIcon={user?.avatarIcon ?? null}
             avatarColor={user?.avatarColor ?? null}
-            profileHref={profileHref}
             onSignOut={() => void logout()}
           />
         </nav>

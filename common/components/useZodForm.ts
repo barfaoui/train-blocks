@@ -1,9 +1,8 @@
 import { type FormEvent, useMemo, useState } from 'react';
 import { type ZodType } from 'zod';
 
+import { fieldErrors } from '@common/auth-validation';
 import { clearFieldError } from '@common/utils/forms.util';
-
-import { fieldErrors } from './validation';
 
 type FormSchema<TValues> = ZodType | ((values: TValues) => ZodType);
 

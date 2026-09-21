@@ -16,10 +16,6 @@ export function authsLoginHref(authsFrontBase: string): string {
   return authsFrontBase || '/';
 }
 
-export function authsProfileHref(authsFrontBase: string): string {
-  return `${authsFrontBase}/profile`;
-}
-
 export function authsApiBaseHref(authsServiceBase: string): string {
   return `${authsServiceBase}/api/auth`;
 }

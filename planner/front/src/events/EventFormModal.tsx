@@ -1,4 +1,4 @@
-import { type ReactNode, type SubmitEvent, useState } from 'react';
+import { type ReactNode, type SubmitEvent, useMemo, useState } from 'react';
 
 import { Button } from '@common/components/Button';
 import { Checkbox } from '@common/components/Checkbox';
@@ -10,10 +10,12 @@ import { TextInput } from '@common/components/TextInput';
 import { Toast } from '@common/components/Toast';
 import { type EventEditScope, SPORT_TYPES, type SportType } from '@common/planner-types';
 import { TypographySmall } from '@common/styles/Typography';
+import { addMinutesToTime } from '@common/utils/time.util';
 
 import styles from './EventFormModal.module.scss';
 import { browserTimeZone } from './events-service';
 import { SPORT_TYPE_INFO } from './sport-types';
+import { useSession } from '../auth/session';
 import { SportIcon } from '../components/SportIcon/SportIcon';
 
 const SPORT_TYPE_OPTIONS = SPORT_TYPES.map((sportType) => ({
@@ -21,6 +23,17 @@ const SPORT_TYPE_OPTIONS = SPORT_TYPES.map((sportType) => ({
   label: SPORT_TYPE_INFO[sportType].label,
   icon: <SportIcon sportType={sportType} />,
 }));
+
+// The user's favorite sports first, in the order they chose them, then everything else.
+function sportOptionsWithFavoritesFirst(favorites: string[]) {
+  const favoriteOptions = favorites
+    .map((favorite) => SPORT_TYPE_OPTIONS.find((option) => option.value === favorite))
+    .filter((option) => option !== undefined);
+  return [
+    ...favoriteOptions,
+    ...SPORT_TYPE_OPTIONS.filter((option) => !favorites.includes(option.value)),
+  ];
+}
 
 export type RepeatFrequency = '' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
@@ -214,6 +227,8 @@ export type EventFormModalProps = {
   // Lets the user choose between the current occurrence and this one plus later ones;
   // the repeat controls then only apply (and show) when this-and-future is picked.
   showScope?: boolean;
+  // Fills in the end time when a start time is picked and there is none yet.
+  defaultDurationMin?: number;
   onSubmit: (values: EventFormValues) => Promise<void>;
   onClose: () => void;
 };
@@ -224,9 +239,16 @@ export function EventFormModal({
   initialValues,
   showRepeat = false,
   showScope = false,
+  defaultDurationMin,
   onSubmit,
   onClose,
 }: EventFormModalProps) {
+  const { user } = useSession();
+  const favoriteSports = user?.preferences?.favoriteSports;
+  const sportOptions = useMemo(
+    () => sportOptionsWithFavoritesFirst(favoriteSports ?? []),
+    [favoriteSports],
+  );
   const [form, setForm] = useState<EventFormValues>(initialValues);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [apiError, setApiError] = useState<string | null>(null);
@@ -292,7 +314,7 @@ export function EventFormModal({
               required
               value={form.sportType}
               error={errors.sportType}
-              options={SPORT_TYPE_OPTIONS}
+              options={sportOptions}
               onChange={(value) => setField('sportType', value as SportType)}
             />
           </FieldRow>
@@ -322,7 +344,12 @@ export function EventFormModal({
                     title="Start time"
                     type="time"
                     value={form.startTime}
-                    onChange={(value) => setField('startTime', value)}
+                    onChange={(value) => {
+                      setField('startTime', value);
+                      if (defaultDurationMin && value && !form.endTime) {
+                        setField('endTime', addMinutesToTime(value, defaultDurationMin));
+                      }
+                    }}
                   />
                 ) : null}
               </div>

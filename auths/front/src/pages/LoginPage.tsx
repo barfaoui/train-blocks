@@ -2,11 +2,11 @@ import { useState } from 'react';
 
 import { Button } from '@common/components/Button';
 import { TextInput } from '@common/components/TextInput';
+import { useZodForm } from '@common/components/useZodForm';
 import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
 
 import styles from './LoginPage.module.scss';
 import { useSession } from '../auth/session';
-import { useZodForm } from '../auth/useZodForm';
 import { signInBody, signUpForm } from '../auth/validation';
 import { AuthApiError } from '../types/error';
 
