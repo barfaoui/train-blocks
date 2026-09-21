@@ -20,6 +20,15 @@ export function viewSlugFor(view: UserPreferences['defaultView']): CalendarViewS
   return VIEW_SLUG[view];
 }
 
+// The user's locale if it is a valid BCP 47 tag, otherwise the browser's own.
+export function resolveLocale(locale: string): string {
+  try {
+    return Intl.getCanonicalLocales(locale)[0];
+  } catch {
+    return navigator.language;
+  }
+}
+
 function hourToTime(hour: number): string {
   return `${String(hour).padStart(2, '0')}:00`;
 }
@@ -52,7 +61,7 @@ export function calendarOptionsFor(
 
   return {
     firstDay: FIRST_DAY[preferences.weekStart],
-    locale: preferences.locale,
+    locale: resolveLocale(preferences.locale),
     weekNumbers: preferences.showWeekNumbers,
     eventTimeFormat: timeFormat,
     slotLabelFormat: timeFormat,

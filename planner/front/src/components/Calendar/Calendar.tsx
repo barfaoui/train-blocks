@@ -22,7 +22,7 @@ import type { UserPreferences } from '@common/auth-types';
 import { Button } from '@common/components/Button';
 import type { PlannerEvent, SportType } from '@common/planner-types';
 
-import { calendarOptionsFor, viewSlugFor } from './calendar-preferences.util';
+import { calendarOptionsFor, resolveLocale, viewSlugFor } from './calendar-preferences.util';
 import {
   type CalendarViewSlug,
   VIEW_OPTIONS,
@@ -252,7 +252,9 @@ export function Calendar({
         headerToolbar={false}
         height="auto"
         dayCellContent={renderDayCellContent}
-        dayHeaderContent={(arg) => renderDayHeaderContent(arg, preferences?.locale ?? 'en-US')}
+        dayHeaderContent={(arg) =>
+          renderDayHeaderContent(arg, preferences ? resolveLocale(preferences.locale) : 'en-US')
+        }
         eventContent={renderEventContent}
         allDayContent={() =>
           needsAllDayCollapse ? (
