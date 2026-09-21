@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { DEFAULT_USER_PREFERENCES } from '@common/auth-types';
@@ -8,12 +9,16 @@ import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styl
 import styles from './ProfilePage.module.scss';
 import { useSession } from '../auth/session';
 import { AccountSection } from '../profile/AccountSection';
+import { type AvatarDraft, AvatarEditor, DEFAULT_AVATAR_COLOR } from '../profile/AvatarEditor';
 import { PREFERENCE_CATEGORIES } from '../profile/preference-fields';
 import { PreferenceSection } from '../profile/PreferenceSection';
 import { SectionCard } from '../profile/SectionCard';
 
 export function ProfilePage() {
   const { user, logout } = useSession();
+  // The avatar being edited, or null when not editing. Cancelling drops it, which puts
+  // the saved avatar back.
+  const [avatarDraft, setAvatarDraft] = useState<AvatarDraft | null>(null);
 
   if (!user) {
     return null;
@@ -21,6 +26,11 @@ export function ProfilePage() {
 
   const preferences = user.preferences ?? DEFAULT_USER_PREFERENCES;
   const name = user.displayName ?? user.username;
+  const savedAvatar: AvatarDraft = {
+    icon: user.avatarIcon,
+    color: user.avatarColor ?? DEFAULT_AVATAR_COLOR,
+  };
+  const shownAvatar = avatarDraft ?? savedAvatar;
 
   return (
     <main className={styles.page}>
@@ -30,12 +40,23 @@ export function ProfilePage() {
         </Link>
 
         <header className={styles.hero}>
-          <Avatar
-            className={styles.avatar}
-            icon={user.avatarIcon}
-            color={user.avatarColor}
-            name={name}
-          />
+          <div className={styles.avatarColumn}>
+            <Avatar
+              className={styles.avatar}
+              icon={shownAvatar.icon}
+              color={shownAvatar.color}
+              name={name}
+            />
+            {avatarDraft ? null : (
+              <Button
+                type="button"
+                style="small"
+                outlined
+                label="Edit avatar"
+                onClick={() => setAvatarDraft(savedAvatar)}
+              />
+            )}
+          </div>
           <div className={styles.identity}>
             <TypographyLarge as="h1" variant="bold" className={styles.name}>
               {name}
@@ -57,6 +78,15 @@ export function ProfilePage() {
             onClick={() => void logout()}
           />
         </header>
+
+        {avatarDraft ? (
+          <AvatarEditor
+            saved={savedAvatar}
+            draft={avatarDraft}
+            onDraftChange={setAvatarDraft}
+            onClose={() => setAvatarDraft(null)}
+          />
+        ) : null}
 
         <AccountSection user={user} />
 

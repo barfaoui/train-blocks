@@ -7,6 +7,7 @@ export type {
   MeUser,
   SignInBody,
   SignUpBody,
+  UpdateAvatarBody,
 } from '@common/auth-types';
 
 export type AuthResult = {

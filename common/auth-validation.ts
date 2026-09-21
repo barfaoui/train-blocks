@@ -26,6 +26,18 @@ export const signInBody = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+// An emoji, possibly a multi-part one (skin tone, ZWJ sequence, flag).
+export const avatarIcon = z
+  .string()
+  .max(32, 'Avatar emoji is too long')
+  .regex(/^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u, 'Avatar must be an emoji');
+
+export const avatarColor = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Avatar color must be a #RRGGBB hex');
+
+export const updateAvatarBody = z.object({ avatarIcon, avatarColor });
+
 export function confirmPassword(password: string) {
   return z
     .string()

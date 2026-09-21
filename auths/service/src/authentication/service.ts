@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
-import type { AuthResult, MeUser } from '../data/types/authentication';
+import type { AuthResult, MeUser, UpdateAvatarBody } from '../data/types/authentication';
 import {
   InvalidCredentialsError,
   UnauthorizedError,
@@ -79,6 +79,20 @@ export async function getMe(userId: string): Promise<MeUser> {
     createdAt: user.createdAt.toISOString(),
     preferences: user.preferences,
   };
+}
+
+export async function updateAvatar(userId: string, avatar: UpdateAvatarBody): Promise<MeUser> {
+  try {
+    await prisma.user.update({ where: { id: userId }, data: avatar });
+  } catch (error) {
+    // P2025: the user no longer exists.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      throw new UnauthorizedError();
+    }
+    throw error;
+  }
+
+  return getMe(userId);
 }
 
 function isUniqueConstraintError(error: unknown): boolean {

@@ -3,8 +3,8 @@ import { Router } from 'express';
 import { requireAuth } from '@common/utils/auth-middleware.util';
 import { clearAuthCookie, setAuthCookie } from '@common/utils/cookie.util';
 
-import { getMe, isUsernameAvailable, signIn, signUp } from './service';
-import { formatZodError, signInBody, signUpBody, username } from './validation';
+import { getMe, isUsernameAvailable, signIn, signUp, updateAvatar } from './service';
+import { formatZodError, signInBody, signUpBody, updateAvatarBody, username } from './validation';
 import type { AuthenticatedRequest } from '../data/types/authentication';
 import {
   InvalidCredentialsError,
@@ -56,6 +56,27 @@ authenticationRouter.get('/me', requireAuth, async (req, res) => {
 
   try {
     const me = await getMe(user.id);
+    res.status(200).json(me);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+authenticationRouter.patch('/me/avatar', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+  const parsed = updateAvatarBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json(formatZodError(parsed.error));
+    return;
+  }
+
+  try {
+    const me = await updateAvatar(user.id, parsed.data);
     res.status(200).json(me);
   } catch (error) {
     if (error instanceof UnauthorizedError) {

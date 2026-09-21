@@ -2,7 +2,13 @@ import { type ZodError } from 'zod';
 
 import type { FieldError } from '../data/types/authentication';
 
-export { password, signInBody, signUpBody, username } from '@common/auth-validation';
+export {
+  password,
+  signInBody,
+  signUpBody,
+  updateAvatarBody,
+  username,
+} from '@common/auth-validation';
 
 export function formatZodError(error: ZodError): { error: string; details: FieldError[] } {
   return {

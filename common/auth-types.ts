@@ -58,6 +58,11 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   profileVisibility: 'PRIVATE',
 };
 
+export type UpdateAvatarBody = {
+  avatarIcon: string;
+  avatarColor: string;
+};
+
 export type MeUser = AuthUser & {
   email: string | null;
   emailVerifiedAt: string | null;

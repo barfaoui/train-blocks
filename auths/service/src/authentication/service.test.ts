@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { signToken } from '@common/utils/jwt.util';
 
-import { getMe, isUsernameAvailable, signIn, signUp } from './service';
+import { getMe, isUsernameAvailable, signIn, signUp, updateAvatar } from './service';
 import { prisma } from '../data/prisma';
 import {
   InvalidCredentialsError,
@@ -17,6 +17,7 @@ vi.mock('../data/prisma', () => ({
     user: {
       findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -33,6 +34,7 @@ vi.mock('@common/utils/jwt.util', () => ({
 const prismaUser = prisma.user as unknown as {
   findUnique: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
 };
 
 const hashPasswordMock = vi.mocked(hashPassword);
@@ -186,5 +188,47 @@ describe('getMe', () => {
     prismaUser.findUnique.mockResolvedValue(null);
 
     await expect(getMe('user-1')).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+});
+
+describe('updateAvatar', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('saves the avatar and returns the refreshed profile', async () => {
+    prismaUser.update.mockResolvedValue({});
+    prismaUser.findUnique.mockResolvedValue({
+      id: 'user-1',
+      username: 'bochra',
+      email: null,
+      emailVerifiedAt: null,
+      displayName: null,
+      avatarIcon: '🏃',
+      avatarColor: '#7C3AED',
+      createdAt: new Date('2026-08-15T07:00:00.000Z'),
+      preferences: null,
+    });
+
+    const me = await updateAvatar('user-1', { avatarIcon: '🏃', avatarColor: '#7C3AED' });
+
+    expect(prismaUser.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { avatarIcon: '🏃', avatarColor: '#7C3AED' },
+    });
+    expect(me).toMatchObject({ avatarIcon: '🏃', avatarColor: '#7C3AED' });
+  });
+
+  it('throws UnauthorizedError when the user no longer exists', async () => {
+    prismaUser.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Record not found', {
+        code: 'P2025',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      updateAvatar('user-1', { avatarIcon: '🏃', avatarColor: '#7C3AED' }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resetPasswordForm } from './auth-validation';
+import { resetPasswordForm, updateAvatarBody } from './auth-validation';
 
 describe('resetPasswordForm', () => {
   const valid = {
@@ -38,5 +38,19 @@ describe('resetPasswordForm', () => {
     expect(firstMessage({ ...valid, confirmPassword: 'Different3#' })).toBe(
       'Passwords do not match',
     );
+  });
+});
+
+describe('updateAvatarBody', () => {
+  it.each(['🏃', '🏃🏽', '👨‍👩‍👧', '🇹🇳'])('accepts the emoji %s', (avatarIcon) => {
+    expect(updateAvatarBody.safeParse({ avatarIcon, avatarColor: '#7C3AED' }).success).toBe(true);
+  });
+
+  it.each(['star', 'A', '', ' 🏃'])('rejects %j as an icon', (avatarIcon) => {
+    expect(updateAvatarBody.safeParse({ avatarIcon, avatarColor: '#7C3AED' }).success).toBe(false);
+  });
+
+  it.each(['red', '#fff', '7C3AED', '#GGGGGG'])('rejects %s as a color', (avatarColor) => {
+    expect(updateAvatarBody.safeParse({ avatarIcon: '🏃', avatarColor }).success).toBe(false);
   });
 });
