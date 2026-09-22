@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import { DEFAULT_USER_PREFERENCES } from '@common/auth-types';
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import { ThemeToggle } from '@common/components/ThemeToggle';
-import { Toast } from '@common/components/Toast';
 import type { PlannerEvent } from '@common/planner-types';
 import { TypographyMedium } from '@common/styles/Typography';
 
@@ -30,13 +30,13 @@ type SelectedEvent = {
 
 export function HomePage() {
   const { user, logout } = useSession();
+  const { reportError } = useErrorReporter();
   const [createRequest, setCreateRequest] = useState<CreateRequest | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<SelectedEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<PlannerEvent | null>(null);
   const [duplicatingEvent, setDuplicatingEvent] = useState<PlannerEvent | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<PlannerEvent | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [moveError, setMoveError] = useState<string | null>(null);
   async function moveEvent(event: PlannerEvent, changes: EventMoveChanges) {
     try {
       await updateEvent(event.id, {
@@ -50,7 +50,7 @@ export function HomePage() {
       });
       setReloadKey((key) => key + 1);
     } catch (error) {
-      setMoveError(error instanceof Error ? error.message : 'Failed to move event');
+      reportError(error);
       throw error;
     }
   }
@@ -143,9 +143,6 @@ export function HomePage() {
             setReloadKey((key) => key + 1);
           }}
         />
-      ) : null}
-      {moveError ? (
-        <Toast message={moveError} variant="error" onClose={() => setMoveError(null)} />
       ) : null}
     </main>
   );

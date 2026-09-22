@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "planner",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["-C", "planner", "run"],
+      "port": 3004
+    }
+  ]
+}

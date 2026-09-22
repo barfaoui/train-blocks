@@ -3,11 +3,11 @@ import { type ReactNode, type SubmitEvent, useMemo, useState } from 'react';
 import { Button } from '@common/components/Button';
 import { Checkbox } from '@common/components/Checkbox';
 import { DateTimeInput } from '@common/components/DateTimeInput';
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import { Modal } from '@common/components/Modal';
 import { Select } from '@common/components/Select';
 import { Textarea } from '@common/components/Textarea';
 import { TextInput } from '@common/components/TextInput';
-import { Toast } from '@common/components/Toast';
 import { type EventEditScope, SPORT_TYPES, type SportType } from '@common/planner-types';
 import { TypographySmall } from '@common/styles/Typography';
 import { addMinutesToTime } from '@common/utils/time.util';
@@ -243,6 +243,7 @@ export function EventFormModal({
   onClose,
 }: EventFormModalProps) {
   const { user } = useSession();
+  const { reportError } = useErrorReporter();
   const favoriteSports = user?.preferences?.favoriteSports;
   const sportOptions = useMemo(
     () => sportOptionsWithFavoritesFirst(favoriteSports ?? []),
@@ -250,7 +251,6 @@ export function EventFormModal({
   );
   const [form, setForm] = useState<EventFormValues>(initialValues);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const rowClass = [styles.row, form.allDay ? styles['-single'] : undefined]
     .filter(Boolean)
@@ -280,197 +280,188 @@ export function EventFormModal({
     }
 
     setSubmitting(true);
-    setApiError(null);
 
     try {
       await onSubmit(form);
     } catch (error) {
-      setApiError(error instanceof Error ? error.message : 'Failed to save event');
+      reportError(error);
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <>
-      <Modal title={title} onClose={onClose}>
-        <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
-          <FieldRow icon="✏️">
-            <TextInput
-              aria-label="Title"
-              placeholder="Title *"
-              required
-              value={form.title}
-              error={errors.title}
-              onChange={(value) => setField('title', value)}
-            />
+    <Modal title={title} onClose={onClose}>
+      <form className={styles.form} onSubmit={(event) => void handleSubmit(event)}>
+        <FieldRow icon="✏️">
+          <TextInput
+            aria-label="Title"
+            placeholder="Title *"
+            required
+            value={form.title}
+            error={errors.title}
+            onChange={(value) => setField('title', value)}
+          />
+        </FieldRow>
+
+        <FieldRow icon="🏃">
+          <Select
+            aria-label="Sport"
+            placeholder="Sport *"
+            required
+            value={form.sportType}
+            error={errors.sportType}
+            options={sportOptions}
+            onChange={(value) => setField('sportType', value as SportType)}
+          />
+        </FieldRow>
+
+        <div className={styles.dateTimeContainer}>
+          <Checkbox
+            className={styles.allDay}
+            label="🕒 All day"
+            checked={form.allDay}
+            onChange={(checked) => setField('allDay', checked)}
+          />
+
+          <FieldRow icon="🕒">
+            <div className={rowClass}>
+              <DateTimeInput
+                aria-label="Start date"
+                title="Start date"
+                type="date"
+                required
+                value={form.startDate}
+                error={errors.startDate}
+                onChange={(value) => setField('startDate', value)}
+              />
+              {!form.allDay ? (
+                <DateTimeInput
+                  aria-label="Start time"
+                  title="Start time"
+                  type="time"
+                  value={form.startTime}
+                  onChange={(value) => {
+                    setField('startTime', value);
+                    if (defaultDurationMin && value && !form.endTime) {
+                      setField('endTime', addMinutesToTime(value, defaultDurationMin));
+                    }
+                  }}
+                />
+              ) : null}
+            </div>
           </FieldRow>
 
-          <FieldRow icon="🏃">
-            <Select
-              aria-label="Sport"
-              placeholder="Sport *"
-              required
-              value={form.sportType}
-              error={errors.sportType}
-              options={sportOptions}
-              onChange={(value) => setField('sportType', value as SportType)}
-            />
+          <FieldRow icon="🕒">
+            <div className={rowClass}>
+              <DateTimeInput
+                aria-label="End date"
+                title="End date"
+                type="date"
+                required
+                value={form.endDate}
+                error={errors.endDate}
+                onChange={(value) => setField('endDate', value)}
+              />
+              {!form.allDay ? (
+                <DateTimeInput
+                  aria-label="End time"
+                  title="End time"
+                  type="time"
+                  value={form.endTime}
+                  error={errors.endTime}
+                  onChange={(value) => setField('endTime', value)}
+                />
+              ) : null}
+            </div>
           </FieldRow>
+        </div>
 
-          <div className={styles.dateTimeContainer}>
+        {showScope ? (
+          <FieldRow icon="🔗" centered>
             <Checkbox
-              className={styles.allDay}
-              label="🕒 All day"
-              checked={form.allDay}
-              onChange={(checked) => setField('allDay', checked)}
-            />
-
-            <FieldRow icon="🕒">
-              <div className={rowClass}>
-                <DateTimeInput
-                  aria-label="Start date"
-                  title="Start date"
-                  type="date"
-                  required
-                  value={form.startDate}
-                  error={errors.startDate}
-                  onChange={(value) => setField('startDate', value)}
-                />
-                {!form.allDay ? (
-                  <DateTimeInput
-                    aria-label="Start time"
-                    title="Start time"
-                    type="time"
-                    value={form.startTime}
-                    onChange={(value) => {
-                      setField('startTime', value);
-                      if (defaultDurationMin && value && !form.endTime) {
-                        setField('endTime', addMinutesToTime(value, defaultDurationMin));
-                      }
-                    }}
-                  />
-                ) : null}
-              </div>
-            </FieldRow>
-
-            <FieldRow icon="🕒">
-              <div className={rowClass}>
-                <DateTimeInput
-                  aria-label="End date"
-                  title="End date"
-                  type="date"
-                  required
-                  value={form.endDate}
-                  error={errors.endDate}
-                  onChange={(value) => setField('endDate', value)}
-                />
-                {!form.allDay ? (
-                  <DateTimeInput
-                    aria-label="End time"
-                    title="End time"
-                    type="time"
-                    value={form.endTime}
-                    error={errors.endTime}
-                    onChange={(value) => setField('endTime', value)}
-                  />
-                ) : null}
-              </div>
-            </FieldRow>
-          </div>
-
-          {showScope ? (
-            <FieldRow icon="🔗" centered>
-              <Checkbox
-                label="Update this and future events"
-                checked={form.scope === 'THIS_AND_FUTURE_EVENTS'}
-                onChange={(checked) =>
-                  setField('scope', checked ? 'THIS_AND_FUTURE_EVENTS' : 'THIS_EVENT')
-                }
-              />
-            </FieldRow>
-          ) : null}
-
-          {repeatVisible ? (
-            <FieldRow icon="🔁">
-              <Select
-                aria-label="Repeat"
-                value={form.repeatFrequency}
-                options={REPEAT_FREQUENCY_OPTIONS}
-                onChange={(value) => setField('repeatFrequency', value as RepeatFrequency)}
-              />
-
-              {form.repeatFrequency ? (
-                <div className={styles.intervalRow}>
-                  <TypographySmall className={styles.intervalUnit}>Every</TypographySmall>
-                  <TextInput
-                    aria-label="Every"
-                    type="number"
-                    min="1"
-                    className={styles.intervalNumber}
-                    value={form.repeatInterval}
-                    error={errors.repeatInterval}
-                    onChange={(value) => setField('repeatInterval', value)}
-                  />
-                  <TypographySmall className={styles.intervalUnit}>
-                    {intervalUnitLabel(form.repeatFrequency, Number(form.repeatInterval))}
-                  </TypographySmall>
-                </div>
-              ) : null}
-
-              {form.repeatFrequency === 'WEEKLY' ? (
-                <div className={styles.weekdays}>
-                  {WEEKDAYS.map((day) => {
-                    const selected = form.repeatWeekdays.includes(day.value);
-                    return (
-                      <button
-                        key={day.value}
-                        type="button"
-                        className={[
-                          styles.weekdayButton,
-                          selected ? styles['-selected'] : undefined,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                        aria-pressed={selected}
-                        onClick={() => toggleWeekday(day.value)}
-                      >
-                        {day.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </FieldRow>
-          ) : null}
-
-          <FieldRow icon="📍">
-            <TextInput
-              aria-label="Location"
-              placeholder="Location"
-              value={form.location}
-              onChange={(value) => setField('location', value)}
+              label="Update this and future events"
+              checked={form.scope === 'THIS_AND_FUTURE_EVENTS'}
+              onChange={(checked) =>
+                setField('scope', checked ? 'THIS_AND_FUTURE_EVENTS' : 'THIS_EVENT')
+              }
             />
           </FieldRow>
+        ) : null}
 
-          <FieldRow icon="📝">
-            <Textarea
-              aria-label="Description"
-              placeholder="Description"
-              value={form.description}
-              onChange={(value) => setField('description', value)}
+        {repeatVisible ? (
+          <FieldRow icon="🔁">
+            <Select
+              aria-label="Repeat"
+              value={form.repeatFrequency}
+              options={REPEAT_FREQUENCY_OPTIONS}
+              onChange={(value) => setField('repeatFrequency', value as RepeatFrequency)}
             />
-          </FieldRow>
 
-          <div className={styles.actions}>
-            <Button type="button" style="small" label="Cancel" outlined onClick={onClose} />
-            <Button type="submit" style="small" label={submitLabel} isLoading={submitting} />
-          </div>
-        </form>
-      </Modal>
-      {apiError ? (
-        <Toast message={apiError} variant="error" onClose={() => setApiError(null)} />
-      ) : null}
-    </>
+            {form.repeatFrequency ? (
+              <div className={styles.intervalRow}>
+                <TypographySmall className={styles.intervalUnit}>Every</TypographySmall>
+                <TextInput
+                  aria-label="Every"
+                  type="number"
+                  min="1"
+                  className={styles.intervalNumber}
+                  value={form.repeatInterval}
+                  error={errors.repeatInterval}
+                  onChange={(value) => setField('repeatInterval', value)}
+                />
+                <TypographySmall className={styles.intervalUnit}>
+                  {intervalUnitLabel(form.repeatFrequency, Number(form.repeatInterval))}
+                </TypographySmall>
+              </div>
+            ) : null}
+
+            {form.repeatFrequency === 'WEEKLY' ? (
+              <div className={styles.weekdays}>
+                {WEEKDAYS.map((day) => {
+                  const selected = form.repeatWeekdays.includes(day.value);
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      className={[styles.weekdayButton, selected ? styles['-selected'] : undefined]
+                        .filter(Boolean)
+                        .join(' ')}
+                      aria-pressed={selected}
+                      onClick={() => toggleWeekday(day.value)}
+                    >
+                      {day.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </FieldRow>
+        ) : null}
+
+        <FieldRow icon="📍">
+          <TextInput
+            aria-label="Location"
+            placeholder="Location"
+            value={form.location}
+            onChange={(value) => setField('location', value)}
+          />
+        </FieldRow>
+
+        <FieldRow icon="📝">
+          <Textarea
+            aria-label="Description"
+            placeholder="Description"
+            value={form.description}
+            onChange={(value) => setField('description', value)}
+          />
+        </FieldRow>
+
+        <div className={styles.actions}>
+          <Button type="button" style="small" label="Cancel" outlined onClick={onClose} />
+          <Button type="submit" style="small" label={submitLabel} isLoading={submitting} />
+        </div>
+      </form>
+    </Modal>
   );
 }
