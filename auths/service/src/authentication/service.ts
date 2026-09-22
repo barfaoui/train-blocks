@@ -92,9 +92,9 @@ export async function getMe(userId: string): Promise<MeUser> {
   };
 }
 
-// A deleted-but-not-yet-purged account shouldn't be writable from a session that predates
-// the deletion (getMe alone won't catch this: it would only reject the response, after the
-// write already landed).
+// A soft-deleted (but not yet purged) account can't be reached through any authenticated
+// route: `requireAuth` itself now rejects it before a handler runs. This is only for
+// `deleteAccount`, to make a repeat or racing delete a clean no-op instead of a second write.
 async function assertAccountIsActive(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { deletedAt: true } });
   if (!user || user.deletedAt) {
@@ -106,8 +106,6 @@ async function updateProfileFields(
   userId: string,
   data: Pick<Prisma.UserUpdateInput, 'avatarIcon' | 'avatarColor' | 'displayName'>,
 ): Promise<MeUser> {
-  await assertAccountIsActive(userId);
-
   try {
     await prisma.user.update({ where: { id: userId }, data });
   } catch (error) {
@@ -170,7 +168,6 @@ export async function updatePreferences(
   userId: string,
   changes: UpdatePreferencesBody,
 ): Promise<MeUser> {
-  await assertAccountIsActive(userId);
   await assertActiveDayIsValid(userId, changes);
   await assertEmailIsSet(userId, changes);
 
@@ -193,9 +190,29 @@ export async function updatePreferences(
 
 // Soft delete: the row (and its preferences, via cascade) is purged some days later by
 // auths/service/scripts/purge-deleted-users.mjs. The username stays reserved until then.
+//
+// Also soft-deletes the events this user created, but only the ones nobody else is on: an
+// event with another participant survives, since it isn't solely theirs to remove. The
+// planner and auths schemas live in the same database, so this runs as one transaction with
+// the user update; the events then age out on the planner's own purge schedule
+// (planner/service/scripts/purge-deleted-events.mjs), same as any other deleted event.
 export async function deleteAccount(userId: string): Promise<void> {
   await assertAccountIsActive(userId);
-  await prisma.user.update({ where: { id: userId }, data: { deletedAt: new Date() } });
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: userId }, data: { deletedAt: new Date() } }),
+    prisma.$executeRaw`
+      UPDATE "planner"."events"
+      SET "deleted_at" = now()
+      WHERE "created_by_id" = ${userId}::uuid
+        AND "deleted_at" IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM "planner"."event_participants"
+          WHERE "event_participants"."event_id" = "events"."id"
+            AND "event_participants"."user_id" <> ${userId}::uuid
+        )
+    `,
+  ]);
 }
 
 function isUniqueConstraintError(error: unknown): boolean {
