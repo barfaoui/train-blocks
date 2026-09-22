@@ -8,22 +8,25 @@
   gap: var(--space-3);
   max-width: 24rem;
   padding: var(--space-3) var(--space-4);
-  color: var(--color-danger-contrast);
+  color: #fff;
   background: var(--color-danger);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
   animation: slideIn 0.18s ease-out;
 
   &.-success {
-    color: var(--color-primary-contrast);
     background: var(--color-success);
+  }
+
+  .message {
+    color: #fff;
   }
 }
 
 .closeButton {
   flex-shrink: 0;
   padding: 0 var(--space-1);
-  color: inherit;
+  color: #fff;
   background: transparent;
   border: none;
   font-size: var(--font-size-lg);
