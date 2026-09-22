@@ -44,7 +44,6 @@ export function useEvents(
         if (err.name === 'AbortError') {
           return;
         }
-        console.error('Failed to load events', err);
         reportError(err);
         setError(err);
         setLoading(false);
