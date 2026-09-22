@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button } from '@common/components/Button';
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import { Modal } from '@common/components/Modal';
 import type { EventDeleteScope, PlannerEvent } from '@common/planner-types';
 import { TypographyMedium, TypographySmall } from '@common/styles/Typography';
@@ -21,19 +22,18 @@ export type DeleteEventModalProps = {
 };
 
 export function DeleteEventModal({ event, onClose, onDeleted }: DeleteEventModalProps) {
+  const { reportError } = useErrorReporter();
   const isRecurring = event.seriesId !== null;
   const [scope, setScope] = useState<EventDeleteScope>('THIS_EVENT');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
     setSubmitting(true);
-    setError(null);
     try {
       await deleteEvent(event.id, isRecurring ? scope : 'THIS_EVENT');
       onDeleted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete event');
+      reportError(err);
       setSubmitting(false);
     }
   }
@@ -63,11 +63,6 @@ export function DeleteEventModal({ event, onClose, onDeleted }: DeleteEventModal
               </label>
             ))}
           </fieldset>
-        ) : null}
-        {error ? (
-          <TypographySmall className={styles.error} role="alert">
-            {error}
-          </TypographySmall>
         ) : null}
         <div className={styles.actions}>
           <Button label="Cancel" variant="primary" style="small" outlined onClick={onClose} />

@@ -1,20 +1,20 @@
 export class InvalidRecurrenceRuleError extends Error {
   constructor() {
-    super('recurrenceRule is not a valid RFC5545 recurrence rule');
+    super("That repeat pattern isn't valid.");
     this.name = 'InvalidRecurrenceRuleError';
   }
 }
 
 export class PlanNotFoundError extends Error {
   constructor() {
-    super('planId does not reference an existing plan');
+    super("We couldn't find that plan.");
     this.name = 'PlanNotFoundError';
   }
 }
 
 export class EventNotFoundError extends Error {
   constructor() {
-    super('event does not exist');
+    super('This event no longer exists.');
     this.name = 'EventNotFoundError';
   }
 }

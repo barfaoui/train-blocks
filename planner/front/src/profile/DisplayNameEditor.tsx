@@ -2,6 +2,7 @@ import { type ReactNode, useState } from 'react';
 
 import { TextInput } from '@common/components/TextInput';
 import { TypographyLarge } from '@common/styles/Typography';
+import { getErrorMessage } from '@common/utils/error-message.util';
 
 import styles from './DisplayNameEditor.module.scss';
 import { useSession } from '../auth/session';
@@ -77,7 +78,7 @@ export function DisplayNameEditor({ name, displayName, username }: DisplayNameEd
       await updateDisplayName(trimmed);
       setEditing(false);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to save your name');
+      setError(getErrorMessage(saveError));
     } finally {
       setSaving(false);
     }
