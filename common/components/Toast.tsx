@@ -20,7 +20,7 @@ export function Toast({ message, variant = 'error', onClose, duration = 6000 }: 
 
   return (
     <div className={[styles.toast, styles[`-${variant}`]].filter(Boolean).join(' ')} role="alert">
-      <TypographySmall>{message}</TypographySmall>
+      <TypographySmall className={styles.message}>{message}</TypographySmall>
       <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Dismiss">
         ×
       </button>

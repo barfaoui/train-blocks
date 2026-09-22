@@ -6,6 +6,7 @@ import type {
   UpdateDisplayNameBody,
   UpdatePreferencesBody,
 } from '@common/auth-types';
+import { DEFAULT_ERROR_MESSAGE, UserFacingError } from '@common/utils/error-message.util';
 import { request } from '@common/utils/request.util';
 
 import { authsServiceBase } from './url-bases';
@@ -55,9 +56,15 @@ function authsRequest<T>(path: string, init?: RequestInit): Promise<T> {
 async function parseAuthsError(response: Response): Promise<Error> {
   try {
     const body = (await response.json()) as { error?: string; details?: { message: string }[] };
-    const details = body.details?.map((detail) => detail.message).join('. ');
-    return new Error(details || body.error || response.statusText);
+    const message = body.details?.map((detail) => detail.message).join('. ') || body.error;
+    if (message) {
+      return new UserFacingError(message);
+    }
   } catch {
-    return new Error(response.statusText || `Request failed with status ${response.status}`);
+    // non-JSON error body
   }
+  console.error(
+    `Auths request failed: ${response.status} ${response.statusText || '(no status text)'}`,
+  );
+  return new UserFacingError(DEFAULT_ERROR_MESSAGE);
 }

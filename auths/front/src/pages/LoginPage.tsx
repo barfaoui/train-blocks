@@ -4,6 +4,7 @@ import { Button } from '@common/components/Button';
 import { TextInput } from '@common/components/TextInput';
 import { useZodForm } from '@common/components/useZodForm';
 import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
+import { DEFAULT_ERROR_MESSAGE } from '@common/utils/error-message.util';
 
 import styles from './LoginPage.module.scss';
 import { useSession } from '../auth/session';
@@ -204,7 +205,7 @@ function submitMessage(
     applyServerErrors(error.fieldErrors);
     return Object.keys(error.fieldErrors).length > 0 ? undefined : error.message;
   }
-  return 'Something went wrong. Please try again.';
+  return DEFAULT_ERROR_MESSAGE;
 }
 
 function FormError({ message }: { message?: string }) {

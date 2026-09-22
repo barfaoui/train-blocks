@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { HexColorInput, HexColorPicker } from 'react-colorful';
 
 import { Button } from '@common/components/Button';
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import { useTheme } from '@common/styles/ThemeProvider';
 import { TypographySmall } from '@common/styles/Typography';
 
@@ -27,8 +28,8 @@ export type AvatarEditorProps = {
 export function AvatarEditor({ saved, draft, onDraftChange, onClose }: AvatarEditorProps) {
   const { resolved } = useTheme();
   const { updateAvatar } = useSession();
+  const { reportError } = useErrorReporter();
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const dirty =
     draft.icon !== saved.icon || draft.color.toLowerCase() !== saved.color.toLowerCase();
@@ -38,12 +39,11 @@ export function AvatarEditor({ saved, draft, onDraftChange, onClose }: AvatarEdi
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       await updateAvatar({ avatarIcon: draft.icon, avatarColor: toSixDigitHex(draft.color) });
       onClose();
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to save your avatar');
+      reportError(saveError);
     } finally {
       setSaving(false);
     }
@@ -88,11 +88,6 @@ export function AvatarEditor({ saved, draft, onDraftChange, onClose }: AvatarEdi
           />
         </div>
       </div>
-      {error ? (
-        <TypographySmall as="p" className={styles.error}>
-          {error}
-        </TypographySmall>
-      ) : null}
       <div className={styles.footer}>
         {!draft.icon ? (
           <TypographySmall as="span" className={styles.hint}>

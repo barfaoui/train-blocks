@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { type UserPreferences } from '@common/auth-types';
 import { Button } from '@common/components/Button';
 import { Checkbox } from '@common/components/Checkbox';
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import { MultiSelect } from '@common/components/MultiSelect';
 import { Select } from '@common/components/Select';
 import { TextInput } from '@common/components/TextInput';
@@ -188,9 +189,9 @@ export type PreferenceSectionProps = {
 export function PreferenceSection({ category, preferences }: PreferenceSectionProps) {
   const [editing, setEditing] = useState(false);
   const { user, updatePreferences } = useSession();
+  const { reportError } = useErrorReporter();
   const [draft, setDraft] = useState<Draft>(() => toDraft(preferences));
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const initial = toDraft(preferences);
   const dirty = category.fields.some((field) => draft[field.key] !== initial[field.key]);
@@ -199,7 +200,6 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
 
   function startEditing() {
     setDraft(toDraft(preferences));
-    setError(null);
     setEditing(true);
   }
 
@@ -213,12 +213,11 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       await updatePreferences(category.id, changesFor(category, initial, draft));
       setEditing(false);
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Failed to save your preferences');
+      reportError(saveError);
     } finally {
       setSaving(false);
     }
@@ -255,11 +254,6 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
               />
             ))}
           </div>
-          {error ? (
-            <TypographySmall as="p" className={styles.error}>
-              {error}
-            </TypographySmall>
-          ) : null}
           <div className={styles.footer}>
             <Button type="button" style="small" outlined label="Cancel" onClick={cancel} />
             <Button

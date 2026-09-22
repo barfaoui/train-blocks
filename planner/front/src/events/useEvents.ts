@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import type { PlannerEvent, SportType } from '@common/planner-types';
 
 import { listEvents } from './events-service';
@@ -20,6 +21,7 @@ export function useEvents(
   sportTypes?: SportType[],
   reloadKey?: number,
 ): UseEventsResult {
+  const { reportError } = useErrorReporter();
   const [events, setEvents] = useState<PlannerEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -42,7 +44,7 @@ export function useEvents(
         if (err.name === 'AbortError') {
           return;
         }
-        console.error('Failed to load events', err);
+        reportError(err);
         setError(err);
         setLoading(false);
       });
@@ -51,7 +53,7 @@ export function useEvents(
       controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range?.startDate, range?.endDate, sportTypes, reloadKey]);
+  }, [range?.startDate, range?.endDate, sportTypes, reloadKey, reportError]);
 
   return { events, loading, error };
 }

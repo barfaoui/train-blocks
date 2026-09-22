@@ -1,3 +1,5 @@
+import { DEFAULT_ERROR_MESSAGE, UserFacingError } from './error-message.util';
+
 export type JsonRequestOptions = RequestInit & {
   baseUrl: string;
   parseError?: (response: Response) => Error | Promise<Error>;
@@ -27,5 +29,6 @@ export async function request<T>(path: string, options: JsonRequestOptions): Pro
 }
 
 async function defaultParseError(response: Response): Promise<Error> {
-  return new Error(response.statusText || `Request failed with status ${response.status}`);
+  console.error(`Request failed: ${response.status} ${response.statusText || '(no status text)'}`);
+  return new UserFacingError(DEFAULT_ERROR_MESSAGE);
 }

@@ -7,6 +7,7 @@ import type {
   UpdateEventBody,
   UpdateEventResponse,
 } from '@common/planner-types';
+import { DEFAULT_ERROR_MESSAGE, UserFacingError } from '@common/utils/error-message.util';
 import { request } from '@common/utils/request.util';
 
 import { plannerServiceBase } from '../auth/url-bases';
@@ -38,6 +39,7 @@ export function listEvents(
   return request<{ events: PlannerEvent[] }>(`?${query.toString()}`, {
     baseUrl: apiBase,
     signal: init?.signal,
+    parseError: eventsApiErrorFrom,
   }).then((result) => result.events);
 }
 
@@ -68,14 +70,16 @@ export function deleteEvent(eventId: string, scope: EventDeleteScope): Promise<v
 }
 
 async function eventsApiErrorFrom(response: Response): Promise<Error> {
-  let message = response.statusText || `Request failed with status ${response.status}`;
   try {
     const body = (await response.json()) as { error?: string };
     if (body.error) {
-      message = body.error;
+      return new UserFacingError(body.error);
     }
   } catch {
     // non-JSON error body
   }
-  return new Error(message);
+  console.error(
+    `Events request failed: ${response.status} ${response.statusText || '(no status text)'}`,
+  );
+  return new UserFacingError(DEFAULT_ERROR_MESSAGE);
 }

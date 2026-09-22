@@ -1,5 +1,6 @@
 import { authsApiBaseHref } from '@common/app-urls';
 import type { AuthUser, MeUser } from '@common/auth-types';
+import { DEFAULT_ERROR_MESSAGE } from '@common/utils/error-message.util';
 import { request } from '@common/utils/request.util';
 
 import { authsServiceBase } from './url-bases';
@@ -48,7 +49,9 @@ async function authApiErrorFrom(response: Response): Promise<AuthApiError> {
   try {
     body = (await response.json()) as ErrorBody;
   } catch {
-    // non-JSON error body
+    console.error(
+      `Auths request failed: ${response.status} ${response.statusText || '(no status text)'}`,
+    );
   }
 
   const fieldErrors: Record<string, string> = {};
@@ -62,5 +65,5 @@ async function authApiErrorFrom(response: Response): Promise<AuthApiError> {
     fieldErrors.username = body.error ?? 'Username already taken';
   }
 
-  return new AuthApiError(response.status, body.error ?? 'Request failed', fieldErrors);
+  return new AuthApiError(response.status, body.error ?? DEFAULT_ERROR_MESSAGE, fieldErrors);
 }

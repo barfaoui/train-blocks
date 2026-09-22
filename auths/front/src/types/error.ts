@@ -1,11 +1,12 @@
 import type { FieldError } from '@common/auth-types';
+import { UserFacingError } from '@common/utils/error-message.util';
 
 export type ErrorBody = {
   error?: string;
   details?: FieldError[];
 };
 
-export class AuthApiError extends Error {
+export class AuthApiError extends UserFacingError {
   readonly status: number;
   readonly fieldErrors: Record<string, string>;
 
