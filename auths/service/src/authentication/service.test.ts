@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signToken } from '@common/utils/jwt.util';
 
 import {
+  deleteAccount,
   getMe,
   isUsernameAvailable,
   signIn,
@@ -32,6 +33,8 @@ vi.mock('../data/prisma', () => ({
       findUnique: vi.fn(),
       upsert: vi.fn(),
     },
+    $transaction: vi.fn(),
+    $executeRaw: vi.fn(),
   },
 }));
 
@@ -54,6 +57,9 @@ const prismaPreferences = prisma.userPreferences as unknown as {
   findUnique: ReturnType<typeof vi.fn>;
   upsert: ReturnType<typeof vi.fn>;
 };
+
+const prismaTransaction = prisma.$transaction as unknown as ReturnType<typeof vi.fn>;
+const prismaExecuteRaw = prisma.$executeRaw as unknown as ReturnType<typeof vi.fn>;
 
 const hashPasswordMock = vi.mocked(hashPassword);
 const verifyPasswordMock = vi.mocked(verifyPassword);
@@ -162,7 +168,9 @@ describe('signIn', () => {
       user: { id: 'user-1', username: 'bochra' },
     });
 
-    expect(prismaUser.findUnique).toHaveBeenCalledWith({ where: { username: 'bochra' } });
+    expect(prismaUser.findUnique).toHaveBeenCalledWith({
+      where: { username: 'bochra', deletedAt: null },
+    });
     expect(verifyPasswordMock).toHaveBeenCalledWith('Secret1!', 'hashed-password');
     expect(signTokenMock).toHaveBeenCalledWith({ sub: 'user-1', username: 'bochra' });
   });
@@ -221,7 +229,7 @@ describe('getMe', () => {
     });
 
     expect(prismaUser.findUnique).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
+      where: { id: 'user-1', deletedAt: null },
       omit: { passwordHash: true },
       include: { preferences: { omit: { userId: true } } },
     });
@@ -441,5 +449,44 @@ describe('updatePreferences', () => {
     await expect(updatePreferences('user-1', { theme: 'DARK' })).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
+  });
+});
+
+describe('deleteAccount', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('soft-deletes the account and its sole-participant events in one transaction', async () => {
+    prismaUser.findUnique.mockResolvedValue({ deletedAt: null });
+    prismaUser.update.mockResolvedValue({});
+    prismaExecuteRaw.mockResolvedValue(0);
+    prismaTransaction.mockResolvedValue(undefined);
+
+    await deleteAccount('user-1');
+
+    expect(prismaUser.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { deletedAt: expect.any(Date) },
+    });
+    // The raw query is a tagged template: its values (here just the user id, used
+    // twice) come after the SQL fragments.
+    expect(prismaExecuteRaw).toHaveBeenCalledWith(expect.anything(), 'user-1', 'user-1');
+    expect(prismaTransaction).toHaveBeenCalledTimes(1);
+    expect(prismaTransaction.mock.calls[0][0]).toHaveLength(2);
+  });
+
+  it('throws UnauthorizedError when the user no longer exists', async () => {
+    prismaUser.findUnique.mockResolvedValue(null);
+
+    await expect(deleteAccount('user-1')).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(prismaUser.update).not.toHaveBeenCalled();
+  });
+
+  it('throws UnauthorizedError when the account is already deleted', async () => {
+    prismaUser.findUnique.mockResolvedValue({ deletedAt: new Date() });
+
+    await expect(deleteAccount('user-1')).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(prismaUser.update).not.toHaveBeenCalled();
   });
 });

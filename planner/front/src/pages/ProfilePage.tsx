@@ -10,6 +10,7 @@ import styles from './ProfilePage.module.scss';
 import { useSession } from '../auth/session';
 import { AccountSection } from '../profile/AccountSection';
 import { type AvatarDraft, DEFAULT_AVATAR_COLOR } from '../profile/avatar';
+import { DeleteAccountModal } from '../profile/DeleteAccountModal';
 import { DisplayNameEditor } from '../profile/DisplayNameEditor';
 import { PREFERENCE_CATEGORIES } from '../profile/preference-fields';
 import { PreferenceSection } from '../profile/PreferenceSection';
@@ -24,6 +25,7 @@ export function ProfilePage() {
   const { user, logout } = useSession();
   // Null unless editing; dropping it puts the saved avatar back.
   const [avatarDraft, setAvatarDraft] = useState<AvatarDraft | null>(null);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   if (!user) {
     return null;
@@ -122,13 +124,12 @@ export function ProfilePage() {
               style="small"
               variant="dangerous"
               label="Delete account"
-              onClick={() => {
-                // TODO: confirm and delete the account once the endpoint exists.
-              }}
+              onClick={() => setDeletingAccount(true)}
             />
           }
         />
       </div>
+      {deletingAccount ? <DeleteAccountModal onClose={() => setDeletingAccount(false)} /> : null}
     </main>
   );
 }
