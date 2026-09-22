@@ -57,9 +57,14 @@ model User {
   avatarIcon      String?   @map("avatar_icon") @db.VarChar(32)
   avatarColor     String?   @map("avatar_color") @db.VarChar(7)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  // Soft delete: set when the user asks to delete their account. The row (and
+  // everything cascading from it) is purged some days later; see
+  // auths/service/scripts/purge-deleted-users.mjs.
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   preferences UserPreferences?
 
+  @@index([deletedAt])
   @@map("users")
   @@schema("auth")
 }

@@ -5,6 +5,7 @@ import { requireAuth } from '@common/utils/auth-middleware.util';
 import { clearAuthCookie, setAuthCookie } from '@common/utils/cookie.util';
 
 import {
+  deleteAccount,
   getMe,
   isUsernameAvailable,
   signIn,
@@ -95,6 +96,23 @@ authenticationRouter.get('/me', requireAuth, async (req, res) => {
   try {
     const me = await getMe(user.id);
     res.status(200).json(me);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+authenticationRouter.delete('/me', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+
+  try {
+    await deleteAccount(user.id);
+    clearAuthCookie(res);
+    res.status(204).end();
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       res.status(401).json({ error: 'Unauthorized' });

@@ -16,6 +16,7 @@ import type {
 } from '@common/auth-types';
 
 import {
+  deleteAccount as apiDeleteAccount,
   logout as apiLogout,
   updateAvatar as apiUpdateAvatar,
   updateDisplayName as apiUpdateDisplayName,
@@ -29,6 +30,7 @@ export type SessionValue = {
   status: SessionStatus;
   user: MeUser | null;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateAvatar: (avatar: UpdateAvatarBody) => Promise<void>;
   updateDisplayName: (displayName: string) => Promise<void>;
   updatePreferences: (
@@ -81,6 +83,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [clearUser]);
 
+  // Unlike logout, a failed request must not clear the local session: the account is
+  // still there, and the caller shows the error so the user can try again.
+  const deleteAccount = useCallback(async () => {
+    await apiDeleteAccount();
+    clearUser();
+  }, [clearUser]);
+
   const updateAvatar = useCallback(
     async (avatar: UpdateAvatarBody) => {
       applyUser(await apiUpdateAvatar(avatar));
@@ -103,8 +112,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ status, user, logout, updateAvatar, updateDisplayName, updatePreferences }),
-    [status, user, logout, updateAvatar, updateDisplayName, updatePreferences],
+    () => ({
+      status,
+      user,
+      logout,
+      deleteAccount,
+      updateAvatar,
+      updateDisplayName,
+      updatePreferences,
+    }),
+    [status, user, logout, deleteAccount, updateAvatar, updateDisplayName, updatePreferences],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

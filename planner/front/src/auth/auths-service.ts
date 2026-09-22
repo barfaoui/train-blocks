@@ -40,6 +40,10 @@ export function updatePreferences(
   });
 }
 
+export function deleteAccount(): Promise<void> {
+  return authsRequest('/me', { method: 'DELETE' });
+}
+
 export function logout(): Promise<void> {
   return authsRequest('/sign-out', { method: 'POST' });
 }

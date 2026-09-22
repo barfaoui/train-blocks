@@ -1,7 +1,7 @@
 ROOT := ..
 PRISMA_SCHEMA := auths/service/prisma/schema.prisma
 
-.PHONY: run reset reset-db db-migrate db-studio run-service run-front preview-front build test clean
+.PHONY: run reset reset-db db-migrate db-studio purge-deleted-users run-service run-front preview-front build test clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -28,6 +28,12 @@ db-migrate:
 # Open Prisma Studio for auth.users
 db-studio:
 	cd $(ROOT) && npx prisma studio --schema=$(PRISMA_SCHEMA)
+
+# Permanently delete accounts soft-deleted more than 7 days ago (see
+# auths/service/scripts/purge-deleted-users.mjs). Intended to be wired into
+# an OS-level cron in production, not run automatically here.
+purge-deleted-users:
+	cd $(ROOT) && node auths/service/scripts/purge-deleted-users.mjs
 
 # Wipe schema + reseed, then run
 reset: reset-db run

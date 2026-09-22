@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signToken } from '@common/utils/jwt.util';
 
 import {
+  deleteAccount,
   getMe,
   isUsernameAvailable,
   signIn,
@@ -162,7 +163,9 @@ describe('signIn', () => {
       user: { id: 'user-1', username: 'bochra' },
     });
 
-    expect(prismaUser.findUnique).toHaveBeenCalledWith({ where: { username: 'bochra' } });
+    expect(prismaUser.findUnique).toHaveBeenCalledWith({
+      where: { username: 'bochra', deletedAt: null },
+    });
     expect(verifyPasswordMock).toHaveBeenCalledWith('Secret1!', 'hashed-password');
     expect(signTokenMock).toHaveBeenCalledWith({ sub: 'user-1', username: 'bochra' });
   });
@@ -221,7 +224,7 @@ describe('getMe', () => {
     });
 
     expect(prismaUser.findUnique).toHaveBeenCalledWith({
-      where: { id: 'user-1' },
+      where: { id: 'user-1', deletedAt: null },
       omit: { passwordHash: true },
       include: { preferences: { omit: { userId: true } } },
     });
@@ -273,6 +276,15 @@ describe('updateAvatar', () => {
     await expect(
       updateAvatar('user-1', { avatarIcon: '🏃', avatarColor: '#7C3AED' }),
     ).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  it('throws UnauthorizedError for a soft-deleted account, without writing', async () => {
+    prismaUser.findUnique.mockResolvedValue({ deletedAt: new Date() });
+
+    await expect(
+      updateAvatar('user-1', { avatarIcon: '🏃', avatarColor: '#7C3AED' }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(prismaUser.update).not.toHaveBeenCalled();
   });
 });
 
@@ -441,5 +453,46 @@ describe('updatePreferences', () => {
     await expect(updatePreferences('user-1', { theme: 'DARK' })).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
+  });
+
+  it('throws UnauthorizedError for a soft-deleted account, without writing', async () => {
+    prismaUser.findUnique.mockResolvedValue({ deletedAt: new Date() });
+
+    await expect(updatePreferences('user-1', { theme: 'DARK' })).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
+    expect(prismaPreferences.upsert).not.toHaveBeenCalled();
+  });
+});
+
+describe('deleteAccount', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('soft-deletes the account by setting deletedAt', async () => {
+    prismaUser.findUnique.mockResolvedValue({ deletedAt: null });
+    prismaUser.update.mockResolvedValue({});
+
+    await deleteAccount('user-1');
+
+    expect(prismaUser.update).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { deletedAt: expect.any(Date) },
+    });
+  });
+
+  it('throws UnauthorizedError when the user no longer exists', async () => {
+    prismaUser.findUnique.mockResolvedValue(null);
+
+    await expect(deleteAccount('user-1')).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(prismaUser.update).not.toHaveBeenCalled();
+  });
+
+  it('throws UnauthorizedError when the account is already deleted', async () => {
+    prismaUser.findUnique.mockResolvedValue({ deletedAt: new Date() });
+
+    await expect(deleteAccount('user-1')).rejects.toBeInstanceOf(UnauthorizedError);
+    expect(prismaUser.update).not.toHaveBeenCalled();
   });
 });

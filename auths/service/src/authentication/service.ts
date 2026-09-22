@@ -50,7 +50,7 @@ export async function signUp(
 }
 
 export async function signIn(username: string, password: string): Promise<AuthResult> {
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await prisma.user.findUnique({ where: { username, deletedAt: null } });
   if (!user) {
     throw new InvalidCredentialsError();
   }
@@ -70,7 +70,7 @@ export async function signIn(username: string, password: string): Promise<AuthRe
 
 export async function getMe(userId: string): Promise<MeUser> {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, deletedAt: null },
     omit: { passwordHash: true },
     include: { preferences: { omit: { userId: true } } },
   });
@@ -92,10 +92,22 @@ export async function getMe(userId: string): Promise<MeUser> {
   };
 }
 
+// A deleted-but-not-yet-purged account shouldn't be writable from a session that predates
+// the deletion (getMe alone won't catch this: it would only reject the response, after the
+// write already landed).
+async function assertAccountIsActive(userId: string): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { deletedAt: true } });
+  if (!user || user.deletedAt) {
+    throw new UnauthorizedError();
+  }
+}
+
 async function updateProfileFields(
   userId: string,
   data: Pick<Prisma.UserUpdateInput, 'avatarIcon' | 'avatarColor' | 'displayName'>,
 ): Promise<MeUser> {
+  await assertAccountIsActive(userId);
+
   try {
     await prisma.user.update({ where: { id: userId }, data });
   } catch (error) {
@@ -158,6 +170,7 @@ export async function updatePreferences(
   userId: string,
   changes: UpdatePreferencesBody,
 ): Promise<MeUser> {
+  await assertAccountIsActive(userId);
   await assertActiveDayIsValid(userId, changes);
   await assertEmailIsSet(userId, changes);
 
@@ -176,6 +189,13 @@ export async function updatePreferences(
   }
 
   return getMe(userId);
+}
+
+// Soft delete: the row (and its preferences, via cascade) is purged some days later by
+// auths/service/scripts/purge-deleted-users.mjs. The username stays reserved until then.
+export async function deleteAccount(userId: string): Promise<void> {
+  await assertAccountIsActive(userId);
+  await prisma.user.update({ where: { id: userId }, data: { deletedAt: new Date() } });
 }
 
 function isUniqueConstraintError(error: unknown): boolean {
