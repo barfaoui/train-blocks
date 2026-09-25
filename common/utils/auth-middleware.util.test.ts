@@ -7,9 +7,13 @@ import { verifyToken } from './jwt.util';
 
 const ACCESS_TOKEN_COOKIE_NAME = 'jwt';
 
-vi.mock('./jwt.util', () => ({
+vi.mock('./jwt.util', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./jwt.util')>()),
   verifyToken: vi.fn(),
 }));
+
+// 2026-09-25T10:00:00Z, in seconds.
+const ISSUED_AT = 1_790_330_400;
 
 // vi.mock is hoisted above regular top-level declarations, so the mock's state has to be
 // created through vi.hoisted to be visible inside the factory below.
@@ -78,8 +82,8 @@ describe('requireAuth', () => {
   });
 
   it('sets req.user and calls next when the account is active', async () => {
-    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra' });
-    findUniqueMock.mockResolvedValue({ id: 'user-1' });
+    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra', issuedAt: ISSUED_AT });
+    findUniqueMock.mockResolvedValue({ id: 'user-1', passwordChangedAt: null });
 
     const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=cookie-token`);
     const res = createMockRes();
@@ -89,7 +93,7 @@ describe('requireAuth', () => {
     expect(verifyTokenMock).toHaveBeenCalledWith('cookie-token');
     expect(findUniqueMock).toHaveBeenCalledWith({
       where: { id: 'user-1', deletedAt: null },
-      select: { id: true },
+      select: { id: true, passwordChangedAt: true },
     });
     expect((req as AuthenticatedRequest).user).toEqual({ id: 'user-1', username: 'bochra' });
     expect(next).toHaveBeenCalledOnce();
@@ -97,7 +101,7 @@ describe('requireAuth', () => {
   });
 
   it('returns 401 for a valid token whose account is soft-deleted or gone', async () => {
-    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra' });
+    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra', issuedAt: ISSUED_AT });
     findUniqueMock.mockResolvedValue(null);
 
     const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=cookie-token`);
@@ -111,8 +115,39 @@ describe('requireAuth', () => {
     expect((req as AuthenticatedRequest).user).toBeUndefined();
   });
 
+  it('returns 401 for a session that started before the last password change', async () => {
+    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra', issuedAt: ISSUED_AT });
+    findUniqueMock.mockResolvedValue({
+      id: 'user-1',
+      passwordChangedAt: new Date((ISSUED_AT + 60) * 1000),
+    });
+
+    const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=cookie-token`);
+    const res = createMockRes();
+
+    await requireAuth(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('keeps the session handed out in the same second as the password change', async () => {
+    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra', issuedAt: ISSUED_AT });
+    findUniqueMock.mockResolvedValue({
+      id: 'user-1',
+      passwordChangedAt: new Date(ISSUED_AT * 1000 + 400),
+    });
+
+    const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=cookie-token`);
+    const res = createMockRes();
+
+    await requireAuth(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+  });
+
   it('returns 500 when the account lookup fails', async () => {
-    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra' });
+    verifyTokenMock.mockReturnValue({ sub: 'user-1', username: 'bochra', issuedAt: ISSUED_AT });
     findUniqueMock.mockRejectedValue(new Error('connection lost'));
 
     const req = createMockReq(`${ACCESS_TOKEN_COOKIE_NAME}=cookie-token`);

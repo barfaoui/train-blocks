@@ -12,6 +12,12 @@
       "runtimeExecutable": "make",
       "runtimeArgs": ["-C", "auths", "run-service"],
       "port": 3001
+    },
+    {
+      "name": "auths-front",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["-C", "auths", "run-front"],
+      "port": 3002
     }
   ]
 }

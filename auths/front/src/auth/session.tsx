@@ -14,6 +14,7 @@ import {
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
+  resetPassword as apiResetPassword,
   getMe,
 } from './auths-service';
 
@@ -25,6 +26,8 @@ export type SessionValue = {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  // Resetting signs out every session, this browser's included.
+  resetPassword: (token: string, password: string) => Promise<void>;
 };
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -102,9 +105,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [clearUser]);
 
+  const resetPassword = useCallback(
+    async (token: string, password: string) => {
+      await apiResetPassword(token, password);
+      clearUser();
+    },
+    [clearUser],
+  );
+
   const value = useMemo(
-    () => ({ status, user, login, register, logout }),
-    [status, user, login, register, logout],
+    () => ({ status, user, login, register, logout, resetPassword }),
+    [status, user, login, register, logout, resetPassword],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

@@ -1,5 +1,5 @@
 import { authsApiBaseHref } from '@common/app-urls';
-import type { AuthUser, MeUser } from '@common/auth-types';
+import type { AuthUser, ForgotPasswordResult, MeUser } from '@common/auth-types';
 import { DEFAULT_ERROR_MESSAGE } from '@common/utils/error-message.util';
 import { request } from '@common/utils/request.util';
 
@@ -30,6 +30,20 @@ export function login(username: string, password: string): Promise<{ user: AuthU
 
 export function getMe(): Promise<MeUser> {
   return authsRequest('/me');
+}
+
+export function requestPasswordReset(username: string): Promise<ForgotPasswordResult> {
+  return authsRequest('/password/forgot', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  });
+}
+
+export function resetPassword(token: string, password: string): Promise<void> {
+  return authsRequest('/password/reset', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  });
 }
 
 export function logout(): Promise<void> {

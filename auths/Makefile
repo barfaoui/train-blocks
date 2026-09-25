@@ -35,7 +35,7 @@ db-studio:
 purge-deleted-users:
 	cd $(ROOT) && node auths/service/scripts/purge-deleted-users.mjs
 
-# Delete email verification links that expired without being used (see
+# Delete email verification and password reset links that expired unused (see
 # auths/service/scripts/purge-expired-email-tokens.mjs). Also meant for a cron.
 purge-expired-email-tokens:
 	cd $(ROOT) && node auths/service/scripts/purge-expired-email-tokens.mjs
