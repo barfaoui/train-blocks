@@ -14,6 +14,8 @@ RUN npx prisma generate --schema=auths/service/prisma/schema.prisma \
   && make build
 
 ENV NODE_ENV=production
+# The files stay root-owned, so the running process can read them but not change them.
+USER node
 
 # Reverse proxy serving the built fronts.
 FROM caddy:2 AS web
