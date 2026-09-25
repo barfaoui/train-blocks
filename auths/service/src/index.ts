@@ -9,6 +9,8 @@ import { authenticationRouter } from './authentication/controller';
 
 dotenv.config();
 const app = express();
+// Behind one reverse proxy (Caddy) in production: take the client IP from X-Forwarded-For.
+app.set('trust proxy', 1);
 const PORT = environment.ports['auths-service'];
 
 app.use(

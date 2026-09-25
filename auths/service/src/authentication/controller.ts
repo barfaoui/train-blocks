@@ -48,6 +48,7 @@ import {
   UsernameTakenError,
   VerificationCooldownError,
 } from '../data/types/errors';
+import { credentialLimiter, sendingLimiter } from '../utils/rate-limit.util';
 
 export const authenticationRouter = Router();
 
@@ -121,7 +122,7 @@ authenticationRouter.get('/usernames/:username/availability', async (req, res) =
   }
 });
 
-authenticationRouter.post('/sign-up', async (req, res) => {
+authenticationRouter.post('/sign-up', sendingLimiter, async (req, res) => {
   const parsed = signUpRequest.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json(formatZodError(parsed.error));
@@ -220,7 +221,7 @@ authenticationRouter.patch('/me/preferences/:category', requireAuth, async (req,
   await respondWithProfile(res, () => updatePreferences(user.id, parsed.data));
 });
 
-authenticationRouter.put('/me/email', requireAuth, async (req, res) => {
+authenticationRouter.put('/me/email', requireAuth, sendingLimiter, async (req, res) => {
   const { user } = req as AuthenticatedRequest;
   const parsed = setEmailBody.safeParse(req.body);
   if (!parsed.success) {
@@ -237,19 +238,24 @@ authenticationRouter.delete('/me/email', requireAuth, async (req, res) => {
   await respondWithProfile(res, () => removeEmail(user.id));
 });
 
-authenticationRouter.post('/me/email/verification', requireAuth, async (req, res) => {
-  const { user } = req as AuthenticatedRequest;
+authenticationRouter.post(
+  '/me/email/verification',
+  requireAuth,
+  sendingLimiter,
+  async (req, res) => {
+    const { user } = req as AuthenticatedRequest;
 
-  try {
-    await resendVerificationEmail(user.id);
-    res.status(204).end();
-  } catch (error) {
-    respondWithError(res, error);
-  }
-});
+    try {
+      await resendVerificationEmail(user.id);
+      res.status(204).end();
+    } catch (error) {
+      respondWithError(res, error);
+    }
+  },
+);
 
 // Public: see `verifyEmail`.
-authenticationRouter.post('/email/verify', async (req, res) => {
+authenticationRouter.post('/email/verify', credentialLimiter, async (req, res) => {
   const parsed = verifyEmailBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json(formatZodError(parsed.error));
@@ -265,7 +271,7 @@ authenticationRouter.post('/email/verify', async (req, res) => {
 });
 
 // Also hands this device a new session: the change signs out every existing one.
-authenticationRouter.post('/me/password', requireAuth, async (req, res) => {
+authenticationRouter.post('/me/password', requireAuth, credentialLimiter, async (req, res) => {
   const { user } = req as AuthenticatedRequest;
   const parsed = changePasswordBody.safeParse(req.body);
   if (!parsed.success) {
@@ -286,7 +292,7 @@ authenticationRouter.post('/me/password', requireAuth, async (req, res) => {
   }
 });
 
-authenticationRouter.post('/password/forgot', async (req, res) => {
+authenticationRouter.post('/password/forgot', sendingLimiter, async (req, res) => {
   const parsed = forgotPasswordBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json(formatZodError(parsed.error));
@@ -301,7 +307,7 @@ authenticationRouter.post('/password/forgot', async (req, res) => {
 });
 
 // Public, like /email/verify. Every session is signed out afterwards, this browser's too.
-authenticationRouter.post('/password/reset', async (req, res) => {
+authenticationRouter.post('/password/reset', credentialLimiter, async (req, res) => {
   const parsed = resetPasswordBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json(formatZodError(parsed.error));
@@ -317,7 +323,7 @@ authenticationRouter.post('/password/reset', async (req, res) => {
   }
 });
 
-authenticationRouter.post('/sign-in', async (req, res) => {
+authenticationRouter.post('/sign-in', credentialLimiter, async (req, res) => {
   const parsed = signInBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json(formatZodError(parsed.error));
