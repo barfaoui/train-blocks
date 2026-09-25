@@ -21,6 +21,11 @@ function getTransporter(): Transporter {
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       : undefined,
+    // Nodemailer waits up to 2 minutes to connect and 10 for a stalled socket by default;
+    // a request that sends mail would hang that long if the SMTP server stops answering.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
   return transporter;
 }

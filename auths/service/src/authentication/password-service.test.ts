@@ -49,7 +49,11 @@ const signTokenMock = vi.mocked(signToken);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  prismaTransaction.mockResolvedValue([]);
+  // Array transactions resolve as is; interactive ones run against the same mocks.
+  prismaTransaction.mockImplementation((arg: unknown) =>
+    typeof arg === 'function' ? arg(prisma) : Promise.resolve([]),
+  );
+  prismaResetTokens.deleteMany.mockResolvedValue({ count: 1 });
   sendMailMock.mockResolvedValue(undefined);
   hashPasswordMock.mockResolvedValue('new-hash');
 });
@@ -110,6 +114,15 @@ describe('changePassword', () => {
     verifyPasswordMock.mockResolvedValue(true);
     sendMailMock.mockRejectedValue(new Error('SMTP down'));
     vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(changePassword('user-1', 'OldSecret1!', 'NewSecret2@')).resolves.toBeDefined();
+  });
+
+  it('does not wait for the notification email', async () => {
+    prismaUser.findUnique.mockResolvedValue(storedUser);
+    verifyPasswordMock.mockResolvedValue(true);
+    // A mail server that never answers.
+    sendMailMock.mockReturnValue(new Promise(() => {}));
 
     await expect(changePassword('user-1', 'OldSecret1!', 'NewSecret2@')).resolves.toBeDefined();
   });
@@ -207,6 +220,17 @@ describe('resetPassword', () => {
     expect(prismaTransaction).not.toHaveBeenCalled();
   });
 
+  it('rejects a token another submission already used', async () => {
+    prismaResetTokens.findUnique.mockResolvedValue(record);
+    // The concurrent submission committed first and claimed the token.
+    prismaResetTokens.deleteMany.mockResolvedValueOnce({ count: 0 });
+
+    await expect(resetPassword(token, 'NewSecret2@')).rejects.toBeInstanceOf(
+      InvalidResetTokenError,
+    );
+    expect(prismaUser.update).not.toHaveBeenCalled();
+  });
+
   it('sets the new password, signs everyone out and says so by email', async () => {
     prismaResetTokens.findUnique.mockResolvedValue(record);
 
@@ -215,6 +239,7 @@ describe('resetPassword', () => {
     expect(prismaResetTokens.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { tokenHash: record.tokenHash } }),
     );
+    expect(prismaResetTokens.deleteMany).toHaveBeenCalledWith({ where: { id: 'token-1' } });
     expectPasswordUpdated('user-1');
     expect(sendMailMock).toHaveBeenCalledWith(
       expect.objectContaining({ to: 'bochra@example.com', subject: 'Your password was changed' }),

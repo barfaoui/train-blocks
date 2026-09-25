@@ -328,6 +328,8 @@ export async function setEmail(userId: string, email: string): Promise<MeUser> {
     await prisma.$transaction([
       prisma.user.update({ where: { id: userId }, data: { email, emailVerifiedAt: null } }),
       prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
+      // A reset link sent to the previous address must not outlive it.
+      prisma.passwordResetToken.deleteMany({ where: { userId } }),
       ...queries,
     ]);
   } catch (error) {
@@ -378,10 +380,10 @@ export async function verifyEmail(token: string): Promise<void> {
   }
 }
 
-// Pending links are kept on purpose: they can't verify anything once the address is gone
-// (`verifyEmail` checks it still matches), and the latest one keeps the send cooldown
-// running, so removing and re-adding an address can't be used to skip it. They're
-// deleted when they expire by auths/service/scripts/purge-expired-email-tokens.mjs.
+// Pending verification links are kept on purpose: they can't verify anything once the
+// address is gone (`verifyEmail` checks it still matches), and the latest one keeps the
+// send cooldown running, so removing and re-adding an address can't be used to skip it.
+// They're deleted when they expire by auths/service/scripts/purge-expired-email-tokens.mjs.
 export async function removeEmail(userId: string): Promise<MeUser> {
   try {
     await prisma.$transaction([
@@ -390,6 +392,8 @@ export async function removeEmail(userId: string): Promise<MeUser> {
         data: { email: null, emailVerifiedAt: null },
       }),
       prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
+      // Unlike verification links, reset links go: they would still open the account.
+      prisma.passwordResetToken.deleteMany({ where: { userId } }),
     ]);
   } catch (error) {
     // P2025: the user no longer exists.

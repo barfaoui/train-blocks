@@ -26,29 +26,23 @@ import { hashPassword, verifyPassword } from '../utils/password.util';
 
 type Recipient = { username: string; displayName: string | null; email: string | null };
 
-// Best effort: the password has already changed by the time this runs, so a mail failure
-// is logged rather than turned into an error for a change that did succeed.
-async function notifyPasswordChanged(user: Recipient): Promise<void> {
+// Best effort, and not awaited: the password has already changed by the time this runs, so
+// neither a mail failure nor a slow mail server should hold up or fail the response.
+function notifyPasswordChanged(user: Recipient): void {
   if (!user.email) {
     return;
   }
-  try {
-    await sendMail(passwordChangedEmail(user.email, user.displayName ?? user.username));
-  } catch (error) {
-    console.error(error);
-  }
+  sendMail(passwordChangedEmail(user.email, user.displayName ?? user.username)).catch(
+    (error: unknown) => console.error(error),
+  );
 }
 
-// Setting `passwordChangedAt` signs out every existing session (see `requireAuth`), and any
-// pending reset link stops working too.
-function passwordUpdateQueries(userId: string, passwordHash: string) {
-  return [
-    prisma.user.update({
-      where: { id: userId },
-      data: { passwordHash, passwordChangedAt: new Date() },
-    }),
-    prisma.passwordResetToken.deleteMany({ where: { userId } }),
-  ];
+// Setting `passwordChangedAt` signs out every existing session (see `requireAuth`).
+function passwordUpdate(userId: string, passwordHash: string) {
+  return {
+    where: { id: userId },
+    data: { passwordHash, passwordChangedAt: new Date() },
+  };
 }
 
 // Returns a fresh session for the device that made the change, since the change itself
@@ -69,8 +63,13 @@ export async function changePassword(
     throw new IncorrectPasswordError();
   }
 
-  await prisma.$transaction(passwordUpdateQueries(userId, await hashPassword(newPassword)));
-  await notifyPasswordChanged(user);
+  const passwordHash = await hashPassword(newPassword);
+  // Pending reset links stop working too: the user evidently knows their password.
+  await prisma.$transaction([
+    prisma.user.update(passwordUpdate(userId, passwordHash)),
+    prisma.passwordResetToken.deleteMany({ where: { userId } }),
+  ]);
+  notifyPasswordChanged(user);
 
   return {
     token: signToken({ sub: userId, username: user.username }),
@@ -143,6 +142,17 @@ export async function resetPassword(token: string, newPassword: string): Promise
     throw new InvalidResetTokenError();
   }
 
-  await prisma.$transaction(passwordUpdateQueries(record.userId, await hashPassword(newPassword)));
-  await notifyPasswordChanged(record.user);
+  // Hashed before the transaction, so bcrypt's deliberate slowness doesn't hold it open.
+  const passwordHash = await hashPassword(newPassword);
+  await prisma.$transaction(async (tx) => {
+    // Claiming the token first keeps it single-use when the form is submitted twice at
+    // once: the second delete waits for the first transaction to commit, then finds nothing.
+    const claimed = await tx.passwordResetToken.deleteMany({ where: { id: record.id } });
+    if (claimed.count === 0) {
+      throw new InvalidResetTokenError();
+    }
+    await tx.user.update(passwordUpdate(record.userId, passwordHash));
+    await tx.passwordResetToken.deleteMany({ where: { userId: record.userId } });
+  });
+  notifyPasswordChanged(record.user);
 }
