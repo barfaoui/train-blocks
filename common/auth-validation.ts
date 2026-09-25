@@ -75,11 +75,30 @@ export const email = z
 
 export const setEmailBody = z.object({ email });
 
-// Verification tokens are 32 random bytes in base64url.
+// Tokens in emailed links are 32 random bytes in base64url.
+function linkToken(invalidMessage: string) {
+  return z.string().regex(/^[A-Za-z0-9_-]{43}$/, invalidMessage);
+}
+
 export const verifyEmailBody = z.object({
-  token: z
-    .string()
-    .regex(/^[A-Za-z0-9_-]{43}$/, 'This verification link is invalid or has expired'),
+  token: linkToken('This verification link is invalid or has expired'),
+});
+
+export const changePasswordBody = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password'),
+    newPassword: password,
+  })
+  .refine((body) => body.newPassword !== body.currentPassword, {
+    path: ['newPassword'],
+    message: 'New password must be different from the current one',
+  });
+
+export const forgotPasswordBody = z.object({ username });
+
+export const resetPasswordBody = z.object({
+  token: linkToken('This password reset link is invalid or has expired'),
+  password,
 });
 
 export function confirmPassword(password: string) {
@@ -96,6 +115,14 @@ export function resetPasswordForm(values: { currentPassword: string; newPassword
       message: 'New password must be different from the current one',
     }),
     confirmPassword: confirmPassword(values.newPassword),
+  });
+}
+
+// Choosing a new password from a reset link: no current password to check against.
+export function newPasswordForm(values: { password: string }) {
+  return z.object({
+    password,
+    confirmPassword: confirmPassword(values.password),
   });
 }
 

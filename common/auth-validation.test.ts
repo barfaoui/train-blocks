@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   appearancePreferencesBody,
   calendarPreferencesBody,
+  changePasswordBody,
+  newPasswordForm,
   notificationsPrivacyPreferencesBody,
   preferenceCategoryBodies,
+  resetPasswordBody,
   resetPasswordForm,
   setEmailBody,
   trainingPreferencesBody,
@@ -38,6 +41,43 @@ describe('verifyEmailBody', () => {
     ['characters outside base64url', `${'a'.repeat(42)}=`],
   ])('rejects %s', (_label, token) => {
     expect(verifyEmailBody.safeParse({ token }).success).toBe(false);
+  });
+});
+
+describe('changePasswordBody', () => {
+  it('rejects a new password equal to the current one, on the new password field', () => {
+    const result = changePasswordBody.safeParse({
+      currentPassword: 'OldSecret1!',
+      newPassword: 'OldSecret1!',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(['newPassword']);
+  });
+
+  it('applies the password format rules to the new password only', () => {
+    expect(
+      changePasswordBody.safeParse({ currentPassword: 'weak', newPassword: 'NewSecret2@' }).success,
+    ).toBe(true);
+    expect(
+      changePasswordBody.safeParse({ currentPassword: 'OldSecret1!', newPassword: 'short' })
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe('resetPasswordBody', () => {
+  it('applies the password format rules', () => {
+    expect(resetPasswordBody.safeParse({ token: 'a'.repeat(43), password: 'short' }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('newPasswordForm', () => {
+  it('rejects a confirmation that does not match', () => {
+    const values = { password: 'NewSecret2@', confirmPassword: 'Different3#' };
+    expect(newPasswordForm(values).safeParse(values).success).toBe(false);
   });
 });
 

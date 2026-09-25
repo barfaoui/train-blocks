@@ -3,8 +3,11 @@ import { type ZodError } from 'zod';
 import type { FieldError } from '../data/types/authentication';
 
 export {
+  changePasswordBody,
+  forgotPasswordBody,
   password,
   preferenceCategoryBodies,
+  resetPasswordBody,
   setEmailBody,
   signInBody,
   signUpBody,

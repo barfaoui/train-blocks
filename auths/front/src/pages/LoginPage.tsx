@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@common/components/Button';
 import { TextInput } from '@common/components/TextInput';
@@ -108,6 +109,14 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
         onChange={(value) => form.setField('password', value)}
         onBlur={() => form.touchField('password')}
       />
+      <TypographySmall
+        as={Link}
+        to="/forgot-password"
+        state={{ username: form.values.username }}
+        className={styles.forgotLink}
+      >
+        Forgot password?
+      </TypographySmall>
       <FormError message={submitError} />
       <Button
         type="submit"

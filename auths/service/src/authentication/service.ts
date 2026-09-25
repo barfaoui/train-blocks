@@ -16,15 +16,15 @@ import {
   UsernameTakenError,
   VerificationCooldownError,
 } from '../data/types/errors';
+import {
+  EMAIL_VERIFICATION_TTL_MS,
+  SEND_COOLDOWN_MS,
+  generateLinkToken,
+  hashLinkToken,
+} from '../utils/link-token.util';
 import { sendMail } from '../utils/mail.util';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 import { type BrowserHints, initialPreferencesFor } from '../utils/preferences.util';
-import {
-  EMAIL_VERIFICATION_TTL_MS,
-  RESEND_COOLDOWN_MS,
-  generateVerificationToken,
-  hashVerificationToken,
-} from '../utils/verification-token.util';
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   const existing = await prisma.user.findUnique({ where: { username } });
@@ -239,7 +239,7 @@ type VerificationRecipient = { username: string; displayName: string | null };
 // The writes that start a new verification: the previous links stop working and a new
 // one is stored. Returned as queries so callers can run them in their own transaction.
 function replaceVerificationToken(userId: string, email: string) {
-  const { token, tokenHash } = generateVerificationToken();
+  const { token, tokenHash } = generateLinkToken();
   const queries = [
     prisma.emailVerificationToken.deleteMany({ where: { userId } }),
     prisma.emailVerificationToken.create({
@@ -289,7 +289,7 @@ type EmailOwner = Awaited<ReturnType<typeof findEmailOwner>>;
 // between addresses would send unlimited mail to arbitrary recipients from our sender.
 function assertVerificationCooldownElapsed(user: EmailOwner): void {
   const lastSentAt = user.emailVerificationTokens[0]?.createdAt;
-  if (lastSentAt && Date.now() - lastSentAt.getTime() < RESEND_COOLDOWN_MS) {
+  if (lastSentAt && Date.now() - lastSentAt.getTime() < SEND_COOLDOWN_MS) {
     throw new VerificationCooldownError();
   }
 }
@@ -328,6 +328,8 @@ export async function setEmail(userId: string, email: string): Promise<MeUser> {
     await prisma.$transaction([
       prisma.user.update({ where: { id: userId }, data: { email, emailVerifiedAt: null } }),
       prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
+      // A reset link sent to the previous address must not outlive it.
+      prisma.passwordResetToken.deleteMany({ where: { userId } }),
       ...queries,
     ]);
   } catch (error) {
@@ -350,7 +352,7 @@ export async function resendVerificationEmail(userId: string): Promise<void> {
 // and the 256-bit token is itself the proof.
 export async function verifyEmail(token: string): Promise<void> {
   const record = await prisma.emailVerificationToken.findUnique({
-    where: { tokenHash: hashVerificationToken(token) },
+    where: { tokenHash: hashLinkToken(token) },
     include: { user: { select: { email: true, deletedAt: true } } },
   });
   if (
@@ -378,10 +380,10 @@ export async function verifyEmail(token: string): Promise<void> {
   }
 }
 
-// Pending links are kept on purpose: they can't verify anything once the address is gone
-// (`verifyEmail` checks it still matches), and the latest one keeps the send cooldown
-// running, so removing and re-adding an address can't be used to skip it. They're
-// deleted when they expire by auths/service/scripts/purge-expired-email-tokens.mjs.
+// Pending verification links are kept on purpose: they can't verify anything once the
+// address is gone (`verifyEmail` checks it still matches), and the latest one keeps the
+// send cooldown running, so removing and re-adding an address can't be used to skip it.
+// They're deleted when they expire by auths/service/scripts/purge-expired-email-tokens.mjs.
 export async function removeEmail(userId: string): Promise<MeUser> {
   try {
     await prisma.$transaction([
@@ -390,6 +392,8 @@ export async function removeEmail(userId: string): Promise<MeUser> {
         data: { email: null, emailVerifiedAt: null },
       }),
       prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
+      // Unlike verification links, reset links go: they would still open the account.
+      prisma.passwordResetToken.deleteMany({ where: { userId } }),
     ]);
   } catch (error) {
     // P2025: the user no longer exists.

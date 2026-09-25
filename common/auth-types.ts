@@ -93,6 +93,24 @@ export type VerifyEmailBody = {
   token: string;
 };
 
+export type ChangePasswordBody = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type ForgotPasswordBody = {
+  username: string;
+};
+
+// `sent`: a reset link went to the account's verified email, shown masked (`b•••@pm.me`).
+// `no-email`: the account has no verified email, so there is nowhere to send one.
+export type ForgotPasswordResult = { status: 'sent'; email: string } | { status: 'no-email' };
+
+export type ResetPasswordBody = {
+  token: string;
+  password: string;
+};
+
 export type MeUser = AuthUser & {
   email: string | null;
   emailVerifiedAt: string | null;

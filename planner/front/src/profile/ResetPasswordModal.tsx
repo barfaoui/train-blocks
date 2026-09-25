@@ -1,16 +1,20 @@
 import { resetPasswordForm } from '@common/auth-validation';
 import { Button } from '@common/components/Button';
+import { useErrorReporter } from '@common/components/ErrorProvider';
 import { Modal } from '@common/components/Modal';
 import { TextInput } from '@common/components/TextInput';
 import { useZodForm } from '@common/components/useZodForm';
+import { TypographySmall } from '@common/styles/Typography';
 
 import styles from './ResetPasswordModal.module.scss';
+import { AuthsRequestError, changePassword } from '../auth/auths-service';
 
 export type ResetPasswordModalProps = {
   onClose: () => void;
 };
 
 export function ResetPasswordModal({ onClose }: ResetPasswordModalProps) {
+  const { reportError, showToast } = useErrorReporter();
   const form = useZodForm(resetPasswordForm, {
     currentPassword: '',
     newPassword: '',
@@ -18,14 +22,27 @@ export function ResetPasswordModal({ onClose }: ResetPasswordModalProps) {
   });
 
   return (
-    <Modal title="Reset password" onClose={onClose}>
+    <Modal title="Reset password" onClose={form.submitting ? () => {} : onClose}>
       <form
         className={styles.form}
         noValidate
-        onSubmit={form.handleSubmit(() => {
-          // TODO: send the new password to the auths service once the endpoint exists.
+        onSubmit={form.handleSubmit(async ({ currentPassword, newPassword }) => {
+          try {
+            await changePassword({ currentPassword, newPassword });
+            showToast('Your password was changed. Your other devices were signed out.', 'success');
+            onClose();
+          } catch (error) {
+            if (error instanceof AuthsRequestError && Object.keys(error.fieldErrors).length > 0) {
+              form.applyServerErrors(error.fieldErrors);
+            } else {
+              reportError(error);
+            }
+          }
         })}
       >
+        <TypographySmall as="p" className={styles.intro}>
+          Changing your password signs you out on your other devices.
+        </TypographySmall>
         <TextInput
           label="Current password"
           type="password"

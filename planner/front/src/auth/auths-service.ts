@@ -1,5 +1,6 @@
 import { authsApiBaseHref } from '@common/app-urls';
 import type {
+  ChangePasswordBody,
   MeUser,
   PreferenceCategoryId,
   SetEmailBody,
@@ -59,6 +60,11 @@ export function verifyEmail(token: VerifyEmailBody['token']): Promise<void> {
   return authsRequest('/email/verify', { method: 'POST', body: JSON.stringify({ token }) });
 }
 
+// Signs out every other device; this one gets a new session cookie in the response.
+export function changePassword(body: ChangePasswordBody): Promise<void> {
+  return authsRequest('/me/password', { method: 'POST', body: JSON.stringify(body) });
+}
+
 export function deleteAccount(): Promise<void> {
   return authsRequest('/me', { method: 'DELETE' });
 }
@@ -75,13 +81,32 @@ function authsRequest<T>(path: string, init?: RequestInit): Promise<T> {
   });
 }
 
+// Keeps the service's field errors so a form can show them next to its inputs.
+export class AuthsRequestError extends UserFacingError {
+  constructor(
+    message: string,
+    readonly fieldErrors: Record<string, string> = {},
+  ) {
+    super(message);
+    this.name = 'AuthsRequestError';
+  }
+}
+
 // Prefers the service's field messages over the bare status text.
 async function parseAuthsError(response: Response): Promise<Error> {
   try {
-    const body = (await response.json()) as { error?: string; details?: { message: string }[] };
+    const body = (await response.json()) as {
+      error?: string;
+      details?: { path?: string; message: string }[];
+    };
     const message = body.details?.map((detail) => detail.message).join('. ') || body.error;
     if (message) {
-      return new UserFacingError(message);
+      const fieldErrors = Object.fromEntries(
+        (body.details ?? [])
+          .filter((detail) => detail.path)
+          .map((detail) => [detail.path as string, detail.message]),
+      );
+      return new AuthsRequestError(message, fieldErrors);
     }
   } catch {
     // non-JSON error body
