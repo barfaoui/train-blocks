@@ -187,7 +187,7 @@ describe('requestPasswordReset', () => {
     const mail = sendMailMock.mock.calls[0][0];
     expect(mail.to).toBe('bochra@example.com');
     const link = new URL(mail.text.match(/https?:\/\/\S+/)![0]);
-    expect(link.pathname).toBe('/reset-password');
+    expect(link.pathname).toBe('/auth/reset-password');
     expect(hashLinkToken(link.searchParams.get('token')!)).toBe(stored.tokenHash);
   });
 });

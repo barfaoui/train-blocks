@@ -12,7 +12,6 @@ import styles from './AvatarEditor.module.scss';
 import { SectionCard } from './SectionCard';
 import { useSession } from '../auth/session';
 
-// A picked color can be a 3-digit hex, which the server doesn't accept.
 function toSixDigitHex(color: string): string {
   const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(color);
   return short ? `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}` : color;

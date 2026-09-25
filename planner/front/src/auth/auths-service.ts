@@ -57,6 +57,7 @@ export function resendVerificationEmail(): Promise<void> {
 
 // Works without a session: the link may be opened on a device that isn't signed in.
 export function verifyEmail(token: VerifyEmailBody['token']): Promise<void> {
+  // POST request and not a GET, so that mail scenners that pre-open links don't use the token up
   return authsRequest('/email/verify', { method: 'POST', body: JSON.stringify({ token }) });
 }
 

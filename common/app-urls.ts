@@ -1,5 +1,7 @@
 import { type AppId, environment } from './environment';
 
+export const AUTHS_FRONT_PATH = '/auth';
+
 export function localhostOrigin(appId: AppId): string {
   return `http://localhost:${environment.ports[appId]}`;
 }
@@ -9,11 +11,12 @@ export function resolveSameOrigin(explicitFlag: string | undefined, isProdBuild:
 }
 
 export function appBaseHref(appId: AppId, sameOrigin: boolean): string {
-  return sameOrigin ? '' : localhostOrigin(appId);
+  const origin = sameOrigin ? '' : localhostOrigin(appId);
+  return appId === 'auths-front' ? `${origin}${AUTHS_FRONT_PATH}` : origin;
 }
 
 export function authsLoginHref(authsFrontBase: string): string {
-  return authsFrontBase || '/';
+  return `${authsFrontBase}/`;
 }
 
 export function authsApiBaseHref(authsServiceBase: string): string {
@@ -26,18 +29,15 @@ export function isAllowedAppRedirect(href: string): boolean {
 
   try {
     const url = relative ? new URL(normalized, 'http://local.invalid') : new URL(normalized);
-    const targetsAuthsFront = relative || url.origin === localhostOrigin('auths-front');
-    if (targetsAuthsFront && url.pathname === '/') {
-      return false;
-    }
     if (relative) {
-      return true;
+      return !isUnderPath(url.pathname, AUTHS_FRONT_PATH);
     }
-    return (
-      url.origin === localhostOrigin('auths-front') ||
-      url.origin === localhostOrigin('planner-front')
-    );
+    return url.origin === localhostOrigin('planner-front');
   } catch {
     return false;
   }
+}
+
+function isUnderPath(pathname: string, basePath: string): boolean {
+  return pathname === basePath || pathname.startsWith(`${basePath}/`);
 }

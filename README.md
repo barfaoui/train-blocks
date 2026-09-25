@@ -52,7 +52,7 @@ Ports = `basePort + index + 1` from [`common/environment.json`](common/environme
 | App | URL |
 | --- | --- |
 | Auths service | <http://localhost:3001> |
-| Auths front | <http://localhost:3002> |
+| Auths front | <http://localhost:3002/auth/> |
 | Planner service | <http://localhost:3003> |
 | Planner front | <http://localhost:3004> |
 
