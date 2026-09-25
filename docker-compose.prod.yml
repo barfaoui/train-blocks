@@ -1,0 +1,81 @@
+# Production stack: docker compose -f docker-compose.prod.yml up -d --build
+# Settings and secrets come from .env.production (gitignored).
+name: train-blocks
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+x-app: &app
+  build:
+    context: .
+    target: app
+  image: train-blocks-app
+  env_file: .env.production
+  logging: *logging
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    env_file: .env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    logging: *logging
+
+  migrate:
+    <<: *app
+    command: >-
+      sh -c "npx prisma migrate deploy --schema=auths/service/prisma/schema.prisma
+      && npx prisma migrate deploy --schema=planner/service/prisma/schema.prisma"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auths-service:
+    <<: *app
+    restart: unless-stopped
+    command: node -r tsconfig-paths/register auths/service/dist/index.js
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  planner-service:
+    <<: *app
+    restart: unless-stopped
+    command: node -r tsconfig-paths/register planner/service/dist/index.js
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      target: web
+    image: train-blocks-web
+    restart: unless-stopped
+    env_file: .env.production
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - auths-service
+      - planner-service
+    logging: *logging
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

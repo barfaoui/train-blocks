@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/generated
+**/*.tsbuildinfo
+**/*.log
+
+.env
+.env.*
+!.env.example
+
+.git
+.vscode
+.claude
+Docker
