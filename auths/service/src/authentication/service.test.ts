@@ -29,9 +29,9 @@ import {
   UsernameTakenError,
   VerificationCooldownError,
 } from '../data/types/errors';
+import { hashLinkToken } from '../utils/link-token.util';
 import { sendMail } from '../utils/mail.util';
 import { hashPassword, verifyPassword } from '../utils/password.util';
-import { hashVerificationToken } from '../utils/verification-token.util';
 
 vi.mock('../data/prisma', () => ({
   prisma: {
@@ -589,7 +589,7 @@ describe('setEmail', () => {
     const mail = sendMailMock.mock.calls[0][0];
     expect(mail.to).toBe('new@example.com');
     const link = new URL(mail.text.match(/https?:\/\/\S+/)![0]);
-    expect(hashVerificationToken(link.searchParams.get('token')!)).toBe(stored.tokenHash);
+    expect(hashLinkToken(link.searchParams.get('token')!)).toBe(stored.tokenHash);
     expect(mail.text).not.toContain(stored.tokenHash);
   });
 
@@ -682,7 +682,7 @@ describe('verifyEmail', () => {
     id: 'token-1',
     userId: 'user-1',
     email: 'bochra@example.com',
-    tokenHash: hashVerificationToken(token),
+    tokenHash: hashLinkToken(token),
     expiresAt: new Date(Date.now() + 60_000),
     user: { email: 'bochra@example.com', deletedAt: null as Date | null },
   };

@@ -56,7 +56,28 @@ export class VerificationCooldownError extends Error {
 
 export class EmailDeliveryError extends Error {
   constructor(readonly reason?: unknown) {
-    super("We couldn't send the verification email, please try again");
+    super("We couldn't send the email, please try again");
     this.name = 'EmailDeliveryError';
+  }
+}
+
+export class IncorrectPasswordError extends Error {
+  constructor() {
+    super('Your current password is incorrect');
+    this.name = 'IncorrectPasswordError';
+  }
+}
+
+export class UnknownUsernameError extends Error {
+  constructor() {
+    super("We couldn't find an account with this username");
+    this.name = 'UnknownUsernameError';
+  }
+}
+
+export class InvalidResetTokenError extends Error {
+  constructor() {
+    super('This password reset link is invalid or has expired');
+    this.name = 'InvalidResetTokenError';
   }
 }
