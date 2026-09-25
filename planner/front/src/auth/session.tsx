@@ -18,6 +18,8 @@ import type {
 import {
   deleteAccount as apiDeleteAccount,
   logout as apiLogout,
+  removeEmail as apiRemoveEmail,
+  setEmail as apiSetEmail,
   updateAvatar as apiUpdateAvatar,
   updateDisplayName as apiUpdateDisplayName,
   updatePreferences as apiUpdatePreferences,
@@ -37,6 +39,10 @@ export type SessionValue = {
     category: PreferenceCategoryId,
     changes: UpdatePreferencesBody,
   ) => Promise<void>;
+  setEmail: (email: string) => Promise<void>;
+  removeEmail: () => Promise<void>;
+  // Re-reads the profile, for changes made outside this tab (like verifying the email).
+  reloadUser: () => Promise<void>;
 };
 
 const SessionContext = createContext<SessionValue | null>(null);
@@ -111,6 +117,28 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [applyUser],
   );
 
+  const reloadUser = useCallback(async () => {
+    applyUser(await getMe());
+  }, [applyUser]);
+
+  const setEmail = useCallback(
+    async (email: string) => {
+      try {
+        applyUser(await apiSetEmail(email));
+      } catch (error) {
+        // The address can be saved even when the verification email then fails to send,
+        // so pick up whatever the server now has before surfacing the error.
+        await reloadUser().catch(() => {});
+        throw error;
+      }
+    },
+    [applyUser, reloadUser],
+  );
+
+  const removeEmail = useCallback(async () => {
+    applyUser(await apiRemoveEmail());
+  }, [applyUser]);
+
   const value = useMemo(
     () => ({
       status,
@@ -120,8 +148,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       updateAvatar,
       updateDisplayName,
       updatePreferences,
+      setEmail,
+      removeEmail,
+      reloadUser,
     }),
-    [status, user, logout, deleteAccount, updateAvatar, updateDisplayName, updatePreferences],
+    [
+      status,
+      user,
+      logout,
+      deleteAccount,
+      updateAvatar,
+      updateDisplayName,
+      updatePreferences,
+      setEmail,
+      removeEmail,
+      reloadUser,
+    ],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
