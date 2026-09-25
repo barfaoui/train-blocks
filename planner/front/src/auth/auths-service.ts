@@ -2,9 +2,11 @@ import { authsApiBaseHref } from '@common/app-urls';
 import type {
   MeUser,
   PreferenceCategoryId,
+  SetEmailBody,
   UpdateAvatarBody,
   UpdateDisplayNameBody,
   UpdatePreferencesBody,
+  VerifyEmailBody,
 } from '@common/auth-types';
 import { DEFAULT_ERROR_MESSAGE, UserFacingError } from '@common/utils/error-message.util';
 import { request } from '@common/utils/request.util';
@@ -38,6 +40,23 @@ export function updatePreferences(
     method: 'PATCH',
     body: JSON.stringify(changes),
   });
+}
+
+export function setEmail(email: SetEmailBody['email']): Promise<MeUser> {
+  return authsRequest('/me/email', { method: 'PUT', body: JSON.stringify({ email }) });
+}
+
+export function removeEmail(): Promise<MeUser> {
+  return authsRequest('/me/email', { method: 'DELETE' });
+}
+
+export function resendVerificationEmail(): Promise<void> {
+  return authsRequest('/me/email/verification', { method: 'POST' });
+}
+
+// Works without a session: the link may be opened on a device that isn't signed in.
+export function verifyEmail(token: VerifyEmailBody['token']): Promise<void> {
+  return authsRequest('/email/verify', { method: 'POST', body: JSON.stringify({ token }) });
 }
 
 export function deleteAccount(): Promise<void> {

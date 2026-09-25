@@ -66,6 +66,22 @@ export const updateDisplayNameBody = z.object({
     .transform((value) => value || null),
 });
 
+export const email = z
+  .string()
+  .trim()
+  .max(255, 'Email must be 255 characters or fewer')
+  .pipe(z.email('Enter a valid email address'))
+  .transform((value) => value.toLowerCase());
+
+export const setEmailBody = z.object({ email });
+
+// Verification tokens are 32 random bytes in base64url.
+export const verifyEmailBody = z.object({
+  token: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{43}$/, 'This verification link is invalid or has expired'),
+});
+
 export function confirmPassword(password: string) {
   return z
     .string()

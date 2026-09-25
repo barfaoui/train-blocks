@@ -6,10 +6,40 @@ import {
   notificationsPrivacyPreferencesBody,
   preferenceCategoryBodies,
   resetPasswordForm,
+  setEmailBody,
   trainingPreferencesBody,
   updateAvatarBody,
   updateDisplayNameBody,
+  verifyEmailBody,
 } from './auth-validation';
+
+describe('setEmailBody', () => {
+  it('trims and lowercases the address', () => {
+    expect(setEmailBody.parse({ email: '  Bochra@Example.COM ' }).email).toBe('bochra@example.com');
+  });
+
+  it('rejects something that is not an email', () => {
+    expect(setEmailBody.safeParse({ email: 'bochra' }).success).toBe(false);
+  });
+
+  it('rejects an address longer than the column', () => {
+    const email = `${'a'.repeat(250)}@example.com`;
+    expect(setEmailBody.safeParse({ email }).success).toBe(false);
+  });
+});
+
+describe('verifyEmailBody', () => {
+  it('accepts a 43-character base64url token', () => {
+    expect(verifyEmailBody.safeParse({ token: 'aZ0_-'.repeat(8) + 'abc' }).success).toBe(true);
+  });
+
+  it.each([
+    ['a token of the wrong length', 'a'.repeat(42)],
+    ['characters outside base64url', `${'a'.repeat(42)}=`],
+  ])('rejects %s', (_label, token) => {
+    expect(verifyEmailBody.safeParse({ token }).success).toBe(false);
+  });
+});
 
 describe('resetPasswordForm', () => {
   const valid = {
@@ -92,7 +122,7 @@ describe('preference category bodies', () => {
     ).toEqual({ locale: 'fr-FR', timezone: 'Europe/Paris', weekStart: 'MONDAY' });
   });
 
-  it.each([
+  it.each<[Record<string, unknown>, string]>([
     [{}, 'an empty body'],
     [{ weekStart: 'FRIDAY' }, 'an unknown week start'],
     [{ locale: 'not a locale!' }, 'an invalid locale'],

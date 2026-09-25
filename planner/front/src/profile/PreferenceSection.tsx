@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { type UserPreferences } from '@common/auth-types';
+import { type MeUser, type UserPreferences } from '@common/auth-types';
 import { Button } from '@common/components/Button';
 import { Checkbox } from '@common/components/Checkbox';
 import { useErrorReporter } from '@common/components/ErrorProvider';
@@ -104,11 +104,21 @@ type FieldInputProps = {
   field: PreferenceField;
   draft: Draft;
   errors: DraftErrors;
-  hasEmail: boolean;
+  email: EmailState;
   onChange: (value: string) => void;
 };
 
-function FieldInput({ field, draft, errors, hasEmail, onChange }: FieldInputProps) {
+// Email notifications need an address the user has verified.
+type EmailState = 'none' | 'unverified' | 'verified';
+
+function emailState(user: MeUser | null): EmailState {
+  if (!user?.email) {
+    return 'none';
+  }
+  return user.emailVerifiedAt ? 'verified' : 'unverified';
+}
+
+function FieldInput({ field, draft, errors, email, onChange }: FieldInputProps) {
   const { kind, label } = field;
   const value = draft[field.key];
 
@@ -116,7 +126,7 @@ function FieldInput({ field, draft, errors, hasEmail, onChange }: FieldInputProp
     case 'select':
       return <Select label={label} value={value} options={kind.options} onChange={onChange} />;
     case 'boolean': {
-      const needsEmail = field.key === 'notifyByEmail' && !hasEmail;
+      const needsEmail = field.key === 'notifyByEmail' && email !== 'verified';
       return (
         <div className={styles.checkbox}>
           <Checkbox
@@ -127,7 +137,9 @@ function FieldInput({ field, draft, errors, hasEmail, onChange }: FieldInputProp
           />
           {needsEmail ? (
             <TypographySmall as="p" className={styles.hint}>
-              Add an email address to your account to turn this on.
+              {email === 'none'
+                ? 'Add an email address to your account to turn this on.'
+                : 'Verify your email address to turn this on.'}
             </TypographySmall>
           ) : null}
         </div>
@@ -249,7 +261,7 @@ export function PreferenceSection({ category, preferences }: PreferenceSectionPr
                 field={field}
                 draft={draft}
                 errors={errors}
-                hasEmail={Boolean(user?.email)}
+                email={emailState(user)}
                 onChange={(value) => setDraft((current) => ({ ...current, [field.key]: value }))}
               />
             ))}

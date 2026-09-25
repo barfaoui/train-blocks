@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthGuard } from './guards/AuthGuard';
 import { HomePage } from './pages/HomePage';
 import { ProfilePage } from './pages/ProfilePage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
 
 export function App() {
   return (
@@ -24,6 +25,7 @@ export function App() {
             </AuthGuard>
           }
         />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

@@ -5,12 +5,14 @@ import type { FieldError } from '../data/types/authentication';
 export {
   password,
   preferenceCategoryBodies,
+  setEmailBody,
   signInBody,
   signUpBody,
   signUpRequest,
   updateAvatarBody,
   updateDisplayNameBody,
   username,
+  verifyEmailBody,
 } from '@common/auth-validation';
 
 // `rootPath` labels issues about the whole value, like a missing body or an unknown key.
