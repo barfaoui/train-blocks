@@ -285,6 +285,15 @@ async function findEmailOwner(userId: string) {
 
 type EmailOwner = Awaited<ReturnType<typeof findEmailOwner>>;
 
+// Applies to every verification email, whichever route sends it: otherwise switching
+// between addresses would send unlimited mail to arbitrary recipients from our sender.
+function assertVerificationCooldownElapsed(user: EmailOwner): void {
+  const lastSentAt = user.emailVerificationTokens[0]?.createdAt;
+  if (lastSentAt && Date.now() - lastSentAt.getTime() < RESEND_COOLDOWN_MS) {
+    throw new VerificationCooldownError();
+  }
+}
+
 async function resendFor(userId: string, user: EmailOwner): Promise<void> {
   if (!user.email) {
     throw new EmailNotSetError();
@@ -292,10 +301,7 @@ async function resendFor(userId: string, user: EmailOwner): Promise<void> {
   if (user.emailVerifiedAt) {
     throw new EmailAlreadyVerifiedError();
   }
-  const lastSentAt = user.emailVerificationTokens[0]?.createdAt;
-  if (lastSentAt && Date.now() - lastSentAt.getTime() < RESEND_COOLDOWN_MS) {
-    throw new VerificationCooldownError();
-  }
+  assertVerificationCooldownElapsed(user);
 
   const { token, queries } = replaceVerificationToken(userId, user.email);
   await prisma.$transaction(queries);
@@ -315,6 +321,7 @@ export async function setEmail(userId: string, email: string): Promise<MeUser> {
     }
     return getMe(userId);
   }
+  assertVerificationCooldownElapsed(user);
 
   const { token, queries } = replaceVerificationToken(userId, email);
   try {
@@ -371,6 +378,10 @@ export async function verifyEmail(token: string): Promise<void> {
   }
 }
 
+// Pending links are kept on purpose: they can't verify anything once the address is gone
+// (`verifyEmail` checks it still matches), and the latest one keeps the send cooldown
+// running, so removing and re-adding an address can't be used to skip it. They're
+// deleted when they expire by auths/service/scripts/purge-expired-email-tokens.mjs.
 export async function removeEmail(userId: string): Promise<MeUser> {
   try {
     await prisma.$transaction([
@@ -379,7 +390,6 @@ export async function removeEmail(userId: string): Promise<MeUser> {
         data: { email: null, emailVerifiedAt: null },
       }),
       prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
-      prisma.emailVerificationToken.deleteMany({ where: { userId } }),
     ]);
   } catch (error) {
     // P2025: the user no longer exists.

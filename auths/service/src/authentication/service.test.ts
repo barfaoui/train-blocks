@@ -593,6 +593,20 @@ describe('setEmail', () => {
     expect(mail.text).not.toContain(stored.tokenHash);
   });
 
+  it('refuses to switch to another address within a minute of the last email', async () => {
+    prismaUser.findUnique.mockResolvedValue({
+      ...storedUser,
+      email: 'first@example.com',
+      emailVerificationTokens: [{ createdAt: new Date(Date.now() - 30_000) }],
+    });
+
+    await expect(setEmail('user-1', 'second@example.com')).rejects.toBeInstanceOf(
+      VerificationCooldownError,
+    );
+    expect(prismaTransaction).not.toHaveBeenCalled();
+    expect(sendMailMock).not.toHaveBeenCalled();
+  });
+
   it('keeps the new address when the email cannot be sent', async () => {
     prismaUser.findUnique.mockResolvedValue(storedUser);
     sendMailMock.mockRejectedValue(new EmailDeliveryError());
@@ -722,7 +736,7 @@ describe('removeEmail', () => {
     prismaUser.findUnique.mockResolvedValue(storedUser);
   });
 
-  it('clears the address, its pending links and email notifications', async () => {
+  it('clears the address and email notifications but keeps pending links', async () => {
     await removeEmail('user-1');
 
     expect(prismaUser.update).toHaveBeenCalledWith({
@@ -733,7 +747,8 @@ describe('removeEmail', () => {
       where: { userId: 'user-1' },
       data: { notifyByEmail: false },
     });
-    expect(prismaTokens.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+    // The latest link keeps the send cooldown running across a remove and re-add.
+    expect(prismaTokens.deleteMany).not.toHaveBeenCalled();
   });
 
   it('throws UnauthorizedError when the user no longer exists', async () => {
