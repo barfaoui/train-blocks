@@ -25,6 +25,7 @@ import {
   updatePreferences as apiUpdatePreferences,
   getMe,
 } from './auths-service';
+import { loginHref } from './url-bases';
 
 export type SessionStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -85,16 +86,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       await apiLogout();
     } finally {
-      clearUser();
+      window.location.replace(loginHref);
     }
-  }, [clearUser]);
+  }, []);
 
-  // Unlike logout, a failed request must not clear the local session: the account is
-  // still there, and the caller shows the error so the user can try again.
   const deleteAccount = useCallback(async () => {
     await apiDeleteAccount();
-    clearUser();
-  }, [clearUser]);
+    window.location.replace(loginHref);
+  }, []);
 
   const updateAvatar = useCallback(
     async (avatar: UpdateAvatarBody) => {

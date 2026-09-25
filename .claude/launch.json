@@ -5,19 +5,22 @@
       "name": "planner",
       "runtimeExecutable": "make",
       "runtimeArgs": ["-C", "planner", "run"],
-      "port": 3004
+      "port": 3004,
+      "autoPort": false
     },
     {
       "name": "auths-service",
       "runtimeExecutable": "make",
       "runtimeArgs": ["-C", "auths", "run-service"],
-      "port": 3001
+      "port": 3001,
+      "autoPort": false
     },
     {
       "name": "auths-front",
       "runtimeExecutable": "make",
       "runtimeArgs": ["-C", "auths", "run-front"],
-      "port": 3002
+      "port": 3002,
+      "autoPort": false
     }
   ]
 }

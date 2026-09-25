@@ -1,11 +1,7 @@
 import { type ReactNode, useEffect } from 'react';
 
-import { authsLoginHref } from '@common/app-urls';
-
 import { useSessionStatus } from '../auth/session';
-import { authsFrontBase, sameOrigin } from '../auth/url-bases';
-
-const loginHref = authsLoginHref(authsFrontBase);
+import { loginHref, sameOrigin } from '../auth/url-bases';
 
 export function AuthGuard({ children }: { children: ReactNode }) {
   const status = useSessionStatus();

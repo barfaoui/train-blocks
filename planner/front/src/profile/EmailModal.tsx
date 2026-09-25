@@ -10,7 +10,6 @@ import styles from './EmailModal.module.scss';
 import { useSession } from '../auth/session';
 
 export type EmailModalProps = {
-  // The address being replaced, if any.
   currentEmail: string | null;
   onClose: () => void;
 };

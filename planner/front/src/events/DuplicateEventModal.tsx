@@ -10,7 +10,6 @@ export type DuplicateEventModalProps = {
   onCreated: () => void;
 };
 
-// The copy is only created on submit, so dismissing the modal leaves nothing behind.
 export function DuplicateEventModal({ event, onClose, onCreated }: DuplicateEventModalProps) {
   return (
     <EventFormModal

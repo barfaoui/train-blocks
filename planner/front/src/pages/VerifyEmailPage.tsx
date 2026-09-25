@@ -11,10 +11,6 @@ import { useSession } from '../auth/session';
 type VerificationState =
   { status: 'verifying' } | { status: 'verified' } | { status: 'failed'; message: string };
 
-// Landing page for the link in the verification email. Not behind AuthGuard: the link may
-// be opened on a device that isn't signed in, and the token alone is enough to verify.
-// Verifying is a POST from here rather than the link's own GET, so mail scanners that
-// pre-open links can't use the token up.
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

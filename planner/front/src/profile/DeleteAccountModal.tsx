@@ -21,7 +21,6 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
     setSubmitting(true);
     try {
       await deleteAccount();
-      // The session is now unauthenticated; AuthGuard sends the browser to sign in.
     } catch (error) {
       reportError(error);
       setSubmitting(false);

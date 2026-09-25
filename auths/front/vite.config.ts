@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
+import { AUTHS_FRONT_PATH } from '@common/app-urls';
 import { environment } from '@common/environment';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -11,6 +12,7 @@ const port = environment.ports['auths-front'];
 
 export default defineConfig({
   root,
+  base: `${AUTHS_FRONT_PATH}/`,
   cacheDir: path.join(root, 'node_modules/.vite'),
   plugins: [react()],
   resolve: {

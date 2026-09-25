@@ -2,7 +2,6 @@ import { SPORT_TYPES, type SportType } from '@common/planner-types';
 
 export type SportTypeInfo = {
   label: string;
-  // File name (without extension) of the SVG in assets/sports.
   icon: string;
 };
 
