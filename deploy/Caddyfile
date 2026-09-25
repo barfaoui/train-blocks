@@ -1,0 +1,28 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	@authsApi path /api/auth /api/auth/*
+	handle @authsApi {
+		reverse_proxy auths-service:3001
+	}
+
+	@plannerApi path /api/events /api/events/*
+	handle @plannerApi {
+		reverse_proxy planner-service:3003
+	}
+
+	redir /auth /auth/{?query}
+
+	handle /auth/* {
+		uri strip_prefix /auth
+		root * /srv/auths
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle {
+		root * /srv/planner
+		try_files {path} /index.html
+		file_server
+	}
+}
