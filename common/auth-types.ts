@@ -85,6 +85,14 @@ export type UpdateDisplayNameBody = {
   displayName: string;
 };
 
+export type SetEmailBody = {
+  email: string;
+};
+
+export type VerifyEmailBody = {
+  token: string;
+};
+
 export type MeUser = AuthUser & {
   email: string | null;
   emailVerifiedAt: string | null;

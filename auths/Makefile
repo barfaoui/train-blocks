@@ -1,7 +1,7 @@
 ROOT := ..
 PRISMA_SCHEMA := auths/service/prisma/schema.prisma
 
-.PHONY: run reset reset-db db-migrate db-studio purge-deleted-users run-service run-front preview-front build test clean
+.PHONY: run reset reset-db db-migrate db-studio purge-deleted-users purge-expired-email-tokens run-service run-front preview-front build test clean
 
 # Start service + front (DB up, no seed)
 run:
@@ -34,6 +34,11 @@ db-studio:
 # an OS-level cron in production, not run automatically here.
 purge-deleted-users:
 	cd $(ROOT) && node auths/service/scripts/purge-deleted-users.mjs
+
+# Delete email verification links that expired without being used (see
+# auths/service/scripts/purge-expired-email-tokens.mjs). Also meant for a cron.
+purge-expired-email-tokens:
+	cd $(ROOT) && node auths/service/scripts/purge-expired-email-tokens.mjs
 
 # Wipe schema + reseed, then run
 reset: reset-db run

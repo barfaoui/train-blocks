@@ -25,3 +25,38 @@ export class InvalidPreferencesError extends Error {
     this.name = 'InvalidPreferencesError';
   }
 }
+
+export class InvalidVerificationTokenError extends Error {
+  constructor() {
+    super('This verification link is invalid or has expired');
+    this.name = 'InvalidVerificationTokenError';
+  }
+}
+
+export class EmailNotSetError extends Error {
+  constructor() {
+    super('Add an email address first');
+    this.name = 'EmailNotSetError';
+  }
+}
+
+export class EmailAlreadyVerifiedError extends Error {
+  constructor() {
+    super('This email address is already verified');
+    this.name = 'EmailAlreadyVerifiedError';
+  }
+}
+
+export class VerificationCooldownError extends Error {
+  constructor() {
+    super('Please wait a minute before requesting another email');
+    this.name = 'VerificationCooldownError';
+  }
+}
+
+export class EmailDeliveryError extends Error {
+  constructor(readonly reason?: unknown) {
+    super("We couldn't send the verification email, please try again");
+    this.name = 'EmailDeliveryError';
+  }
+}

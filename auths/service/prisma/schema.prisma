@@ -62,10 +62,30 @@ model User {
   // auths/service/scripts/purge-deleted-users.mjs.
   deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  preferences UserPreferences?
+  preferences             UserPreferences?
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([deletedAt])
   @@map("users")
+  @@schema("auth")
+}
+
+// A pending email verification link. Only the sha256 of the token is stored, so a
+// database leak can't be replayed as working links. `email` is the address the link
+// was sent to: if the user changes their address afterwards, the old link no longer
+// verifies anything. Issuing a new link deletes the user's previous ones.
+model EmailVerificationToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.Char(64)
+  email     String   @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
   @@schema("auth")
 }
 

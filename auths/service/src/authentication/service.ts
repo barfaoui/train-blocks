@@ -4,15 +4,27 @@ import { DEFAULT_USER_PREFERENCES, type UpdatePreferencesBody } from '@common/au
 import { signToken } from '@common/utils/jwt.util';
 
 import { prisma } from '../data/prisma';
+import { verificationEmail, verificationLink } from './emails/verification-email';
 import type { AuthResult, MeUser, UpdateAvatarBody } from '../data/types/authentication';
 import {
+  EmailAlreadyVerifiedError,
+  EmailNotSetError,
   InvalidCredentialsError,
   InvalidPreferencesError,
+  InvalidVerificationTokenError,
   UnauthorizedError,
   UsernameTakenError,
+  VerificationCooldownError,
 } from '../data/types/errors';
+import { sendMail } from '../utils/mail.util';
 import { hashPassword, verifyPassword } from '../utils/password.util';
 import { type BrowserHints, initialPreferencesFor } from '../utils/preferences.util';
+import {
+  EMAIL_VERIFICATION_TTL_MS,
+  RESEND_COOLDOWN_MS,
+  generateVerificationToken,
+  hashVerificationToken,
+} from '../utils/verification-token.util';
 
 export async function isUsernameAvailable(username: string): Promise<boolean> {
   const existing = await prisma.user.findUnique({ where: { username } });
@@ -144,20 +156,27 @@ async function assertActiveDayIsValid(userId: string, changes: UpdatePreferences
   }
 }
 
-async function assertEmailIsSet(userId: string, changes: UpdatePreferencesBody) {
+// Email notifications only go to an address the user has proven they own. Changing or
+// removing the email turns them back off, so this also holds for stored preferences.
+async function assertEmailIsVerified(userId: string, changes: UpdatePreferencesBody) {
   if (changes.notifyByEmail !== true) {
     return;
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, emailVerifiedAt: true },
+  });
   if (!user) {
     throw new UnauthorizedError();
   }
-  if (!user.email) {
+  if (!user.email || !user.emailVerifiedAt) {
     throw new InvalidPreferencesError([
       {
         path: 'notifyByEmail',
-        message: 'Add an email address to turn on email notifications',
+        message: user.email
+          ? 'Verify your email address to turn on email notifications'
+          : 'Add an email address to turn on email notifications',
       },
     ]);
   }
@@ -169,7 +188,7 @@ export async function updatePreferences(
   changes: UpdatePreferencesBody,
 ): Promise<MeUser> {
   await assertActiveDayIsValid(userId, changes);
-  await assertEmailIsSet(userId, changes);
+  await assertEmailIsVerified(userId, changes);
 
   try {
     await prisma.userPreferences.upsert({
@@ -213,6 +232,164 @@ export async function deleteAccount(userId: string): Promise<void> {
         )
     `,
   ]);
+}
+
+type VerificationRecipient = { username: string; displayName: string | null };
+
+// The writes that start a new verification: the previous links stop working and a new
+// one is stored. Returned as queries so callers can run them in their own transaction.
+function replaceVerificationToken(userId: string, email: string) {
+  const { token, tokenHash } = generateVerificationToken();
+  const queries = [
+    prisma.emailVerificationToken.deleteMany({ where: { userId } }),
+    prisma.emailVerificationToken.create({
+      data: {
+        userId,
+        email,
+        tokenHash,
+        expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
+      },
+    }),
+  ];
+  return { token, queries };
+}
+
+// Sent after the token is committed: if the mail fails, the address stays saved and the
+// user can ask for another email instead of retyping it.
+function sendVerificationEmail(email: string, token: string, recipient: VerificationRecipient) {
+  return sendMail(
+    verificationEmail(email, recipient.displayName ?? recipient.username, verificationLink(token)),
+  );
+}
+
+async function findEmailOwner(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId, deletedAt: null },
+    select: {
+      username: true,
+      displayName: true,
+      email: true,
+      emailVerifiedAt: true,
+      emailVerificationTokens: {
+        select: { createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      },
+    },
+  });
+  if (!user) {
+    throw new UnauthorizedError();
+  }
+  return user;
+}
+
+type EmailOwner = Awaited<ReturnType<typeof findEmailOwner>>;
+
+async function resendFor(userId: string, user: EmailOwner): Promise<void> {
+  if (!user.email) {
+    throw new EmailNotSetError();
+  }
+  if (user.emailVerifiedAt) {
+    throw new EmailAlreadyVerifiedError();
+  }
+  const lastSentAt = user.emailVerificationTokens[0]?.createdAt;
+  if (lastSentAt && Date.now() - lastSentAt.getTime() < RESEND_COOLDOWN_MS) {
+    throw new VerificationCooldownError();
+  }
+
+  const { token, queries } = replaceVerificationToken(userId, user.email);
+  await prisma.$transaction(queries);
+  await sendVerificationEmail(user.email, token, user);
+}
+
+// Replaces the address right away; it shows as unverified until the emailed link is used.
+// `email` is expected lowercased (see `setEmailBody`).
+export async function setEmail(userId: string, email: string): Promise<MeUser> {
+  const user = await findEmailOwner(userId);
+
+  if (user.email === email) {
+    // Re-submitting the current address: nothing to do once verified, otherwise it's a
+    // request for a fresh link (subject to the same cooldown as an explicit resend).
+    if (!user.emailVerifiedAt) {
+      await resendFor(userId, user);
+    }
+    return getMe(userId);
+  }
+
+  const { token, queries } = replaceVerificationToken(userId, email);
+  try {
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: userId }, data: { email, emailVerifiedAt: null } }),
+      prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
+      ...queries,
+    ]);
+  } catch (error) {
+    // P2025: the user no longer exists.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      throw new UnauthorizedError();
+    }
+    throw error;
+  }
+
+  await sendVerificationEmail(email, token, user);
+  return getMe(userId);
+}
+
+export async function resendVerificationEmail(userId: string): Promise<void> {
+  await resendFor(userId, await findEmailOwner(userId));
+}
+
+// Needs no session: the link may be opened on a device where the user isn't signed in,
+// and the 256-bit token is itself the proof.
+export async function verifyEmail(token: string): Promise<void> {
+  const record = await prisma.emailVerificationToken.findUnique({
+    where: { tokenHash: hashVerificationToken(token) },
+    include: { user: { select: { email: true, deletedAt: true } } },
+  });
+  if (
+    !record ||
+    record.expiresAt.getTime() <= Date.now() ||
+    record.user.deletedAt ||
+    record.user.email !== record.email
+  ) {
+    throw new InvalidVerificationTokenError();
+  }
+
+  // The email condition guards against the address changing between the read above and
+  // this write, so a stale link can never mark a different address as verified.
+  const [verified] = await prisma.$transaction([
+    prisma.user.updateMany({
+      where: { id: record.userId, email: record.email, deletedAt: null },
+      data: { emailVerifiedAt: new Date() },
+    }),
+    prisma.emailVerificationToken.deleteMany({
+      where: { userId: record.userId, email: record.email },
+    }),
+  ]);
+  if (verified.count === 0) {
+    throw new InvalidVerificationTokenError();
+  }
+}
+
+export async function removeEmail(userId: string): Promise<MeUser> {
+  try {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { email: null, emailVerifiedAt: null },
+      }),
+      prisma.userPreferences.updateMany({ where: { userId }, data: { notifyByEmail: false } }),
+      prisma.emailVerificationToken.deleteMany({ where: { userId } }),
+    ]);
+  } catch (error) {
+    // P2025: the user no longer exists.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      throw new UnauthorizedError();
+    }
+    throw error;
+  }
+
+  return getMe(userId);
 }
 
 function isUniqueConstraintError(error: unknown): boolean {

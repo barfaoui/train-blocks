@@ -8,45 +8,77 @@ import {
   deleteAccount,
   getMe,
   isUsernameAvailable,
+  removeEmail,
+  resendVerificationEmail,
+  setEmail,
   signIn,
   signUp,
   updateAvatar,
   updateDisplayName,
   updatePreferences,
+  verifyEmail,
 } from './service';
 import {
   formatZodError,
   preferenceCategoryBodies,
+  setEmailBody,
   signInBody,
   signUpRequest,
   updateAvatarBody,
   updateDisplayNameBody,
   username,
+  verifyEmailBody,
 } from './validation';
 import type { AuthenticatedRequest } from '../data/types/authentication';
 import {
+  EmailAlreadyVerifiedError,
+  EmailDeliveryError,
+  EmailNotSetError,
   InvalidCredentialsError,
   InvalidPreferencesError,
+  InvalidVerificationTokenError,
   UnauthorizedError,
   UsernameTakenError,
+  VerificationCooldownError,
 } from '../data/types/errors';
 
 export const authenticationRouter = Router();
+
+// The email-flow errors carry messages meant to be shown to the user as is.
+function emailErrorStatus(error: unknown): number | undefined {
+  if (error instanceof InvalidVerificationTokenError) return 400;
+  if (error instanceof EmailNotSetError || error instanceof EmailAlreadyVerifiedError) return 409;
+  if (error instanceof VerificationCooldownError) return 429;
+  if (error instanceof EmailDeliveryError) return 502;
+  return undefined;
+}
+
+function respondWithError(res: Response, error: unknown) {
+  if (error instanceof InvalidPreferencesError) {
+    res.status(400).json({ error: 'Invalid request', details: error.details });
+    return;
+  }
+  if (error instanceof UnauthorizedError) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+  const emailStatus = emailErrorStatus(error);
+  if (emailStatus) {
+    if (error instanceof EmailDeliveryError) {
+      console.error(error.reason);
+    }
+    res.status(emailStatus).json({ error: (error as Error).message });
+    return;
+  }
+  console.error(error);
+  res.status(500).json({ error: 'Internal server error' });
+}
 
 async function respondWithProfile(res: Response, update: () => Promise<MeUser>) {
   try {
     res.status(200).json(await update());
   } catch (error) {
-    if (error instanceof InvalidPreferencesError) {
-      res.status(400).json({ error: 'Invalid request', details: error.details });
-      return;
-    }
-    if (error instanceof UnauthorizedError) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    respondWithError(res, error);
   }
 }
 
@@ -163,6 +195,50 @@ authenticationRouter.patch('/me/preferences/:category', requireAuth, async (req,
   }
 
   await respondWithProfile(res, () => updatePreferences(user.id, parsed.data));
+});
+
+authenticationRouter.put('/me/email', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+  const parsed = setEmailBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json(formatZodError(parsed.error));
+    return;
+  }
+
+  await respondWithProfile(res, () => setEmail(user.id, parsed.data.email));
+});
+
+authenticationRouter.delete('/me/email', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+
+  await respondWithProfile(res, () => removeEmail(user.id));
+});
+
+authenticationRouter.post('/me/email/verification', requireAuth, async (req, res) => {
+  const { user } = req as AuthenticatedRequest;
+
+  try {
+    await resendVerificationEmail(user.id);
+    res.status(204).end();
+  } catch (error) {
+    respondWithError(res, error);
+  }
+});
+
+// Public: see `verifyEmail`.
+authenticationRouter.post('/email/verify', async (req, res) => {
+  const parsed = verifyEmailBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json(formatZodError(parsed.error));
+    return;
+  }
+
+  try {
+    await verifyEmail(parsed.data.token);
+    res.status(204).end();
+  } catch (error) {
+    respondWithError(res, error);
+  }
 });
 
 authenticationRouter.post('/sign-in', async (req, res) => {
