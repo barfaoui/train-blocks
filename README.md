@@ -1,13 +1,13 @@
-# Training Planning
+# Train Blocks
 
-Monorepo for planning training sessions (`auths` + `planner`).
+Monorepo for planning training sessions. Live at <https://trainblocks.app>.
 
 ## Prerequisites
 
 | Tool | Notes |
 | --- | --- |
 | **Node.js** | v20+ recommended |
-| **Docker** | For local Postgres |
+| **Docker** | For local Postgres and Mailpit |
 | **Make** | Optional; used for all run/build targets |
 
 ## Setup
@@ -25,6 +25,8 @@ cp .env.example .env
 docker compose up -d
 # or: make db-up
 ```
+
+Also starts Mailpit, which catches every email the services send locally: <http://localhost:8025>.
 
 Stops with `docker compose down` / `make db-down`.
 
@@ -68,3 +70,71 @@ Use values from `.env` (defaults from `.env.example`):
 | User | `app` |
 | Password | `app` |
 | URL | `postgresql://app:app@localhost:5432/training_planning` |
+
+## Deploying (production)
+
+One server runs everything with Docker Compose (project `train-blocks`), from [`docker-compose.prod.yml`](docker-compose.prod.yml).
+
+| Container | Role |
+| --- | --- |
+| `web` | Caddy: HTTPS certificates, routing, serves both built fronts ([`deploy/Caddyfile`](deploy/Caddyfile)) |
+| `auths-service` | Auths API |
+| `planner-service` | Planner API |
+| `postgres` | Database, reachable only from the other containers |
+| `migrate` | Runs `prisma migrate deploy` for both schemas, then exits; the services start only if it succeeds |
+
+| Path | Served by |
+| --- | --- |
+| `/api/auth/*` | `auths-service` |
+| `/api/events/*` | `planner-service` |
+| `/auth/*` | Auths front |
+| `/*` | Planner front |
+
+### First deploy
+
+The server needs Docker, and DNS for the domain must point to it (ports 80 and 443 open).
+
+```bash
+git clone https://github.com/barfaoui/training-planning.git
+cd training-planning
+cp .env.production.example .env.production
+```
+
+Replace every `<...>` in `.env.production` (see the comments in [`.env.production.example`](.env.production.example)), then:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### Deploy a new version
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### Check and debug
+
+```bash
+docker compose -f docker-compose.prod.yml ps -a
+docker compose -f docker-compose.prod.yml logs --tail 50
+```
+
+`migrate` should show `Exited (0)`; the other four containers should be up.
+
+### Scheduled tasks
+
+Run nightly from the server's crontab:
+
+| Task | Command (prefix with `docker compose -f docker-compose.prod.yml exec -T`) |
+| --- | --- |
+| Purge accounts deleted more than 7 days ago | `auths-service node auths/service/scripts/purge-deleted-users.mjs` |
+| Purge expired email links | `auths-service node auths/service/scripts/purge-expired-email-tokens.mjs` |
+| Purge events deleted more than 14 days ago | `planner-service node planner/service/scripts/purge-deleted-events.mjs` |
+| Back up the database | `postgres pg_dump -U app training_planning \| gzip > backup.sql.gz` |
+
+### Rules
+
+- Never run `make reset-db` or `docker compose -f docker-compose.prod.yml down -v` against production: both delete data.
+- Never rename the Compose project (`train-blocks`): the database volume name depends on it.
+- `.env.production` holds the secrets and exists only on the server. It is gitignored and never copied into the images.
