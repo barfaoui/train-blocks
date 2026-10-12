@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@common/components/Button';
 import { useErrorReporter } from '@common/components/ErrorProvider';
 import { Modal } from '@common/components/Modal';
+import { SUPPORT_EMAIL } from '@common/contact';
 import { TypographyMedium } from '@common/styles/Typography';
 
 import styles from './DeleteAccountModal.module.scss';
@@ -37,8 +38,8 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
         <TypographyMedium>Are you sure you want to delete your account?</TypographyMedium>
         <TypographyMedium>
           You have 7 days: if you change your mind, contact{' '}
-          <a href="mailto:b.arfaoui@pm.me">b.arfaoui@pm.me</a> to restore your account. After that,
-          all your account and related data will be permanently removed.
+          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> to restore your account. After
+          that, all your account and related data will be permanently removed.
         </TypographyMedium>
         <div className={styles.actions}>
           <Button label="Cancel" variant="primary" style="small" outlined onClick={onClose} />
