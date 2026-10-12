@@ -1,7 +1,7 @@
+import { SUPPORT_EMAIL } from '@common/contact';
+
 import { authsPublicUrl, escapeHtml } from './links';
 import type { MailMessage } from '../../utils/mail.util';
-
-const SUPPORT_EMAIL = 'b.arfaoui@pm.me';
 
 // Like the verification link, this opens a page (on the sign-in app) that POSTs the token
 // along with the new password; the GET alone does nothing.

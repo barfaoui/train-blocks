@@ -6,6 +6,7 @@ import { forgotPasswordBody } from '@common/auth-validation';
 import { Button } from '@common/components/Button';
 import { TextInput } from '@common/components/TextInput';
 import { useZodForm } from '@common/components/useZodForm';
+import { SUPPORT_EMAIL } from '@common/contact';
 import { TypographyLarge, TypographyMedium, TypographySmall } from '@common/styles/Typography';
 import { DEFAULT_ERROR_MESSAGE } from '@common/utils/error-message.util';
 
@@ -13,8 +14,6 @@ import styles from './LoginPage.module.scss';
 import passwordStyles from './PasswordPage.module.scss';
 import { requestPasswordReset } from '../auth/auths-service';
 import { AuthApiError } from '../types/error';
-
-const SUPPORT_EMAIL = 'b.arfaoui@pm.me';
 
 function Result({ result }: { result: ForgotPasswordResult }) {
   if (result.status === 'sent') {
