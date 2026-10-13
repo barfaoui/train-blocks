@@ -1,4 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
+
+import { NotFoundPage } from '@common/components/NotFoundPage';
 
 import { AuthGuard } from './guards/AuthGuard';
 import { HomePage } from './pages/HomePage';
@@ -26,7 +28,7 @@ export function App() {
           }
         />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage homeHref="/" />} />
       </Routes>
     </>
   );

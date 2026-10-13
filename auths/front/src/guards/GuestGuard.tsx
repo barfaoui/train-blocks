@@ -4,9 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { isAllowedAppRedirect } from '@common/app-urls';
 
 import { useSessionStatus } from '../auth/session';
-import { plannerFrontBase } from '../auth/url-bases';
-
-const plannerHomeHref = plannerFrontBase || '/';
+import { plannerHomeHref } from '../auth/url-bases';
 
 export function GuestGuard({ children }: { children: ReactNode }) {
   const status = useSessionStatus();
