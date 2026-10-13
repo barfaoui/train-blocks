@@ -1,8 +1,10 @@
 import { Route, Routes } from 'react-router-dom';
 
+import { NotFoundPage } from '@common/components/NotFoundPage';
 import { ThemeToggle } from '@common/components/ThemeToggle';
 
 import styles from './App.module.scss';
+import { plannerHomeHref } from './auth/url-bases';
 import { GuestGuard } from './guards/GuestGuard';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
@@ -25,13 +27,14 @@ export function App() {
         />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
-          path="*"
+          path="/"
           element={
             <GuestGuard>
               <LoginPage />
             </GuestGuard>
           }
         />
+        <Route path="*" element={<NotFoundPage homeHref={plannerHomeHref} />} />
       </Routes>
     </>
   );
