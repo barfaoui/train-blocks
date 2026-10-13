@@ -75,6 +75,10 @@ services:
       - planner-service
     logging: *logging
 
+networks:
+  default:
+    enable_ipv6: true
+
 volumes:
   postgres_data:
   caddy_data:
