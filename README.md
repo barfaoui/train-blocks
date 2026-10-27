@@ -133,8 +133,3 @@ Run nightly from the server's crontab:
 | Purge events deleted more than 14 days ago | `planner-service node planner/service/scripts/purge-deleted-events.mjs` |
 | Back up the database | `postgres pg_dump -U app training_planning \| gzip > backup.sql.gz` |
 
-### Rules
-
-- Never run `make reset-db` or `docker compose -f docker-compose.prod.yml down -v` against production: both delete data.
-- Never rename the Compose project (`train-blocks`): the database volume name depends on it.
-- `.env.production` holds the secrets and exists only on the server. It is gitignored and never copied into the images.
