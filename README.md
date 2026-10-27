@@ -1,8 +1,28 @@
-# Train Blocks
+# Train Blocks 🏗️
 
-Monorepo for planning training sessions. Live at <https://trainblocks.app>.
+A calendar-based training planner for athletes: plan your sessions across sports, organize your weeks, and keep your sessions synced.
 
-## Prerequisites
+**Live:** [trainblocks.app](https://trainblocks.app)
+
+## Stack
+
+TypeScript · React · Vite · Node.js / Express · PostgreSQL · Prisma · Zod · Vitest · Docker · Caddy · GitHub Actions
+
+## Architecture
+
+Monorepo with two services, each with its own front end:
+
+- **Auths**: accounts, sessions (JWT), email verification and password flows, rate-limited endpoints
+- **Planner**: training sessions, recurrence and the calendar
+
+Both share one PostgreSQL database, with a separate schema per service. In production, a single server runs everything with Docker Compose: Caddy (HTTPS and routing), both services, Postgres, and a migration container that must succeed before the services start. Nightly jobs purge deleted data and back up the database.
+
+Every push to `main` runs CI (build, tests, Prettier, ESLint) and then deploys automatically.
+
+
+## Run locally
+
+### Prerequisites
 
 | Tool | Notes |
 | --- | --- |
@@ -10,16 +30,16 @@ Monorepo for planning training sessions. Live at <https://trainblocks.app>.
 | **Docker** | For local Postgres and Mailpit |
 | **Make** | Optional; used for all run/build targets |
 
-## Setup
+### Setup
 
 ```bash
-git clone https://github.com/barfaoui/training-planning.git
-cd training-planning
+git clone https://github.com/barfaoui/train-blocks.git
+cd train-blocks
 npm install
 cp .env.example .env
 ```
 
-## Database
+### Database
 
 ```bash
 docker compose up -d
@@ -30,7 +50,7 @@ Also starts Mailpit, which catches every email the services send locally: <http:
 
 Stops with `docker compose down` / `make db-down`.
 
-## Run
+### Run
 
 | Command | What it starts |
 | --- | --- |
@@ -47,7 +67,7 @@ make -C auths reset-db
 make -C planner reset-db
 ```
 
-## URLs & ports
+### URLs & ports
 
 Ports = `basePort + index + 1` from [`common/environment.json`](common/environment.json) (`basePort: 3000`).
 
@@ -58,7 +78,7 @@ Ports = `basePort + index + 1` from [`common/environment.json`](common/environme
 | Planner service | <http://localhost:3003> |
 | Planner front | <http://localhost:3004> |
 
-## Connect with DataGrip / DBeaver
+### Connect with DataGrip / DBeaver
 
 Use values from `.env` (defaults from `.env.example`):
 
@@ -95,8 +115,8 @@ One server runs everything with Docker Compose (project `train-blocks`), from [`
 The server needs Docker, and DNS for the domain must point to it (ports 80 and 443 open).
 
 ```bash
-git clone https://github.com/barfaoui/training-planning.git
-cd training-planning
+git clone https://github.com/barfaoui/train-blocks.git
+cd train-blocks
 cp .env.production.example .env.production
 ```
 
@@ -133,3 +153,6 @@ Run nightly from the server's crontab:
 | Purge events deleted more than 14 days ago | `planner-service node planner/service/scripts/purge-deleted-events.mjs` |
 | Back up the database | `postgres pg_dump -U app training_planning \| gzip > backup.sql.gz` |
 
+## License
+
+[GPL-3.0](LICENSE)
